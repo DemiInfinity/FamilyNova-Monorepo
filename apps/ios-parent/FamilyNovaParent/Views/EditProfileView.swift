@@ -11,6 +11,8 @@ struct EditProfileView: View {
     let currentDisplayName: String
     let currentSchool: String
     let currentGrade: String
+    let currentAvatarUrl: String?
+    let currentBannerUrl: String?
     
     @State private var displayName: String
     @State private var school: String
@@ -20,6 +22,8 @@ struct EditProfileView: View {
     @State private var errorMessage = ""
     @State private var avatarImage: UIImage? = nil
     @State private var bannerImage: UIImage? = nil
+    @State private var avatarUrl: String? = nil
+    @State private var bannerUrl: String? = nil
     @State private var isUploadingAvatar = false
     @State private var isUploadingBanner = false
     @State private var showImagePicker = false
@@ -30,15 +34,21 @@ struct EditProfileView: View {
     }
     
     let onSave: (String, String, String) -> Void
+    let onImageUploaded: (() -> Void)?
     
-    init(currentDisplayName: String, currentSchool: String, currentGrade: String, onSave: @escaping (String, String, String) -> Void) {
+    init(currentDisplayName: String, currentSchool: String, currentGrade: String, currentAvatarUrl: String? = nil, currentBannerUrl: String? = nil, onSave: @escaping (String, String, String) -> Void, onImageUploaded: (() -> Void)? = nil) {
         self.currentDisplayName = currentDisplayName
         self.currentSchool = currentSchool
         self.currentGrade = currentGrade
+        self.currentAvatarUrl = currentAvatarUrl
+        self.currentBannerUrl = currentBannerUrl
         self.onSave = onSave
+        self.onImageUploaded = onImageUploaded
         _displayName = State(initialValue: currentDisplayName)
         _school = State(initialValue: currentSchool)
         _grade = State(initialValue: currentGrade)
+        _avatarUrl = State(initialValue: currentAvatarUrl)
+        _bannerUrl = State(initialValue: currentBannerUrl)
     }
     
     var body: some View {
@@ -81,16 +91,30 @@ struct EditProfileView: View {
                                     showImagePicker = true
                                 }) {
                                     ZStack {
-                                        if let bannerImage = bannerImage {
-                                            Image(uiImage: bannerImage)
-                                                .resizable()
-                                                .aspectRatio(contentMode: .fill)
-                                        } else {
-                                            LinearGradient(
-                                                colors: [ParentAppColors.primaryBlue, ParentAppColors.primaryPurple],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            )
+                                        Group {
+                                            if let bannerImage = bannerImage {
+                                                Image(uiImage: bannerImage)
+                                                    .resizable()
+                                                    .aspectRatio(contentMode: .fill)
+                                            } else if let bannerUrl = bannerUrl, !bannerUrl.isEmpty {
+                                                AsyncImage(url: URL(string: bannerUrl)) { image in
+                                                    image
+                                                        .resizable()
+                                                        .aspectRatio(contentMode: .fill)
+                                                } placeholder: {
+                                                    LinearGradient(
+                                                        colors: [ParentAppColors.primaryBlue, ParentAppColors.primaryPurple],
+                                                        startPoint: .topLeading,
+                                                        endPoint: .bottomTrailing
+                                                    )
+                                                }
+                                            } else {
+                                                LinearGradient(
+                                                    colors: [ParentAppColors.primaryBlue, ParentAppColors.primaryPurple],
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                )
+                                            }
                                         }
                                         
                                         VStack {
@@ -101,7 +125,7 @@ struct EditProfileView: View {
                                                 .font(ParentAppFonts.caption)
                                                 .foregroundColor(.white)
                                         }
-                                        .opacity(bannerImage == nil ? 1.0 : 0.0)
+                                        .opacity(bannerImage == nil && (bannerUrl == nil || bannerUrl!.isEmpty) ? 1.0 : 0.0)
                                         
                                         if isUploadingBanner {
                                             ProgressView()
@@ -111,6 +135,7 @@ struct EditProfileView: View {
                                     .frame(height: 150)
                                     .frame(maxWidth: .infinity)
                                     .cornerRadius(ParentAppCornerRadius.medium)
+                                    .clipped()
                                 }
                                 .disabled(isUploadingBanner)
                             }
@@ -127,22 +152,39 @@ struct EditProfileView: View {
                                         showImagePicker = true
                                     }) {
                                         ZStack {
-                                            if let avatarImage = avatarImage {
-                                                Image(uiImage: avatarImage)
-                                                    .resizable()
-                                                    .aspectRatio(contentMode: .fill)
-                                            } else {
-                                                Circle()
-                                                    .fill(
-                                                        LinearGradient(
-                                                            colors: [ParentAppColors.primaryBlue, ParentAppColors.primaryPurple],
-                                                            startPoint: .topLeading,
-                                                            endPoint: .bottomTrailing
+                                            Group {
+                                                if let avatarImage = avatarImage {
+                                                    Image(uiImage: avatarImage)
+                                                        .resizable()
+                                                        .aspectRatio(contentMode: .fill)
+                                                } else if let avatarUrl = avatarUrl, !avatarUrl.isEmpty {
+                                                    AsyncImage(url: URL(string: avatarUrl)) { image in
+                                                        image
+                                                            .resizable()
+                                                            .aspectRatio(contentMode: .fill)
+                                                    } placeholder: {
+                                                        Circle()
+                                                            .fill(
+                                                                LinearGradient(
+                                                                    colors: [ParentAppColors.primaryBlue, ParentAppColors.primaryPurple],
+                                                                    startPoint: .topLeading,
+                                                                    endPoint: .bottomTrailing
+                                                                )
+                                                            )
+                                                    }
+                                                } else {
+                                                    Circle()
+                                                        .fill(
+                                                            LinearGradient(
+                                                                colors: [ParentAppColors.primaryBlue, ParentAppColors.primaryPurple],
+                                                                startPoint: .topLeading,
+                                                                endPoint: .bottomTrailing
+                                                            )
                                                         )
-                                                    )
+                                                }
                                             }
                                             
-                                            if avatarImage == nil {
+                                            if avatarImage == nil && (avatarUrl == nil || avatarUrl!.isEmpty) {
                                                 Image(systemName: "camera.fill")
                                                     .font(.system(size: 30))
                                                     .foregroundColor(.white)
@@ -314,15 +356,26 @@ struct EditProfileView: View {
                 
                 request.httpBody = body
                 
-                let (data, response) = try await URLSession.shared.data(for: request)
+                let (responseData, response) = try await URLSession.shared.data(for: request)
                 
                 guard let httpResponse = response as? HTTPURLResponse else {
                     throw NSError(domain: "Invalid response", code: 0)
                 }
                 
                 if (200...299).contains(httpResponse.statusCode) {
-                    await MainActor.run {
-                        isUploadingAvatar = false
+                    // Parse response to get avatar URL
+                    if let jsonData = try? JSONSerialization.jsonObject(with: responseData) as? [String: Any],
+                       let avatarUrlString = jsonData["avatarUrl"] as? String {
+                        await MainActor.run {
+                            isUploadingAvatar = false
+                            avatarUrl = avatarUrlString
+                            onImageUploaded?()
+                        }
+                    } else {
+                        await MainActor.run {
+                            isUploadingAvatar = false
+                            onImageUploaded?()
+                        }
                     }
                 } else {
                     throw NSError(domain: "Upload failed", code: httpResponse.statusCode)
@@ -368,15 +421,26 @@ struct EditProfileView: View {
                 
                 request.httpBody = body
                 
-                let (data, response) = try await URLSession.shared.data(for: request)
+                let (responseData, response) = try await URLSession.shared.data(for: request)
                 
                 guard let httpResponse = response as? HTTPURLResponse else {
                     throw NSError(domain: "Invalid response", code: 0)
                 }
                 
                 if (200...299).contains(httpResponse.statusCode) {
-                    await MainActor.run {
-                        isUploadingBanner = false
+                    // Parse response to get banner URL
+                    if let jsonData = try? JSONSerialization.jsonObject(with: responseData) as? [String: Any],
+                       let bannerUrlString = jsonData["bannerUrl"] as? String {
+                        await MainActor.run {
+                            isUploadingBanner = false
+                            bannerUrl = bannerUrlString
+                            onImageUploaded?()
+                        }
+                    } else {
+                        await MainActor.run {
+                            isUploadingBanner = false
+                            onImageUploaded?()
+                        }
                     }
                 } else {
                     throw NSError(domain: "Upload failed", code: httpResponse.statusCode)

@@ -209,6 +209,7 @@ struct ParentProfile: Codable {
     let firstName: String
     let lastName: String
     let displayName: String
+    let avatar: String?
 }
 
 struct Child: Codable, Identifiable {

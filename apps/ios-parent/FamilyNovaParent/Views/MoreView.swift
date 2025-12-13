@@ -26,14 +26,30 @@ struct MoreView: View {
                     VStack(spacing: CosmicSpacing.xl) {
                         // Profile Section (Personal)
                         VStack(spacing: CosmicSpacing.m) {
-                            Circle()
-                                .fill(CosmicColors.primaryGradient)
-                                .frame(width: 100, height: 100)
-                                .overlay(
+                            Group {
+                                if let user = authManager.currentUser,
+                                   let avatarUrl = user.profile.avatar,
+                                   !avatarUrl.isEmpty {
+                                    AsyncImage(url: URL(string: avatarUrl)) { image in
+                                        image
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fill)
+                                    } placeholder: {
+                                        Circle()
+                                            .fill(CosmicColors.primaryGradient)
+                                    }
+                                } else {
                                     Circle()
-                                        .stroke(CosmicColors.nebulaPurple.opacity(0.5), lineWidth: 3)
-                                )
-                                .shadow(color: CosmicColors.nebulaPurple.opacity(0.5), radius: 15)
+                                        .fill(CosmicColors.primaryGradient)
+                                }
+                            }
+                            .frame(width: 100, height: 100)
+                            .clipShape(Circle())
+                            .overlay(
+                                Circle()
+                                    .stroke(CosmicColors.nebulaPurple.opacity(0.5), lineWidth: 3)
+                            )
+                            .shadow(color: CosmicColors.nebulaPurple.opacity(0.5), radius: 15)
                             
                             if let user = authManager.currentUser {
                                 Text(user.profile.displayName)

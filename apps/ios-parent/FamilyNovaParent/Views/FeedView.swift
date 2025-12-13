@@ -146,6 +146,7 @@ struct FeedView: View {
             
             struct ProfileResponse: Codable {
                 let displayName: String?
+                let avatar: String?
             }
             
             struct CommentResponse: Codable {
@@ -180,6 +181,7 @@ struct FeedView: View {
                     return Post(
                         id: UUID(uuidString: postResponse.id) ?? UUID(),
                         author: postResponse.author.profile.displayName ?? "Unknown",
+                        authorAvatar: postResponse.author.profile.avatar,
                         content: postResponse.content,
                         imageUrl: postResponse.imageUrl,
                         likes: postResponse.likes?.count ?? 0,
@@ -218,6 +220,7 @@ struct FeedView: View {
 struct Post: Identifiable {
     let id: UUID
     let author: String
+    let authorAvatar: String?
     let content: String
     let imageUrl: String?
     let likes: Int
@@ -250,20 +253,44 @@ struct PostCard: View {
         VStack(alignment: .leading, spacing: ParentAppSpacing.m) {
             // Author header
             HStack(spacing: ParentAppSpacing.m) {
-                ZStack {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [ParentAppColors.primaryBlue, ParentAppColors.primaryPurple],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 50, height: 50)
-                    
-                    Text("👤")
-                        .font(.system(size: 24))
+                Group {
+                    if let avatarUrl = post.authorAvatar, !avatarUrl.isEmpty {
+                        AsyncImage(url: URL(string: avatarUrl)) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                        } placeholder: {
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [ParentAppColors.primaryBlue, ParentAppColors.primaryPurple],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .overlay(
+                                    Text("👤")
+                                        .font(.system(size: 24))
+                                )
+                        }
+                    } else {
+                        ZStack {
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [ParentAppColors.primaryBlue, ParentAppColors.primaryPurple],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                            
+                            Text("👤")
+                                .font(.system(size: 24))
+                        }
+                    }
                 }
+                .frame(width: 50, height: 50)
+                .clipShape(Circle())
                 
                 VStack(alignment: .leading, spacing: ParentAppSpacing.xs) {
                     Text(post.author)

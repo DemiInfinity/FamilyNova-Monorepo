@@ -116,6 +116,7 @@ struct HomeFeedView: View {
             
             struct ProfileResponse: Codable {
                 let displayName: String?
+                let avatar: String?
             }
             
             struct CommentResponse: Codable {
@@ -144,6 +145,7 @@ struct HomeFeedView: View {
                     return Post(
                         id: UUID(uuidString: postResponse.id) ?? UUID(),
                         author: postResponse.author.profile.displayName ?? "Unknown",
+                        authorAvatar: postResponse.author.profile.avatar,
                         content: postResponse.content,
                         imageUrl: postResponse.imageUrl,
                         likes: postResponse.likes?.count ?? 0,
@@ -173,14 +175,28 @@ struct CosmicPostCard: View {
             // Header
             HStack(spacing: CosmicSpacing.m) {
                 // Profile picture with glow
-                Circle()
-                    .fill(CosmicColors.primaryGradient)
-                    .frame(width: 50, height: 50)
-                    .overlay(
+                Group {
+                    if let avatarUrl = post.authorAvatar, !avatarUrl.isEmpty {
+                        AsyncImage(url: URL(string: avatarUrl)) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                        } placeholder: {
+                            Circle()
+                                .fill(CosmicColors.primaryGradient)
+                        }
+                    } else {
                         Circle()
-                            .stroke(CosmicColors.nebulaPurple.opacity(0.5), lineWidth: 2)
-                    )
-                    .shadow(color: CosmicColors.nebulaPurple.opacity(0.5), radius: 8)
+                            .fill(CosmicColors.primaryGradient)
+                    }
+                }
+                .frame(width: 50, height: 50)
+                .clipShape(Circle())
+                .overlay(
+                    Circle()
+                        .stroke(CosmicColors.nebulaPurple.opacity(0.5), lineWidth: 2)
+                )
+                .shadow(color: CosmicColors.nebulaPurple.opacity(0.5), radius: 8)
                 
                 VStack(alignment: .leading, spacing: CosmicSpacing.xs) {
                     Text(post.author)

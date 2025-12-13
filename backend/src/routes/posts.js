@@ -386,7 +386,8 @@ router.get('/', async (req, res) => {
             profile: {
               displayName: authorProfile.displayName || 'Unknown',
               firstName: authorProfile.firstName,
-              lastName: authorProfile.lastName
+              lastName: authorProfile.lastName,
+              avatar: authorProfile.avatar
             },
             verification: author?.verification || { parentVerified: false, schoolVerified: false }
           },

@@ -12,10 +12,9 @@ struct ProfileView: View {
     @State private var email = ""
     @State private var school: String? = nil
     @State private var grade: String? = nil
-    @State private var parentVerified = false
-    @State private var schoolVerified = false
+    @State private var avatarUrl: String? = nil
+    @State private var bannerUrl: String? = nil
     @State private var showEditProfile = false
-    @State private var showSchoolCodeEntry = false
     @State private var pendingChanges = false
     @State private var isLoading = true
     @State private var showError = false
@@ -47,8 +46,21 @@ struct ProfileView: View {
                             // Cover Image/Banner (like Facebook/Twitter)
                             ZStack(alignment: .bottomLeading) {
                                 // Cover Banner
-                                CosmicColors.spaceGradient
+                                Group {
+                                    if let bannerUrl = bannerUrl, !bannerUrl.isEmpty {
+                                        AsyncImage(url: URL(string: bannerUrl)) { image in
+                                            image
+                                                .resizable()
+                                                .aspectRatio(contentMode: .fill)
+                                        } placeholder: {
+                                            CosmicColors.spaceGradient
+                                        }
+                                    } else {
+                                        CosmicColors.spaceGradient
+                                    }
+                                }
                                 .frame(height: 200)
+                                .clipped()
                                 .overlay(
                                     // Pattern overlay for visual interest
                                     Image(systemName: "sparkles")
@@ -64,12 +76,28 @@ struct ProfileView: View {
                                         .frame(width: 120, height: 120)
                                         .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
                                     
-                                    Circle()
-                                        .fill(CosmicColors.primaryGradient)
-                                        .frame(width: 110, height: 110)
+                                    Group {
+                                        if let avatarUrl = avatarUrl, !avatarUrl.isEmpty {
+                                            AsyncImage(url: URL(string: avatarUrl)) { image in
+                                                image
+                                                    .resizable()
+                                                    .aspectRatio(contentMode: .fill)
+                                            } placeholder: {
+                                                Circle()
+                                                    .fill(CosmicColors.primaryGradient)
+                                            }
+                                        } else {
+                                            Circle()
+                                                .fill(CosmicColors.primaryGradient)
+                                        }
+                                    }
+                                    .frame(width: 110, height: 110)
+                                    .clipShape(Circle())
                                     
-                                    Text("👤")
-                                        .font(.system(size: 55))
+                                    if avatarUrl == nil || avatarUrl!.isEmpty {
+                                        Text("👤")
+                                            .font(.system(size: 55))
+                                    }
                                 }
                                 .offset(x: 20, y: 60)
                             }
@@ -78,23 +106,9 @@ struct ProfileView: View {
                             VStack(alignment: .leading, spacing: CosmicSpacing.m) {
                                 // Name and Handle
                                 VStack(alignment: .leading, spacing: CosmicSpacing.xs) {
-                                    HStack(spacing: CosmicSpacing.xs) {
-                                        Text(displayName.isEmpty ? email : displayName)
-                                            .font(.system(size: 24, weight: .bold))
-                                            .foregroundColor(CosmicColors.textPrimary)
-                                        
-                                        // Verification badges
-                                        if parentVerified {
-                                            Image(systemName: "checkmark.seal.fill")
-                                                .foregroundColor(CosmicColors.nebulaBlue)
-                                                .font(.system(size: 18))
-                                        }
-                                        if schoolVerified {
-                                            Image(systemName: "building.2.fill")
-                                                .foregroundColor(CosmicColors.nebulaPurple)
-                                                .font(.system(size: 18))
-                                        }
-                                    }
+                                    Text(displayName.isEmpty ? email : displayName)
+                                        .font(.system(size: 24, weight: .bold))
+                                        .foregroundColor(CosmicColors.textPrimary)
                                     
                                     Text("@\(email.components(separatedBy: "@").first ?? "user")")
                                         .font(CosmicFonts.body)
@@ -268,12 +282,6 @@ struct ProfileView: View {
                             Label("Edit Profile", systemImage: "pencil")
                         }
                         
-                        if !schoolVerified {
-                            Button(action: { showSchoolCodeEntry = true }) {
-                                Label("Link School", systemImage: "building.2")
-                            }
-                        }
-                        
                         Divider()
                         
                         Button(role: .destructive, action: handleLogout) {
@@ -291,6 +299,8 @@ struct ProfileView: View {
                     currentDisplayName: displayName,
                     currentSchool: school ?? "",
                     currentGrade: grade ?? "",
+                    currentAvatarUrl: avatarUrl,
+                    currentBannerUrl: bannerUrl,
                     onSave: { newDisplayName, newSchool, newGrade in
                         // Request profile change
                         requestProfileChange(
@@ -298,13 +308,13 @@ struct ProfileView: View {
                             school: newSchool,
                             grade: newGrade
                         )
+                    },
+                    onImageUploaded: {
+                        // Reload profile to get updated images
+                        loadProfile()
                     }
                 )
-            }
-            .sheet(isPresented: $showSchoolCodeEntry) {
-                SchoolCodeEntryView { code in
-                    validateSchoolCode(code: code)
-                }
+                .environmentObject(authManager)
             }
             .onAppear {
                 loadProfile()
@@ -358,6 +368,7 @@ struct ProfileView: View {
                 
                 struct ProfileResponse: Codable {
                     let displayName: String?
+                    let avatar: String?
                 }
                 
                 struct CommentResponse: Codable {
@@ -393,6 +404,7 @@ struct ProfileView: View {
                         return Post(
                             id: UUID(uuidString: postResponse.id) ?? UUID(),
                             author: postResponse.author.profile.displayName ?? "Unknown",
+                            authorAvatar: postResponse.author.profile.avatar,
                             content: postResponse.content,
                             imageUrl: postResponse.imageUrl,
                             likes: postResponse.likes?.count ?? 0,
@@ -501,7 +513,6 @@ struct ProfileView: View {
                     let id: String
                     let email: String
                     let profile: ProfileData
-                    let verification: VerificationData
                     let friends: [FriendResponse]?
                     let friendsCount: Int?
                     let children: [ChildResponse]?
@@ -516,17 +527,12 @@ struct ProfileView: View {
                     let school: String?
                     let grade: String?
                     let avatar: String?
-                }
-                
-                struct VerificationData: Codable {
-                    let parentVerified: Bool?
-                    let schoolVerified: Bool?
+                    let banner: String?
                 }
                 
                 struct FriendResponse: Codable {
                     let id: String
                     let profile: FriendProfileData
-                    let verification: VerificationData?
                 }
                 
                 struct FriendProfileData: Codable {
@@ -538,6 +544,11 @@ struct ProfileView: View {
                     let id: String
                     let profile: ChildProfileData
                     let verification: VerificationData?
+                }
+                
+                struct VerificationData: Codable {
+                    let parentVerified: Bool?
+                    let schoolVerified: Bool?
                 }
                 
                 struct ChildProfileData: Codable {
@@ -560,8 +571,8 @@ struct ProfileView: View {
                                       (fullName.isEmpty ? response.user.email : fullName)
                     self.school = response.user.profile.school
                     self.grade = response.user.profile.grade
-                    self.parentVerified = response.user.verification.parentVerified ?? false
-                    self.schoolVerified = response.user.verification.schoolVerified ?? false
+                    self.avatarUrl = response.user.profile.avatar
+                    self.bannerUrl = response.user.profile.banner
                     
                     // Update counts from response
                     self.friendsCount = response.user.friendsCount ?? response.user.friends?.count ?? 0
@@ -573,7 +584,12 @@ struct ProfileView: View {
                     if let currentUser = authManager.currentUser {
                         // Convert children from response to Child structs
                         let children = (response.user.children ?? []).map { childResponse in
-                            Child(
+                            let verificationData = childResponse.verification
+                            let verification = VerificationStatus(
+                                parentVerified: verificationData?.parentVerified ?? false,
+                                schoolVerified: verificationData?.schoolVerified ?? false
+                            )
+                            return Child(
                                 id: childResponse.id,
                                 profile: ChildProfile(
                                     displayName: childResponse.profile.displayName ?? "Unknown",
@@ -581,7 +597,7 @@ struct ProfileView: View {
                                     school: childResponse.profile.school,
                                     grade: childResponse.profile.grade
                                 ),
-                                verification: childResponse.verification ?? VerificationStatus(parentVerified: false, schoolVerified: false),
+                                verification: verification,
                                 lastLogin: nil
                             )
                         }
@@ -593,7 +609,8 @@ struct ProfileView: View {
                             profile: ParentProfile(
                                 firstName: response.user.profile.firstName ?? "",
                                 lastName: response.user.profile.lastName ?? "",
-                                displayName: self.displayName
+                                displayName: self.displayName,
+                                avatar: self.avatarUrl
                             ),
                             children: children,
                             parentConnections: currentUser.parentConnections
@@ -617,194 +634,8 @@ struct ProfileView: View {
         showEditProfile = false
     }
     
-    private func validateSchoolCode(code: String) {
-        // TODO: Implement API call to validate school code
-        // POST /api/school-codes/validate
-        // Body: { code }
-        schoolVerified = true
-        showSchoolCodeEntry = false
-    }
-    
     private func handleLogout() {
         authManager.logout()
-    }
-}
-
-struct SchoolCodeEntryCard: View {
-    @Binding var showCodeEntry: Bool
-    
-    var body: some View {
-        Button(action: { showCodeEntry = true }) {
-            HStack(spacing: CosmicSpacing.m) {
-                ZStack {
-                    Circle()
-                        .fill(CosmicColors.starGold.opacity(0.2))
-                        .frame(width: 60, height: 60)
-                    
-                    Text("🏫")
-                        .font(.system(size: 32))
-                }
-                
-                VStack(alignment: .leading, spacing: CosmicSpacing.xs) {
-                    Text("Link Your School")
-                        .font(CosmicFonts.headline)
-                        .foregroundColor(CosmicColors.starGold)
-                    Text("Enter your school code to verify your account")
-                        .font(CosmicFonts.caption)
-                        .foregroundColor(CosmicColors.textSecondary)
-                }
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .foregroundColor(CosmicColors.starGold)
-            }
-            .padding(CosmicSpacing.l)
-            .background(
-                RoundedRectangle(cornerRadius: CosmicCornerRadius.large)
-                    .fill(CosmicColors.starGold.opacity(0.1))
-            )
-        }
-        .buttonStyle(PlainButtonStyle())
-    }
-}
-
-struct SchoolCodeEntryView: View {
-    @Environment(\.dismiss) var dismiss
-    @State private var code = ""
-    @State private var isSubmitting = false
-    @State private var showError = false
-    @State private var errorMessage = ""
-    @State private var showSuccess = false
-    
-    let onValidate: (String) -> Void
-    
-    var body: some View {
-        NavigationView {
-            ZStack {
-                LinearGradient(
-                    colors: [CosmicColors.nebulaBlue.opacity(0.1), CosmicColors.nebulaPurple.opacity(0.1)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
-                
-                VStack(spacing: CosmicSpacing.xl) {
-                    // Header
-                    VStack(spacing: CosmicSpacing.m) {
-                        Text("🏫")
-                            .font(.system(size: 80))
-                        Text("Enter School Code")
-                            .font(CosmicFonts.title)
-                            .foregroundColor(CosmicColors.nebulaPurple)
-                        Text("Get your 6-digit code from your school")
-                            .font(CosmicFonts.body)
-                            .foregroundColor(CosmicColors.textSecondary)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, CosmicSpacing.xl)
-                    }
-                    .padding(.top, CosmicSpacing.xxl)
-                    
-                    // Code Input
-                    VStack(alignment: .leading, spacing: CosmicSpacing.s) {
-                        Text("School Code")
-                            .font(CosmicFonts.caption)
-                            .foregroundColor(CosmicColors.textSecondary)
-                        
-                        TextField("Enter 6-digit code", text: $code)
-                            .textFieldStyle(.plain)
-                            .foregroundColor(CosmicColors.textPrimary)
-                            .font(.system(size: 32, weight: .bold, design: .monospaced))
-                            .multilineTextAlignment(.center)
-                            .autocapitalization(.allCharacters)
-                            .keyboardType(.asciiCapable)
-                            .padding(CosmicSpacing.l)
-                            .background(Color.white)
-                            .cornerRadius(CosmicCornerRadius.large)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: CosmicCornerRadius.large)
-                                    .stroke(CosmicColors.nebulaBlue, lineWidth: 2)
-                            )
-                            .onChange(of: code) { newValue in
-                                // Limit to 6 characters and uppercase
-                                code = String(newValue.prefix(6)).uppercased()
-                            }
-                    }
-                    .padding(.horizontal, CosmicSpacing.m)
-                    
-                    // Submit Button
-                    Button(action: submitCode) {
-                        HStack(spacing: CosmicSpacing.s) {
-                            if isSubmitting {
-                                ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                            } else {
-                                Text("✅")
-                                    .font(.system(size: 24))
-                                Text("Verify School")
-                                    .font(CosmicFonts.button)
-                                    .foregroundColor(.white)
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 60)
-                        .background(
-                            LinearGradient(
-                                colors: [CosmicColors.nebulaBlue, CosmicColors.nebulaPurple],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .cornerRadius(CosmicCornerRadius.large)
-                        .shadow(color: CosmicColors.nebulaBlue.opacity(0.3), radius: 8, x: 0, y: 4)
-                    }
-                    .padding(.horizontal, CosmicSpacing.m)
-                    .disabled(code.count != 6 || isSubmitting)
-                    .opacity(code.count == 6 ? 1.0 : 0.5)
-                    
-                    Spacer()
-                }
-            }
-            .navigationTitle("School Code")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                    .font(CosmicFonts.button)
-                    .foregroundColor(CosmicColors.nebulaBlue)
-                }
-            }
-            .alert("Error", isPresented: $showError) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text(errorMessage)
-            }
-            .alert("Success", isPresented: $showSuccess) {
-                Button("OK") {
-                    onValidate(code)
-                }
-            } message: {
-                Text("School code verified successfully!")
-            }
-        }
-    }
-    
-    private func submitCode() {
-        guard code.count == 6 else { return }
-        
-        isSubmitting = true
-        Task {
-            // TODO: Implement API call to validate school code
-            // POST /api/school-codes/validate
-            // Body: { code }
-            
-            try? await Task.sleep(nanoseconds: 1_000_000_000)
-            
-            isSubmitting = false
-            showSuccess = true
-        }
     }
 }
 
@@ -845,60 +676,6 @@ struct ProfileHeaderCard: View {
             RoundedRectangle(cornerRadius: CosmicCornerRadius.extraLarge)
                 .fill(Color.white)
                 .shadow(color: CosmicColors.nebulaBlue.opacity(0.2), radius: 10, x: 0, y: 5)
-        )
-    }
-}
-
-struct ProfileVerificationCard: View {
-    let parentVerified: Bool
-    let schoolVerified: Bool
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: CosmicSpacing.m) {
-            HStack {
-                Text("✅")
-                    .font(.system(size: 24))
-                Text("Verification Status")
-                    .font(CosmicFonts.headline)
-                    .foregroundColor(CosmicColors.nebulaPurple)
-            }
-            
-            VStack(alignment: .leading, spacing: CosmicSpacing.m) {
-                HStack(spacing: CosmicSpacing.m) {
-                    ZStack {
-                        Circle()
-                            .fill(parentVerified ? CosmicColors.success.opacity(0.2) : CosmicColors.error.opacity(0.2))
-                            .frame(width: 50, height: 50)
-                        Text(parentVerified ? "✓" : "✗")
-                            .font(.system(size: 24, weight: .bold))
-                            .foregroundColor(parentVerified ? CosmicColors.success : CosmicColors.error)
-                    }
-                    Text("Parent Verified")
-                        .font(CosmicFonts.body)
-                        .foregroundColor(parentVerified ? CosmicColors.success : CosmicColors.error)
-                }
-                
-                HStack(spacing: CosmicSpacing.m) {
-                    ZStack {
-                        Circle()
-                            .fill(schoolVerified ? CosmicColors.success.opacity(0.2) : CosmicColors.error.opacity(0.2))
-                            .frame(width: 50, height: 50)
-                        Text(schoolVerified ? "✓" : "✗")
-                            .font(.system(size: 24, weight: .bold))
-                            .foregroundColor(schoolVerified ? CosmicColors.success : CosmicColors.error)
-                    }
-                    Text("School Verified")
-                        .font(CosmicFonts.body)
-                        .foregroundColor(schoolVerified ? CosmicColors.success : CosmicColors.error)
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(CosmicSpacing.xl)
-        .background(
-            RoundedRectangle(cornerRadius: CosmicCornerRadius.large)
-                .fill(Color.white)
-                .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
         )
     }
 }

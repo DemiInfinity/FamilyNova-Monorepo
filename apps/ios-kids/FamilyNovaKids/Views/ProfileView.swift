@@ -14,6 +14,8 @@ struct ProfileView: View {
     @State private var grade: String? = nil
     @State private var parentVerified = false
     @State private var schoolVerified = false
+    @State private var avatarUrl: String? = nil
+    @State private var bannerUrl: String? = nil
     @State private var showEditProfile = false
     @State private var showSchoolCodeEntry = false
     @State private var pendingChanges = false
@@ -300,6 +302,8 @@ struct ProfileView: View {
                     currentDisplayName: displayName,
                     currentSchool: school ?? "",
                     currentGrade: grade ?? "",
+                    currentAvatarUrl: avatarUrl,
+                    currentBannerUrl: bannerUrl,
                     onSave: { newDisplayName, newSchool, newGrade in
                         // Request profile change
                         requestProfileChange(
@@ -307,8 +311,13 @@ struct ProfileView: View {
                             school: newSchool,
                             grade: newGrade
                         )
+                    },
+                    onImageUploaded: {
+                        // Reload profile to get updated images
+                        loadProfile()
                     }
                 )
+                .environmentObject(authManager)
             }
             .sheet(isPresented: $showSchoolCodeEntry) {
                 SchoolCodeEntryView { code in
@@ -367,6 +376,7 @@ struct ProfileView: View {
                 
                 struct ProfileResponse: Codable {
                     let displayName: String?
+                    let avatar: String?
                 }
                 
                 struct CommentResponse: Codable {
@@ -402,6 +412,7 @@ struct ProfileView: View {
                         return Post(
                             id: UUID(uuidString: postResponse.id) ?? UUID(),
                             author: postResponse.author.profile.displayName ?? "Unknown",
+                            authorAvatar: postResponse.author.profile.avatar,
                             content: postResponse.content,
                             imageUrl: postResponse.imageUrl,
                             likes: postResponse.likes?.count ?? 0,
@@ -520,6 +531,7 @@ struct ProfileView: View {
                     let school: String?
                     let grade: String?
                     let avatar: String?
+                    let banner: String?
                 }
                 
                 struct VerificationData: Codable {
@@ -542,6 +554,8 @@ struct ProfileView: View {
                     self.grade = response.user.profile.grade
                     self.parentVerified = response.user.verification.parentVerified ?? false
                     self.schoolVerified = response.user.verification.schoolVerified ?? false
+                    self.avatarUrl = response.user.profile.avatar
+                    self.bannerUrl = response.user.profile.banner
                     self.isLoading = false
                     
                     // Update authManager's currentUser
