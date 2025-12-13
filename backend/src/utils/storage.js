@@ -20,9 +20,9 @@ async function ensureStorageBucket() {
     const bucketExists = buckets?.some(bucket => bucket.name === bucketName);
 
     if (!bucketExists) {
-      // Create the bucket
+      // Create the bucket as private
       const { data, error: createError } = await supabase.storage.createBucket(bucketName, {
-        public: true,
+        public: false, // Private bucket - requires signed URLs
         fileSizeLimit: 5242880, // 5MB in bytes
         allowedMimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
       });
@@ -52,7 +52,7 @@ async function initializeStorage() {
   if (!result.success) {
     console.warn('⚠️  Could not ensure storage bucket exists. Please create it manually in Supabase Dashboard.');
     console.warn('   Bucket name: user-profiles');
-    console.warn('   Settings: Public, 5MB limit, image/* MIME types');
+    console.warn('   Settings: Private, 5MB limit, image/* MIME types');
   }
   return result;
 }

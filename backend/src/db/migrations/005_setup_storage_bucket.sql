@@ -6,7 +6,7 @@
 -- 1. Go to Storage section in Supabase Dashboard
 -- 2. Click "New bucket"
 -- 3. Name: "user-profiles"
--- 4. Public: Yes (so images can be accessed via public URLs)
+-- 4. Public: No (Private bucket - images accessed via signed URLs)
 -- 5. File size limit: 5MB
 -- 6. Allowed MIME types: image/jpeg, image/png, image/gif, image/webp
 
@@ -38,9 +38,9 @@ USING (
   (storage.foldername(name))[1] = auth.uid()::text
 );
 
--- Allow public read access to profile images
-CREATE POLICY "Public read access to profile images"
+-- Allow authenticated users to read their own files and files from their friends
+CREATE POLICY "Authenticated users can read profile images"
 ON storage.objects FOR SELECT
-TO public
+TO authenticated
 USING (bucket_id = 'user-profiles');
 

@@ -38,6 +38,16 @@ router.post('/profile-picture', requireUserType('kid'), upload.single('image'), 
     const supabase = await getSupabase();
     const userId = req.user.id;
     
+    // Ensure storage bucket exists
+    const bucketCheck = await ensureStorageBucket();
+    if (!bucketCheck.success) {
+      console.error('Storage bucket check failed:', bucketCheck.error);
+      return res.status(500).json({ 
+        error: 'Storage bucket not available. Please contact support or create the bucket manually in Supabase Dashboard.',
+        details: 'Bucket name: user-profiles'
+      });
+    }
+    
     // Generate unique filename: userId/avatar-timestamp.jpg
     const timestamp = Date.now();
     const fileExtension = req.file.originalname.split('.').pop() || 'jpg';
@@ -57,12 +67,17 @@ router.post('/profile-picture', requireUserType('kid'), upload.single('image'), 
       return res.status(500).json({ error: 'Failed to upload image' });
     }
 
-    // Get public URL
-    const { data: urlData } = supabase.storage
+    // Get signed URL (valid for 1 year for profile images)
+    const { data: signedUrlData, error: signedUrlError } = await supabase.storage
       .from(bucketName)
-      .getPublicUrl(fileName);
+      .createSignedUrl(fileName, 31536000); // 1 year in seconds
 
-    const imageUrl = urlData.publicUrl;
+    if (signedUrlError) {
+      console.error('Error creating signed URL:', signedUrlError);
+      return res.status(500).json({ error: 'Failed to generate image URL' });
+    }
+
+    const imageUrl = signedUrlData.signedUrl;
 
     // Update user profile with avatar URL
     const user = await User.findById(userId);
@@ -127,12 +142,17 @@ router.post('/banner', requireUserType('kid'), upload.single('image'), async (re
       return res.status(500).json({ error: 'Failed to upload image' });
     }
 
-    // Get public URL
-    const { data: urlData } = supabase.storage
+    // Get signed URL (valid for 1 year for profile images)
+    const { data: signedUrlData, error: signedUrlError } = await supabase.storage
       .from(bucketName)
-      .getPublicUrl(fileName);
+      .createSignedUrl(fileName, 31536000); // 1 year in seconds
 
-    const imageUrl = urlData.publicUrl;
+    if (signedUrlError) {
+      console.error('Error creating signed URL:', signedUrlError);
+      return res.status(500).json({ error: 'Failed to generate image URL' });
+    }
+
+    const imageUrl = signedUrlData.signedUrl;
 
     // Update user profile with banner URL
     const user = await User.findById(userId);
@@ -178,16 +198,6 @@ router.post('/post-image', requireUserType('kid'), upload.single('image'), async
       });
     }
     
-    // Ensure storage bucket exists
-    const bucketCheck = await ensureStorageBucket();
-    if (!bucketCheck.success) {
-      console.error('Storage bucket check failed:', bucketCheck.error);
-      return res.status(500).json({ 
-        error: 'Storage bucket not available. Please contact support or create the bucket manually in Supabase Dashboard.',
-        details: 'Bucket name: user-profiles'
-      });
-    }
-    
     // Generate unique filename: userId/posts/post-timestamp.jpg
     const timestamp = Date.now();
     const fileExtension = req.file.originalname.split('.').pop() || 'jpg';
@@ -207,12 +217,17 @@ router.post('/post-image', requireUserType('kid'), upload.single('image'), async
       return res.status(500).json({ error: 'Failed to upload image' });
     }
 
-    // Get public URL
-    const { data: urlData } = supabase.storage
+    // Get signed URL (valid for 1 year for profile images)
+    const { data: signedUrlData, error: signedUrlError } = await supabase.storage
       .from(bucketName)
-      .getPublicUrl(fileName);
+      .createSignedUrl(fileName, 31536000); // 1 year in seconds
 
-    const imageUrl = urlData.publicUrl;
+    if (signedUrlError) {
+      console.error('Error creating signed URL:', signedUrlError);
+      return res.status(500).json({ error: 'Failed to generate image URL' });
+    }
+
+    const imageUrl = signedUrlData.signedUrl;
 
     res.json({
       message: 'Image uploaded successfully',
