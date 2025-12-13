@@ -16,6 +16,7 @@
 		4A6BCEA7AF57A5DD85DCA946 /* EditProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7696D9D7026A69E6863A4A37 /* EditProfileView.swift */; };
 		519ED126EA82D46A15D93073 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F0FEEE7038CCEF7EF42DA61 /* DesignSystem.swift */; };
 		54FFEB9881A7C3B3848A3618 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6D39A49A834774DDFD8E2B7 /* LoginView.swift */; };
+		7E89F15AF6EAEFF9D1063C3C /* ProfileComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F140EA56DD7E4B84AF1FA58 /* ProfileComponents.swift */; };
 		8054A230FA2DF40CE19DF2A7 /* EducationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73DE3C61121D8F6D0DB7FF9C /* EducationView.swift */; };
 		8F636396DBAB52C1F90DF6EE /* MessagesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0051B2974DE8FA660890E611 /* MessagesView.swift */; };
 		90768F3726769FE1FD721736 /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 180B1EA80AA8300FD72EC45E /* NotificationsView.swift */; };
@@ -40,6 +41,7 @@
 		180B1EA80AA8300FD72EC45E /* NotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
 		206973E0C1713B23F609D729 /* FamilyNovaKidsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FamilyNovaKidsApp.swift; sourceTree = "<group>"; };
 		40AEF65FC52B3BD80E8834BB /* ApiService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiService.swift; sourceTree = "<group>"; };
+		4F140EA56DD7E4B84AF1FA58 /* ProfileComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileComponents.swift; sourceTree = "<group>"; };
 		586F02C3E1D8F8877F72AA0F /* QRCodeScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCodeScannerView.swift; sourceTree = "<group>"; };
 		5F0FEEE7038CCEF7EF42DA61 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
 		65479BA558886B586601276F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -98,6 +100,7 @@
 				0051B2974DE8FA660890E611 /* MessagesView.swift */,
 				C7CB84A200DE992EA3C64195 /* NewsFeedView.swift */,
 				180B1EA80AA8300FD72EC45E /* NotificationsView.swift */,
+				4F140EA56DD7E4B84AF1FA58 /* ProfileComponents.swift */,
 				C1C0C9B4F8FC40872F07654D /* ProfileView.swift */,
 				586F02C3E1D8F8877F72AA0F /* QRCodeScannerView.swift */,
 				B374F53FCBD18CF21E036022 /* ScanFriendQRView.swift */,
@@ -229,6 +232,7 @@
 				8F636396DBAB52C1F90DF6EE /* MessagesView.swift in Sources */,
 				FEA4824C926E586662379738 /* NewsFeedView.swift in Sources */,
 				90768F3726769FE1FD721736 /* NotificationsView.swift in Sources */,
+				7E89F15AF6EAEFF9D1063C3C /* ProfileComponents.swift in Sources */,
 				E813DFBD8158522FB43F7A76 /* ProfileView.swift in Sources */,
 				2F7334618BAED15C4ED4C184 /* QRCodeScannerView.swift in Sources */,
 				0C5C080B1B8AA7EF5CD196A8 /* ScanFriendQRView.swift in Sources */,

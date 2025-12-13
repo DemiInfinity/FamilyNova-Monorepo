@@ -230,10 +230,13 @@ struct PostCard: View {
     @State private var showComments = false
     @State private var showReactionPicker = false
     @State private var selectedReaction: String? = nil
+    @State private var showDeleteConfirmation = false
     @EnvironmentObject var authManager: AuthManager
+    var onDelete: (() -> Void)? = nil // Optional callback for delete action
     
-    init(post: Post) {
+    init(post: Post, onDelete: (() -> Void)? = nil) {
         self.post = post
+        self.onDelete = onDelete
         _isLiked = State(initialValue: post.isLiked)
         _likesCount = State(initialValue: post.likes)
         _commentsCount = State(initialValue: post.comments)
@@ -269,6 +272,16 @@ struct PostCard: View {
                 }
                 
                 Spacer()
+                
+                // Delete button (only shown if onDelete callback is provided)
+                if onDelete != nil {
+                    Button(action: { showDeleteConfirmation = true }) {
+                        Image(systemName: "trash")
+                            .foregroundColor(AppColors.error)
+                            .font(.system(size: 16))
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
             }
             
             // Post content
@@ -359,6 +372,14 @@ struct PostCard: View {
         }) {
             CommentsView(postId: post.id, postAuthor: post.author, postContent: post.content)
                 .environmentObject(authManager)
+        }
+        .alert("Delete Post", isPresented: $showDeleteConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
+                onDelete?()
+            }
+        } message: {
+            Text("Are you sure you want to delete this post? This action cannot be undone.")
         }
     }
     

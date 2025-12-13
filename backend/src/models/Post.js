@@ -17,7 +17,7 @@ class Post {
   }
 
   static async findById(id) {
-    const supabase = getSupabase();
+    const supabase = await getSupabase();
     const { data, error } = await supabase
       .from('posts')
       .select('*')
@@ -29,7 +29,7 @@ class Post {
   }
 
   static async find(filter = {}) {
-    const supabase = getSupabase();
+    const supabase = await getSupabase();
     let query = supabase.from('posts').select('*');
 
     if (filter.authorId) query = query.eq('author_id', filter.authorId);
@@ -43,14 +43,23 @@ class Post {
   }
 
   static async create(postData) {
-    const supabase = getSupabase();
+    const supabase = await getSupabase();
+    
+    // Ensure author_id is set
+    if (!postData.authorId) {
+      throw new Error('authorId is required');
+    }
+    
+    const now = new Date().toISOString();
     const dbData = {
       author_id: postData.authorId,
       content: postData.content,
       image_url: postData.imageUrl || null,
       status: postData.status || 'pending',
       likes: postData.likes || [],
-      comments: postData.comments || []
+      comments: postData.comments || [],
+      created_at: now,
+      updated_at: now
     };
 
     const { data, error } = await supabase
@@ -59,12 +68,16 @@ class Post {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error creating post:', error);
+      throw error;
+    }
+    
     return new Post(data);
   }
 
   async save() {
-    const supabase = getSupabase();
+    const supabase = await getSupabase();
     const dbData = {
       content: this.content,
       image_url: this.imageUrl,
@@ -73,7 +86,8 @@ class Post {
       status: this.status,
       moderated_by: this.moderatedBy || null,
       moderated_at: this.moderatedAt ? this.moderatedAt.toISOString() : null,
-      rejection_reason: this.rejectionReason || null
+      rejection_reason: this.rejectionReason || null,
+      updated_at: new Date().toISOString()
     };
 
     const { data, error } = await supabase
@@ -83,9 +97,26 @@ class Post {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error saving post:', error);
+      throw error;
+    }
     Object.assign(this, new Post(data));
     return this;
+  }
+
+  static async deleteById(id) {
+    const supabase = await getSupabase();
+    const { error } = await supabase
+      .from('posts')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting post:', error);
+      throw error;
+    }
+    return true;
   }
 }
 

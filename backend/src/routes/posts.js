@@ -46,6 +46,11 @@ router.post('/', requireUserType('kid'), [
     // Get author info for response
     const authorProfile = author.profile || {};
     
+    // Format createdAt as ISO8601 string
+    const createdAt = post.createdAt instanceof Date 
+      ? post.createdAt.toISOString() 
+      : (post.createdAt || new Date().toISOString());
+    
     res.status(201).json({
       post: {
         id: post.id,
@@ -58,7 +63,7 @@ router.post('/', requireUserType('kid'), [
             displayName: authorProfile.displayName || author.email
           }
         },
-        createdAt: post.createdAt
+        createdAt: createdAt
       },
       message: status === 'pending' 
         ? 'Post created and pending parent approval' 
@@ -240,6 +245,15 @@ router.get('/', async (req, res) => {
         // Check if user has liked this post
         const isLiked = userReactions.includes('like');
         
+        // Format timestamps as ISO8601 strings
+        const createdAt = postData.created_at instanceof Date
+          ? postData.created_at.toISOString()
+          : (postData.created_at || new Date().toISOString());
+        
+        const updatedAt = postData.updated_at instanceof Date
+          ? postData.updated_at.toISOString()
+          : (postData.updated_at || new Date().toISOString());
+        
         postsWithAuthors.push({
           id: postData.id,
           content: postData.content,
@@ -258,8 +272,8 @@ router.get('/', async (req, res) => {
             },
             verification: author?.verification || { parentVerified: false, schoolVerified: false }
           },
-          createdAt: postData.created_at,
-          updatedAt: postData.updated_at
+          createdAt: createdAt,
+          updatedAt: updatedAt
         });
       }
     }
@@ -563,6 +577,38 @@ router.post('/:postId/comment', requireUserType('kid'), [
     });
   } catch (error) {
     console.error('Error adding comment:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// @route   DELETE /api/posts/:postId
+// @desc    Delete a post (only by the author)
+// @access  Private (Kid only)
+router.delete('/:postId', requireUserType('kid'), async (req, res) => {
+  try {
+    const { postId } = req.params;
+    
+    // Get the post
+    const post = await Post.findById(postId);
+    
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+    
+    // Verify the user is the author of the post
+    if (post.authorId !== req.user.id) {
+      return res.status(403).json({ error: 'You can only delete your own posts' });
+    }
+    
+    // Delete the post (cascade will delete comments and reactions)
+    await Post.deleteById(postId);
+    
+    res.json({ 
+      message: 'Post deleted successfully',
+      postId: postId
+    });
+  } catch (error) {
+    console.error('Error deleting post:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });

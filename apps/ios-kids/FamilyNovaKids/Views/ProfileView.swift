@@ -19,17 +19,16 @@ struct ProfileView: View {
     @State private var isLoading = true
     @State private var showError = false
     @State private var errorMessage = ""
+    @State private var posts: [Post] = []
+    @State private var postsCount = 0
+    @State private var friendsCount = 0
+    @State private var isLoadingPosts = false
+    @State private var selectedTab = 0 // 0 = Posts, 1 = Photos (future)
     
     var body: some View {
         NavigationView {
             ZStack {
-                // Fun gradient background
-                LinearGradient(
-                    colors: [AppColors.gradientBlue.opacity(0.1), AppColors.gradientPurple.opacity(0.1)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
+                Color.white.ignoresSafeArea()
                 
                 if isLoading {
                     VStack(spacing: AppSpacing.l) {
@@ -42,106 +41,208 @@ struct ProfileView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     ScrollView {
-                        VStack(spacing: AppSpacing.m) {
-                            // Profile Header
-                            ProfileHeaderCard(
-                                displayName: displayName.isEmpty ? email : displayName,
-                                email: email
-                            )
-                            .padding(.horizontal, AppSpacing.m)
-                            .padding(.top, AppSpacing.m)
-                    
-                    // Verification Status
-                    VerificationCard(
-                        parentVerified: parentVerified,
-                        schoolVerified: schoolVerified
-                    )
-                    .padding(.horizontal, AppSpacing.m)
-                    
-                    // School Code Entry (if not verified)
-                    if !schoolVerified {
-                        SchoolCodeEntryCard(showCodeEntry: $showSchoolCodeEntry)
-                            .padding(.horizontal, AppSpacing.m)
-                    }
-                    
-                    // Profile Info
-                    ProfileInfoCard(
-                        school: school ?? "Not set",
-                        grade: grade ?? "Not set"
-                    )
-                    .padding(.horizontal, AppSpacing.m)
-                    
-                    // Pending Changes Notice
-                    if pendingChanges {
-                        VStack(spacing: AppSpacing.s) {
-                            HStack(spacing: AppSpacing.s) {
-                                Text("⏳")
-                                    .font(.system(size: 24))
-                                Text("Profile changes pending parent approval")
-                                    .font(AppFonts.body)
-                                    .foregroundColor(AppColors.primaryOrange)
+                        VStack(spacing: 0) {
+                            // Cover Image/Banner (like Facebook/Twitter)
+                            ZStack(alignment: .bottomLeading) {
+                                // Cover Banner
+                                LinearGradient(
+                                    colors: [AppColors.primaryBlue, AppColors.primaryPurple],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                                .frame(height: 200)
+                                .overlay(
+                                    // Pattern overlay for visual interest
+                                    Image(systemName: "sparkles")
+                                        .font(.system(size: 100))
+                                        .foregroundColor(.white.opacity(0.1))
+                                        .offset(x: 50, y: 50)
+                                )
+                                
+                                // Profile Picture overlaying the cover
+                                ZStack {
+                                    Circle()
+                                        .fill(Color.white)
+                                        .frame(width: 120, height: 120)
+                                        .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
+                                    
+                                    Circle()
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [AppColors.primaryBlue, AppColors.primaryPurple],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
+                                        .frame(width: 110, height: 110)
+                                    
+                                    Text("👤")
+                                        .font(.system(size: 55))
+                                }
+                                .offset(x: 20, y: 60)
                             }
+                            
+                            // User Info Section
+                            VStack(alignment: .leading, spacing: AppSpacing.m) {
+                                // Name and Handle
+                                VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                                    HStack(spacing: AppSpacing.xs) {
+                                        Text(displayName.isEmpty ? email : displayName)
+                                            .font(.system(size: 24, weight: .bold))
+                                            .foregroundColor(AppColors.black)
+                                        
+                                        // Verification badges
+                                        if parentVerified {
+                                            Image(systemName: "checkmark.seal.fill")
+                                                .foregroundColor(AppColors.primaryBlue)
+                                                .font(.system(size: 18))
+                                        }
+                                        if schoolVerified {
+                                            Image(systemName: "building.2.fill")
+                                                .foregroundColor(AppColors.primaryPurple)
+                                                .font(.system(size: 18))
+                                        }
+                                    }
+                                    
+                                    Text("@\(email.components(separatedBy: "@").first ?? "user")")
+                                        .font(AppFonts.body)
+                                        .foregroundColor(AppColors.darkGray)
+                                    
+                                    // Bio/Info
+                                    if let school = school, !school.isEmpty {
+                                        HStack(spacing: AppSpacing.xs) {
+                                            Image(systemName: "building.2")
+                                                .foregroundColor(AppColors.mediumGray)
+                                                .font(.system(size: 14))
+                                            Text(school)
+                                                .font(AppFonts.caption)
+                                                .foregroundColor(AppColors.darkGray)
+                                        }
+                                        .padding(.top, AppSpacing.xs)
+                                    }
+                                    
+                                    if let grade = grade, !grade.isEmpty {
+                                        HStack(spacing: AppSpacing.xs) {
+                                            Image(systemName: "book")
+                                                .foregroundColor(AppColors.mediumGray)
+                                                .font(.system(size: 14))
+                                            Text(grade)
+                                                .font(AppFonts.caption)
+                                                .foregroundColor(AppColors.darkGray)
+                                        }
+                                    }
+                                }
+                                .padding(.leading, 20)
+                                .padding(.top, 70)
+                                
+                                // Stats Bar (like Twitter/Bluesky)
+                                HStack(spacing: AppSpacing.xl) {
+                                    StatItem(count: postsCount, label: "Posts")
+                                    StatItem(count: friendsCount, label: "Friends")
+                                    StatItem(count: 0, label: "Following") // Future feature
+                                }
+                                .padding(.horizontal, 20)
+                                .padding(.top, AppSpacing.m)
+                                .padding(.bottom, AppSpacing.s)
+                                
+                                Divider()
+                                    .padding(.horizontal, 20)
+                                
+                                // Tabs (Posts, Photos, etc.)
+                                HStack(spacing: 0) {
+                                    TabButton(title: "Posts", isSelected: selectedTab == 0) {
+                                        selectedTab = 0
+                                    }
+                                    TabButton(title: "Photos", isSelected: selectedTab == 1) {
+                                        selectedTab = 1
+                                    }
+                                }
+                                .padding(.horizontal, 20)
+                                .padding(.top, AppSpacing.s)
+                                
+                                // Content based on selected tab
+                                if selectedTab == 0 {
+                                    // Posts Feed
+                                    if isLoadingPosts && posts.isEmpty {
+                                        VStack(spacing: AppSpacing.l) {
+                                            ProgressView()
+                                            Text("Loading posts...")
+                                                .font(AppFonts.body)
+                                                .foregroundColor(AppColors.darkGray)
+                                        }
+                                        .padding(AppSpacing.xxl)
+                                    } else if posts.isEmpty {
+                                        VStack(spacing: AppSpacing.l) {
+                                            Text("📝")
+                                                .font(.system(size: 60))
+                                            Text("No posts yet")
+                                                .font(AppFonts.headline)
+                                                .foregroundColor(AppColors.primaryPurple)
+                                            Text("Share your first post!")
+                                                .font(AppFonts.body)
+                                                .foregroundColor(AppColors.darkGray)
+                                        }
+                                        .frame(maxWidth: .infinity)
+                                        .padding(AppSpacing.xxl)
+                                    } else {
+                                        LazyVStack(spacing: AppSpacing.m) {
+                                            ForEach(posts) { post in
+                                                PostCard(post: post, onDelete: {
+                                                    deletePost(postId: post.id)
+                                                })
+                                                    .environmentObject(authManager)
+                                                    .padding(.horizontal, AppSpacing.m)
+                                            }
+                                        }
+                                        .padding(.top, AppSpacing.m)
+                                    }
+                                } else {
+                                    // Photos tab (placeholder for future)
+                                    VStack(spacing: AppSpacing.l) {
+                                        Text("📷")
+                                            .font(.system(size: 60))
+                                        Text("No photos yet")
+                                            .font(AppFonts.headline)
+                                            .foregroundColor(AppColors.primaryPurple)
+                                        Text("Photos from your posts will appear here")
+                                            .font(AppFonts.body)
+                                            .foregroundColor(AppColors.darkGray)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(AppSpacing.xxl)
+                                }
+                            }
+                            .background(Color.white)
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding(AppSpacing.m)
-                        .background(
-                            RoundedRectangle(cornerRadius: AppCornerRadius.large)
-                                .fill(AppColors.primaryOrange.opacity(0.1))
-                        )
-                        .padding(.horizontal, AppSpacing.m)
                     }
-                    
-                    // Edit Profile Button
-                    Button(action: { showEditProfile = true }) {
-                        HStack(spacing: AppSpacing.s) {
-                            Text("✏️")
-                                .font(.system(size: 24))
-                            Text("Edit Profile")
-                                .font(AppFonts.button)
-                                .foregroundColor(.white)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 60)
-                        .background(
-                            LinearGradient(
-                                colors: [AppColors.primaryBlue, AppColors.primaryPurple],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .cornerRadius(AppCornerRadius.large)
-                        .shadow(color: AppColors.primaryBlue.opacity(0.3), radius: 8, x: 0, y: 4)
-                    }
-                    .padding(.horizontal, AppSpacing.m)
-                    .padding(.top, AppSpacing.m)
-                    
-        // Logout Button
-        Button(action: handleLogout) {
-            HStack(spacing: AppSpacing.s) {
-                Text("👋")
-                    .font(.system(size: 24))
-                Text("Logout")
-                    .font(AppFonts.button)
-                    .foregroundColor(AppColors.error)
-            }
-            .frame(maxWidth: .infinity)
-            .frame(height: 60)
-            .background(Color.white)
-            .overlay(
-                RoundedRectangle(cornerRadius: AppCornerRadius.large)
-                    .stroke(AppColors.error, lineWidth: 3)
-            )
-            .shadow(color: AppColors.error.opacity(0.2), radius: 5, x: 0, y: 2)
-        }
-        .padding(.horizontal, AppSpacing.m)
-        .padding(.top, AppSpacing.l)
-                    }
-                    .padding(.bottom, AppSpacing.l)
                 }
             }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Menu {
+                        Button(action: { showEditProfile = true }) {
+                            Label("Edit Profile", systemImage: "pencil")
+                        }
+                        
+                        if !schoolVerified {
+                            Button(action: { showSchoolCodeEntry = true }) {
+                                Label("Link School", systemImage: "building.2")
+                            }
+                        }
+                        
+                        Divider()
+                        
+                        Button(role: .destructive, action: handleLogout) {
+                            Label("Logout", systemImage: "arrow.right.square")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                            .foregroundColor(AppColors.primaryBlue)
+                            .font(.system(size: 20))
+                    }
+                }
             }
-            .navigationTitle("My Profile")
-            .navigationBarTitleDisplayMode(.large)
             .sheet(isPresented: $showEditProfile) {
                 EditProfileView(
                     currentDisplayName: displayName,
@@ -164,11 +265,168 @@ struct ProfileView: View {
             }
             .onAppear {
                 loadProfile()
+                // Load user's posts when profile appears
+                loadUserPosts()
             }
             .alert("Error", isPresented: $showError) {
                 Button("OK", role: .cancel) { }
             } message: {
                 Text(errorMessage)
+            }
+        }
+    }
+    
+    private func loadUserPosts() {
+        guard let token = authManager.getValidatedToken(),
+              let userId = authManager.currentUser?.id else {
+            return
+        }
+        
+        isLoadingPosts = true
+        Task {
+            do {
+                let apiService = ApiService.shared
+                
+                struct PostsResponse: Codable {
+                    let posts: [PostResponse]
+                }
+                
+                struct PostResponse: Codable {
+                    let id: String
+                    let content: String
+                    let imageUrl: String?
+                    let status: String
+                    let author: AuthorResponse
+                    let likes: [String]?
+                    let comments: [CommentResponse]?
+                    let createdAt: String
+                }
+                
+                struct AuthorResponse: Codable {
+                    let id: String
+                    let profile: ProfileResponse
+                }
+                
+                struct ProfileResponse: Codable {
+                    let displayName: String?
+                }
+                
+                struct CommentResponse: Codable {
+                    let id: String
+                    let content: String
+                }
+                
+                let response: PostsResponse = try await apiService.makeRequest(
+                    endpoint: "posts",
+                    method: "GET",
+                    token: token
+                )
+                
+                await MainActor.run {
+                    // Filter to only show user's own posts (posts created by this user)
+                    // Compare author.id with userId to ensure we only show posts created by the current user
+                    let userPosts = response.posts.filter { postResponse in
+                        // Ensure we're comparing strings correctly and only showing approved posts
+                        postResponse.author.id == userId && postResponse.status == "approved"
+                    }
+                    
+                    let dateFormatter = ISO8601DateFormatter()
+                    dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                    
+                    self.posts = userPosts.compactMap { postResponse in
+                        let createdAt = dateFormatter.date(from: postResponse.createdAt) ?? Date()
+                        
+                        var isLiked = false
+                        if let currentUserId = authManager.currentUser?.id {
+                            isLiked = postResponse.likes?.contains(currentUserId) ?? false
+                        }
+                        
+                        return Post(
+                            id: UUID(uuidString: postResponse.id) ?? UUID(),
+                            author: postResponse.author.profile.displayName ?? "Unknown",
+                            content: postResponse.content,
+                            imageUrl: postResponse.imageUrl,
+                            likes: postResponse.likes?.count ?? 0,
+                            comments: postResponse.comments?.count ?? 0,
+                            createdAt: createdAt,
+                            isLiked: isLiked
+                        )
+                    }
+                    // Sort posts by creation date (newest first)
+                    self.posts.sort { $0.createdAt > $1.createdAt }
+                    self.postsCount = self.posts.count
+                    self.isLoadingPosts = false
+                }
+            } catch {
+                await MainActor.run {
+                    self.isLoadingPosts = false
+                    print("Error loading user posts: \(error)")
+                }
+            }
+        }
+    }
+    
+    private func loadFriendsCount() async {
+        guard let token = authManager.getValidatedToken() else { return }
+        
+        do {
+            let apiService = ApiService.shared
+            
+            struct FriendsResponse: Codable {
+                let friends: [FriendResponse]
+            }
+            
+            struct FriendResponse: Codable {
+                let id: String
+            }
+            
+            let response: FriendsResponse = try await apiService.makeRequest(
+                endpoint: "friends",
+                method: "GET",
+                token: token
+            )
+            
+            await MainActor.run {
+                self.friendsCount = response.friends.count
+            }
+        } catch {
+            print("Error loading friends count: \(error)")
+        }
+    }
+    
+    private func deletePost(postId: UUID) {
+        guard let token = authManager.getValidatedToken() else {
+            errorMessage = "Not authenticated. Please log in again."
+            showError = true
+            return
+        }
+        
+        Task {
+            do {
+                let apiService = ApiService.shared
+                let postIdString = postId.uuidString
+                
+                struct DeleteResponse: Codable {
+                    let message: String
+                    let postId: String
+                }
+                
+                let _: DeleteResponse = try await apiService.makeRequest(
+                    endpoint: "posts/\(postIdString)",
+                    method: "DELETE",
+                    token: token
+                )
+                
+                // Remove the post from the local array and update count
+                await MainActor.run {
+                    self.posts.removeAll { $0.id == postId }
+                    self.postsCount = self.posts.count
+                }
+            } catch {
+                await MainActor.run {
+                    self.errorMessage = "Failed to delete post: \(error.localizedDescription)"
+                    self.showError = true
+                }
             }
         }
     }
@@ -250,6 +508,9 @@ struct ProfileView: View {
                         )
                     }
                 }
+                
+                // Load friends count after profile loads
+                await loadFriendsCount()
             } catch {
                 await MainActor.run {
                     self.isLoading = false
