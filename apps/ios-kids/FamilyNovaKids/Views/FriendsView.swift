@@ -11,6 +11,9 @@ struct FriendsView: View {
     @State private var searchResults: [Friend] = []
     @State private var isSearching = false
     @State private var showAddFriend = false
+    @State private var showScanQR = false
+    @State private var showEnterCode = false
+    @State private var showMyCode = false
     @State private var errorMessage = ""
     @State private var showError = false
     @EnvironmentObject var authManager: AuthManager
@@ -56,26 +59,96 @@ struct FriendsView: View {
                     .padding(.horizontal, AppSpacing.m)
                     .padding(.top, AppSpacing.m)
                     
-                    // Add Friend Button - Big and colorful
-                    Button(action: { showAddFriend = true }) {
-                        HStack(spacing: AppSpacing.s) {
-                            Text("➕")
-                                .font(.system(size: 24))
-                            Text("Add New Friend")
-                                .font(AppFonts.button)
-                                .foregroundColor(.white)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 60)
-                        .background(
-                            LinearGradient(
-                                colors: [AppColors.primaryGreen, AppColors.primaryBlue],
-                                startPoint: .leading,
-                                endPoint: .trailing
+                    // Add Friend Buttons
+                    VStack(spacing: AppSpacing.m) {
+                        // Main Add Friend Button
+                        Button(action: {
+                            showAddFriend = true
+                        }) {
+                            HStack(spacing: AppSpacing.s) {
+                                Text("➕")
+                                    .font(.system(size: 24))
+                                Text("Add New Friend")
+                                    .font(AppFonts.button)
+                                    .foregroundColor(.white)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 60)
+                            .background(
+                                LinearGradient(
+                                    colors: [AppColors.primaryGreen, AppColors.primaryBlue],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
                             )
-                        )
-                        .cornerRadius(AppCornerRadius.large)
-                        .shadow(color: AppColors.primaryGreen.opacity(0.3), radius: 8, x: 0, y: 4)
+                            .cornerRadius(AppCornerRadius.large)
+                            .shadow(color: AppColors.primaryGreen.opacity(0.3), radius: 8, x: 0, y: 4)
+                        }
+                        
+                        // Quick Add Options
+                        HStack(spacing: AppSpacing.m) {
+                            Button(action: {
+                                showScanQR = true
+                            }) {
+                                HStack(spacing: AppSpacing.xs) {
+                                    Image(systemName: "qrcode.viewfinder")
+                                        .font(.system(size: 18))
+                                    Text("Scan QR")
+                                        .font(AppFonts.caption)
+                                        .foregroundColor(AppColors.primaryBlue)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, AppSpacing.s)
+                                .background(Color.white)
+                                .cornerRadius(AppCornerRadius.medium)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: AppCornerRadius.medium)
+                                        .stroke(AppColors.primaryBlue, lineWidth: 2)
+                                )
+                            }
+                            
+                            Button(action: {
+                                showEnterCode = true
+                            }) {
+                                HStack(spacing: AppSpacing.xs) {
+                                    Image(systemName: "keyboard")
+                                        .font(.system(size: 18))
+                                    Text("Enter Code")
+                                        .font(AppFonts.caption)
+                                        .foregroundColor(AppColors.primaryPurple)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, AppSpacing.s)
+                                .background(Color.white)
+                                .cornerRadius(AppCornerRadius.medium)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: AppCornerRadius.medium)
+                                        .stroke(AppColors.primaryPurple, lineWidth: 2)
+                                )
+                            }
+                        }
+                        
+                        // Show My Code Button
+                        Button(action: {
+                            showMyCode = true
+                        }) {
+                            HStack(spacing: AppSpacing.xs) {
+                                Image(systemName: "qrcode")
+                                    .font(.system(size: 18))
+                                Text("Show My Code")
+                                    .font(AppFonts.caption)
+                                    .foregroundColor(AppColors.primaryGreen)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, AppSpacing.s)
+                            .background(Color.white)
+                            .cornerRadius(AppCornerRadius.medium)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: AppCornerRadius.medium)
+                                    .stroke(AppColors.primaryGreen, lineWidth: 2)
+                            )
+                        }
+                        .padding(.top, AppSpacing.xs)
                     }
                     .padding(.horizontal, AppSpacing.m)
                     .padding(.top, AppSpacing.m)
@@ -152,6 +225,18 @@ struct FriendsView: View {
             .navigationBarTitleDisplayMode(.large)
             .sheet(isPresented: $showAddFriend) {
                 AddFriendView()
+                    .environmentObject(authManager)
+            }
+            .sheet(isPresented: $showScanQR) {
+                ScanFriendQRView()
+                    .environmentObject(authManager)
+            }
+            .sheet(isPresented: $showEnterCode) {
+                EnterFriendCodeView()
+                    .environmentObject(authManager)
+            }
+            .sheet(isPresented: $showMyCode) {
+                ShowMyFriendCodeView()
                     .environmentObject(authManager)
             }
             .onAppear {
@@ -378,84 +463,6 @@ struct FriendRow: View {
                 .fill(Color.white)
                 .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
         )
-    }
-}
-
-struct AddFriendView: View {
-    @Environment(\.dismiss) var dismiss
-    @State private var searchQuery = ""
-    @State private var searchResults: [Friend] = []
-    
-    var body: some View {
-        NavigationView {
-            ZStack {
-                LinearGradient(
-                    colors: [AppColors.gradientBlue.opacity(0.1), AppColors.gradientPurple.opacity(0.1)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
-                
-                VStack(spacing: AppSpacing.l) {
-                    Text("🔍")
-                        .font(.system(size: 60))
-                    
-                    Text("Find Your Friends")
-                        .font(AppFonts.title)
-                        .foregroundColor(AppColors.primaryPurple)
-                    
-                    Text("Search by name to find and add friends!")
-                        .font(AppFonts.body)
-                        .foregroundColor(AppColors.darkGray)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, AppSpacing.xl)
-                    
-                    // Search field
-                    HStack {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundColor(AppColors.primaryBlue)
-                        TextField("Enter friend's name...", text: $searchQuery)
-                            .textFieldStyle(.plain)
-                            .foregroundColor(AppColors.black)
-                            .font(AppFonts.body)
-                    }
-                    .padding(AppSpacing.l)
-                    .background(
-                        RoundedRectangle(cornerRadius: AppCornerRadius.large)
-                            .fill(Color.white)
-                            .shadow(color: AppColors.primaryBlue.opacity(0.2), radius: 5, x: 0, y: 2)
-                    )
-                    .padding(.horizontal, AppSpacing.m)
-                    .padding(.top, AppSpacing.xl)
-                    
-                    // Search results
-                    if !searchQuery.isEmpty {
-                        ScrollView {
-                            LazyVStack(spacing: AppSpacing.m) {
-                                ForEach(searchResults) { friend in
-                                    FriendRow(friend: friend, showAddButton: true)
-                                }
-                            }
-                            .padding(.horizontal, AppSpacing.m)
-                        }
-                    }
-                    
-                    Spacer()
-                }
-                .padding(.top, AppSpacing.xxl)
-            }
-            .navigationTitle("Add Friend")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                    .font(AppFonts.button)
-                    .foregroundColor(AppColors.primaryBlue)
-                }
-            }
-        }
     }
 }
 

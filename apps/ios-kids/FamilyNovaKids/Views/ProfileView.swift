@@ -7,15 +7,18 @@ import SwiftUI
 
 struct ProfileView: View {
     @EnvironmentObject var authManager: AuthManager
-    @State private var displayName = "Display Name"
-    @State private var email = "email@example.com"
-    @State private var school = "School Name"
-    @State private var grade = "Grade 5"
-    @State private var parentVerified = true
+    @State private var displayName = ""
+    @State private var email = ""
+    @State private var school: String? = nil
+    @State private var grade: String? = nil
+    @State private var parentVerified = false
     @State private var schoolVerified = false
     @State private var showEditProfile = false
     @State private var showSchoolCodeEntry = false
     @State private var pendingChanges = false
+    @State private var isLoading = true
+    @State private var showError = false
+    @State private var errorMessage = ""
     
     var body: some View {
         NavigationView {
@@ -28,15 +31,25 @@ struct ProfileView: View {
                 )
                 .ignoresSafeArea()
                 
-                ScrollView {
-                    VStack(spacing: AppSpacing.m) {
-                        // Profile Header
-                        ProfileHeaderCard(
-                            displayName: displayName,
-                            email: email
-                        )
-                        .padding(.horizontal, AppSpacing.m)
-                        .padding(.top, AppSpacing.m)
+                if isLoading {
+                    VStack(spacing: AppSpacing.l) {
+                        ProgressView()
+                            .scaleEffect(1.5)
+                        Text("Loading profile...")
+                            .font(AppFonts.body)
+                            .foregroundColor(AppColors.darkGray)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    ScrollView {
+                        VStack(spacing: AppSpacing.m) {
+                            // Profile Header
+                            ProfileHeaderCard(
+                                displayName: displayName.isEmpty ? email : displayName,
+                                email: email
+                            )
+                            .padding(.horizontal, AppSpacing.m)
+                            .padding(.top, AppSpacing.m)
                     
                     // Verification Status
                     VerificationCard(
@@ -53,8 +66,8 @@ struct ProfileView: View {
                     
                     // Profile Info
                     ProfileInfoCard(
-                        school: school,
-                        grade: grade
+                        school: school ?? "Not set",
+                        grade: grade ?? "Not set"
                     )
                     .padding(.horizontal, AppSpacing.m)
                     
@@ -126,13 +139,14 @@ struct ProfileView: View {
                     .padding(.bottom, AppSpacing.l)
                 }
             }
+            }
             .navigationTitle("My Profile")
             .navigationBarTitleDisplayMode(.large)
             .sheet(isPresented: $showEditProfile) {
                 EditProfileView(
                     currentDisplayName: displayName,
-                    currentSchool: school,
-                    currentGrade: grade,
+                    currentSchool: school ?? "",
+                    currentGrade: grade ?? "",
                     onSave: { newDisplayName, newSchool, newGrade in
                         // Request profile change
                         requestProfileChange(
@@ -146,6 +160,101 @@ struct ProfileView: View {
             .sheet(isPresented: $showSchoolCodeEntry) {
                 SchoolCodeEntryView { code in
                     validateSchoolCode(code: code)
+                }
+            }
+            .onAppear {
+                loadProfile()
+            }
+            .alert("Error", isPresented: $showError) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(errorMessage)
+            }
+        }
+    }
+    
+    private func loadProfile() {
+        guard let token = authManager.getValidatedToken() else {
+            errorMessage = "Not authenticated. Please log in again."
+            showError = true
+            isLoading = false
+            return
+        }
+        
+        isLoading = true
+        Task {
+            do {
+                let apiService = ApiService.shared
+                
+                struct ProfileResponse: Codable {
+                    let user: UserProfileResponse
+                }
+                
+                struct UserProfileResponse: Codable {
+                    let id: String
+                    let email: String
+                    let profile: ProfileData
+                    let verification: VerificationData
+                }
+                
+                struct ProfileData: Codable {
+                    let firstName: String?
+                    let lastName: String?
+                    let displayName: String?
+                    let school: String?
+                    let grade: String?
+                    let avatar: String?
+                }
+                
+                struct VerificationData: Codable {
+                    let parentVerified: Bool?
+                    let schoolVerified: Bool?
+                }
+                
+                let response: ProfileResponse = try await apiService.makeRequest(
+                    endpoint: "kids/profile",
+                    method: "GET",
+                    token: token
+                )
+                
+                await MainActor.run {
+                    self.email = response.user.email
+                    let fullName = "\(response.user.profile.firstName ?? "") \(response.user.profile.lastName ?? "")".trimmingCharacters(in: .whitespaces)
+                    self.displayName = response.user.profile.displayName ?? 
+                                      (fullName.isEmpty ? response.user.email : fullName)
+                    self.school = response.user.profile.school
+                    self.grade = response.user.profile.grade
+                    self.parentVerified = response.user.verification.parentVerified ?? false
+                    self.schoolVerified = response.user.verification.schoolVerified ?? false
+                    self.isLoading = false
+                    
+                    // Update authManager's currentUser
+                    if let currentUser = authManager.currentUser {
+                        // Update the current user with fetched data
+                        authManager.currentUser = User(
+                            id: currentUser.id,
+                            email: response.user.email,
+                            displayName: self.displayName,
+                            profile: UserProfile(
+                                firstName: response.user.profile.firstName ?? "",
+                                lastName: response.user.profile.lastName ?? "",
+                                displayName: self.displayName,
+                                avatar: response.user.profile.avatar,
+                                school: self.school,
+                                grade: self.grade
+                            ),
+                            verification: VerificationStatus(
+                                parentVerified: self.parentVerified,
+                                schoolVerified: self.schoolVerified
+                            )
+                        )
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    self.isLoading = false
+                    self.errorMessage = "Failed to load profile: \(error.localizedDescription)"
+                    self.showError = true
                 }
             }
         }

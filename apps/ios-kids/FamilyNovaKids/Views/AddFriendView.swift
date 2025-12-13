@@ -10,7 +10,8 @@ import UIKit
 struct AddFriendView: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var authManager: AuthManager
-    @State private var selectedTab = 0 // 0 = Search, 1 = My Code, 2 = Scan QR, 3 = Enter Code
+    var initialTab: Int? = nil // Optional initial tab to show
+    @State private var selectedTab: Int = 0 // 0 = Search, 1 = My Code, 2 = Scan QR, 3 = Enter Code
     @State private var searchQuery = ""
     @State private var searchResults: [Friend] = []
     @State private var myFriendCode = ""
@@ -75,6 +76,10 @@ struct AddFriendView: View {
                 }
             }
             .onAppear {
+                // If initialTab was set, use it
+                if let tab = initialTab {
+                    selectedTab = tab
+                }
                 if selectedTab == 1 {
                     loadMyFriendCode()
                 }

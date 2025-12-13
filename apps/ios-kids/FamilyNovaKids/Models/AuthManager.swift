@@ -215,17 +215,20 @@ class AuthManager: ObservableObject {
             }
             
             // Trim token to remove any whitespace/newlines
-            var accessToken = session.access_token.trimmingCharacters(in: .whitespacesAndNewlines)
-            accessToken = accessToken.trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
+            var tempToken = session.access_token.trimmingCharacters(in: .whitespacesAndNewlines)
+            tempToken = tempToken.trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
             
             // Validate token format before storing
-            let parts = accessToken.split(separator: ".")
+            let parts = tempToken.split(separator: ".")
             guard parts.count == 3 else {
                 print("⚠️ Invalid token format received from login-code - token has \(parts.count) parts (expected 3)")
-                print("Token preview: \(accessToken.prefix(50))...")
-                print("Token length: \(accessToken.count)")
+                print("Token preview: \(tempToken.prefix(50))...")
+                print("Token length: \(tempToken.count)")
                 throw NSError(domain: "Invalid token format", code: 0, userInfo: [NSLocalizedDescriptionKey: "Received invalid authentication token from server"])
             }
+            
+            // Capture as immutable constant for use in MainActor closure
+            let accessToken = tempToken
             
             await MainActor.run {
                 self.token = accessToken
