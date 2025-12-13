@@ -204,4 +204,3 @@ CREATE TRIGGER update_education_content_updated_at BEFORE UPDATE ON education_co
 
 CREATE TRIGGER update_subscriptions_updated_at BEFORE UPDATE ON subscriptions
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-

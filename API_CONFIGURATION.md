@@ -2,7 +2,7 @@
 
 All apps are now configured to connect to the backend at:
 
-**Backend URL:** `http://infinityiotserver.local:3000/api`
+**Backend URL:** `https://family-nova-monorepo.vercel.app/api`
 
 ## Configured Files
 
@@ -19,20 +19,23 @@ All apps are now configured to connect to the backend at:
 
 ### iOS Parent App
 - ✅ `apps/ios-parent/FamilyNovaParent/Services/ApiService.swift` - API service
+- ✅ `apps/ios-parent/FamilyNovaParent/Models/AuthManager.swift` - Registration API URL
 
 ### Web App
 - ✅ `apps/web/next.config.js` - API URL configuration
+- ✅ `apps/web/app/schools/page.tsx` - School registration/login API
+- ✅ `apps/web/app/schools/dashboard/page.tsx` - School dashboard API
 
 ## Testing the Connection
 
-After deploying the backend to Portainer, test with:
+Test the backend API with:
 
 ```bash
 # Health check
-curl http://infinityiotserver.local:3000/api/health
+curl https://family-nova-monorepo.vercel.app/api/health
 
 # Test registration
-curl -X POST http://infinityiotserver.local:3000/api/auth/register \
+curl -X POST https://family-nova-monorepo.vercel.app/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "test@example.com",
@@ -43,7 +46,7 @@ curl -X POST http://infinityiotserver.local:3000/api/auth/register \
   }'
 ```
 
-## Changing the Server IP
+## Changing the API URL
 
-If you need to change the server IP in the future, update all the files listed above with the new IP address.
+If you need to change the API URL in the future, update all the files listed above with the new URL.
 

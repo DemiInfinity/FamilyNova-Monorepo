@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const path = require('path');
 const { connectDB } = require('./config/database');
 require('dotenv').config();
 
@@ -11,8 +12,13 @@ const PORT = process.env.PORT || 3000;
 // Connect to Supabase
 connectDB();
 
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, '../public')));
+
 // Middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false // Allow inline styles for the landing page
+}));
 app.use(cors({
   origin: process.env.CORS_ORIGIN || '*',
   credentials: true
@@ -20,6 +26,11 @@ app.use(cors({
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Root route - serve the landing page
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'));
+});
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));

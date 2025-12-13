@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 
 public class ApiClient {
     private static Retrofit retrofit = null;
-    private static final String BASE_URL = "http://infinityiotserver.local:3000/api/";
+    private static final String BASE_URL = "https://family-nova-monorepo.vercel.app/api/";
     
     public static Retrofit getClient(Context context) {
         if (retrofit == null) {

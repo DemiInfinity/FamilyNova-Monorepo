@@ -2,7 +2,7 @@
     <string name="app_name">FamilyNova Parent</string>
     
     <!-- API Configuration -->
-    <string name="api_base_url">http://infinityiotserver.local:3000/api</string>
+    <string name="api_base_url">https://family-nova-monorepo.vercel.app/api</string>
     
     <!-- Login Screen -->
     <string name="login_title">Parent Portal</string>

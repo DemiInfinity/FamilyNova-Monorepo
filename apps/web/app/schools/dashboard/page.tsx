@@ -61,7 +61,7 @@ export default function SchoolDashboard() {
     }
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://infinityiotserver.local:3000/api'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://family-nova-monorepo.vercel.app/api'
       
       // Get school ID from token (would need to decode JWT in real implementation)
       // For now, we'll need to store school ID separately or decode token
@@ -104,7 +104,7 @@ export default function SchoolDashboard() {
     }
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://infinityiotserver.local:3000/api'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://family-nova-monorepo.vercel.app/api'
       const grade = prompt('Enter grade for this code (e.g., Grade 5):')
       if (!grade) return
       
@@ -335,7 +335,7 @@ function SchoolCodeGenerator() {
       const token = localStorage.getItem('schoolToken')
       if (!token) return
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://infinityiotserver.local:3000/api'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://family-nova-monorepo.vercel.app/api'
       const response = await fetch(`${apiUrl}/school-codes?schoolId=temp`, {
         headers: {
           'Authorization': `Bearer ${token}`

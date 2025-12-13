@@ -8,7 +8,7 @@ import Foundation
 class ApiService {
     static let shared = ApiService()
     
-    private let baseURL = "http://infinityiotserver.local:3000/api"
+    private let baseURL = "https://family-nova-monorepo.vercel.app/api"
     
     private init() {}
     

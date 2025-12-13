@@ -33,7 +33,7 @@ export default function SchoolsPage() {
     setIsLoading(true)
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://infinityiotserver.local:3000/api'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://family-nova-monorepo.vercel.app/api'
       
       if (isLogin) {
         // Login

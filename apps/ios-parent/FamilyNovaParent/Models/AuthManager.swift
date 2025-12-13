@@ -31,7 +31,7 @@ class AuthManager: ObservableObject {
     }
     
     func register(email: String, password: String, firstName: String, lastName: String) async throws {
-        let apiUrl = "http://infinityiotserver.local:3000/api"
+        let apiUrl = "https://family-nova-monorepo.vercel.app/api"
         guard let url = URL(string: "\(apiUrl)/auth/register") else {
             throw NSError(domain: "Invalid URL", code: 0)
         }
