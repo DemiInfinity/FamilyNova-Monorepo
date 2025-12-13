@@ -14,28 +14,37 @@ struct LoginView: View {
     @State private var errorMessage = ""
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                // Logo/Icon Area - Using FamilyNova logo (person.2.fill represents friends/community)
-                Image(systemName: "person.2.fill")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 120, height: 120)
-                    .foregroundColor(AppColors.primaryBlue)
+        ZStack {
+            // Fun gradient background
+            LinearGradient(
+                colors: [AppColors.gradientBlue.opacity(0.2), AppColors.gradientPurple.opacity(0.2)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+            
+            ScrollView {
+                VStack(spacing: 0) {
+                    // Logo
+                    VStack(spacing: AppSpacing.m) {
+                        Image("Logo")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 200, height: 200)
+                            .shadow(color: AppColors.primaryBlue.opacity(0.3), radius: 10, x: 0, y: 5)
+                        
+                        Text("Welcome to FamilyNova!")
+                            .font(AppFonts.title)
+                            .foregroundColor(AppColors.primaryPurple)
+                            .multilineTextAlignment(.center)
+                        Text("A safe place to connect with friends and learn!")
+                            .font(AppFonts.body)
+                            .foregroundColor(AppColors.darkGray)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, AppSpacing.xl)
+                    }
                     .padding(.top, AppSpacing.xxl)
-                    // TODO: Replace with custom FamilyNova logo asset when available
-                
-                // Title
-                Text("Welcome to FamilyNova!")
-                    .font(AppFonts.title)
-                    .foregroundColor(AppColors.primaryBlue)
-                    .padding(.top, AppSpacing.l)
-                
-                // Subtitle
-                Text("A safe place to connect with friends")
-                    .font(AppFonts.body)
-                    .foregroundColor(AppColors.darkGray)
-                    .padding(.top, AppSpacing.s)
+                    .padding(.bottom, AppSpacing.xl)
                 
                 // Email Input
                 VStack(alignment: .leading, spacing: AppSpacing.s) {
@@ -79,40 +88,63 @@ struct LoginView: View {
                 .padding(.top, AppSpacing.m)
                 .padding(.horizontal, AppSpacing.l)
                 
-                // Login Button
-                Button(action: handleLogin) {
-                    Text("Login")
-                        .font(AppFonts.headline)
-                        .foregroundColor(.white)
+                    // Login Button - Big and colorful
+                    Button(action: handleLogin) {
+                        HStack(spacing: AppSpacing.s) {
+                            Text("🚀")
+                                .font(.system(size: 24))
+                            Text("Login")
+                                .font(AppFonts.button)
+                                .foregroundColor(.white)
+                        }
                         .frame(maxWidth: .infinity)
-                        .frame(height: 56)
-                        .background(AppColors.primaryBlue)
-                        .cornerRadius(AppCornerRadius.medium)
-                }
-                .padding(.top, AppSpacing.xl)
-                .padding(.horizontal, AppSpacing.l)
-                .disabled(isLoading)
-                
-                // Register Button
-                Button(action: handleRegister) {
-                    Text("Create Account")
-                        .font(AppFonts.headline)
-                        .foregroundColor(AppColors.primaryBlue)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 56)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: AppCornerRadius.medium)
-                                .stroke(AppColors.primaryBlue, lineWidth: 2)
+                        .frame(height: 60)
+                        .background(
+                            LinearGradient(
+                                colors: [AppColors.primaryBlue, AppColors.primaryPurple],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
                         )
+                        .cornerRadius(AppCornerRadius.large)
+                        .shadow(color: AppColors.primaryBlue.opacity(0.3), radius: 8, x: 0, y: 4)
+                    }
+                    .padding(.top, AppSpacing.xl)
+                    .padding(.horizontal, AppSpacing.l)
+                    .disabled(isLoading)
+                    
+                    // Register Button
+                    Button(action: handleRegister) {
+                        HStack(spacing: AppSpacing.s) {
+                            Text("✨")
+                                .font(.system(size: 24))
+                            Text("Create Account")
+                                .font(AppFonts.button)
+                                .foregroundColor(AppColors.primaryBlue)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 60)
+                        .background(Color.white)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: AppCornerRadius.large)
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [AppColors.primaryBlue, AppColors.primaryPurple],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    ),
+                                    lineWidth: 3
+                                )
+                        )
+                        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                    }
+                    .padding(.top, AppSpacing.m)
+                    .padding(.horizontal, AppSpacing.l)
+                    .disabled(isLoading)
                 }
-                .padding(.top, AppSpacing.m)
-                .padding(.horizontal, AppSpacing.l)
-                .disabled(isLoading)
+                .padding(.bottom, AppSpacing.xxl)
             }
-            .padding(.bottom, AppSpacing.xxl)
         }
-        .background(AppColors.lightGray)
-        .scrollDismissesKeyboard(.interactively)
         .alert("Error", isPresented: $showError) {
             Button("OK", role: .cancel) { }
         } message: {

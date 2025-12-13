@@ -11,52 +11,77 @@ struct MessagesView: View {
     
     var body: some View {
         NavigationView {
-            VStack(spacing: 0) {
-                if messages.isEmpty {
-                    VStack(spacing: AppSpacing.m) {
-                        Image(systemName: "message.fill")
-                            .font(.system(size: 48))
-                            .foregroundColor(AppColors.mediumGray)
-                        Text("No messages yet")
-                            .font(AppFonts.body)
-                            .foregroundColor(AppColors.darkGray)
+            ZStack {
+                // Fun gradient background
+                LinearGradient(
+                    colors: [AppColors.gradientBlue.opacity(0.1), AppColors.gradientPurple.opacity(0.1)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
+                
+                VStack(spacing: 0) {
+                    if messages.isEmpty {
+                        VStack(spacing: AppSpacing.l) {
+                            Text("💬")
+                                .font(.system(size: 80))
+                            Text("No messages yet")
+                                .font(AppFonts.headline)
+                                .foregroundColor(AppColors.primaryBlue)
+                            Text("Start chatting with your friends!")
+                                .font(AppFonts.body)
+                                .foregroundColor(AppColors.darkGray)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, AppSpacing.xl)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else {
+                        ScrollView {
+                            LazyVStack(spacing: AppSpacing.m) {
+                                ForEach(messages) { message in
+                                    MessageBubble(message: message)
+                                }
+                            }
+                            .padding(AppSpacing.m)
+                        }
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    ScrollView {
-                        LazyVStack(spacing: AppSpacing.s) {
-                            ForEach(messages) { message in
-                                MessageBubble(message: message)
+                    
+                    // Message Input - More colorful
+                    HStack(spacing: AppSpacing.m) {
+                        TextField("Type a message...", text: $messageText)
+                            .textFieldStyle(.plain)
+                            .font(AppFonts.body)
+                            .padding(AppSpacing.l)
+                            .background(
+                                RoundedRectangle(cornerRadius: AppCornerRadius.large)
+                                    .fill(Color.white)
+                                    .shadow(color: AppColors.primaryBlue.opacity(0.2), radius: 5, x: 0, y: 2)
+                            )
+                            .lineLimit(3)
+                        
+                        Button(action: sendMessage) {
+                            ZStack {
+                                Circle()
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [AppColors.primaryBlue, AppColors.primaryPurple],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                    .frame(width: 50, height: 50)
+                                Image(systemName: "arrow.up")
+                                    .font(.system(size: 20, weight: .bold))
+                                    .foregroundColor(.white)
                             }
                         }
-                        .padding(AppSpacing.m)
+                        .disabled(messageText.isEmpty)
+                        .opacity(messageText.isEmpty ? 0.5 : 1.0)
                     }
+                    .padding(AppSpacing.m)
+                    .background(Color.white)
                 }
-                
-                // Message Input
-                HStack(spacing: AppSpacing.s) {
-                    TextField("Type a message...", text: $messageText)
-                        .textFieldStyle(PlainTextFieldStyle())
-                        .padding(AppSpacing.s)
-                        .background(Color.white)
-                        .cornerRadius(AppCornerRadius.medium)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: AppCornerRadius.medium)
-                                .stroke(AppColors.mediumGray, lineWidth: 1)
-                        )
-                        .lineLimit(3)
-                    
-                    Button(action: sendMessage) {
-                        Image(systemName: "arrow.up.circle.fill")
-                            .font(.system(size: 32))
-                            .foregroundColor(AppColors.primaryBlue)
-                    }
-                    .disabled(messageText.isEmpty)
-                }
-                .padding(AppSpacing.m)
-                .background(Color.white)
             }
-            .background(AppColors.lightGray)
             .navigationTitle("Messages")
             .navigationBarTitleDisplayMode(.large)
         }
@@ -88,11 +113,18 @@ struct MessageBubble: View {
                 
                 Text(message.timestamp, style: .time)
                     .font(AppFonts.small)
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundColor(.white.opacity(0.8))
             }
-            .padding(AppSpacing.m)
-            .background(AppColors.primaryBlue)
+            .padding(AppSpacing.l)
+            .background(
+                LinearGradient(
+                    colors: [AppColors.primaryBlue, AppColors.primaryPurple],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
             .cornerRadius(AppCornerRadius.large)
+            .shadow(color: AppColors.primaryBlue.opacity(0.2), radius: 5, x: 0, y: 2)
             
             Spacer()
         }

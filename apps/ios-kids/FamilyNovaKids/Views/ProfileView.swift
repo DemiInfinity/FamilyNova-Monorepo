@@ -16,15 +16,24 @@ struct ProfileView: View {
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: AppSpacing.m) {
-                    // Profile Header
-                    ProfileHeaderCard(
-                        displayName: displayName,
-                        email: email
-                    )
-                    .padding(.horizontal, AppSpacing.m)
-                    .padding(.top, AppSpacing.m)
+            ZStack {
+                // Fun gradient background
+                LinearGradient(
+                    colors: [AppColors.gradientBlue.opacity(0.1), AppColors.gradientPurple.opacity(0.1)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(spacing: AppSpacing.m) {
+                        // Profile Header
+                        ProfileHeaderCard(
+                            displayName: displayName,
+                            email: email
+                        )
+                        .padding(.horizontal, AppSpacing.m)
+                        .padding(.top, AppSpacing.m)
                     
                     // Verification Status
                     VerificationCard(
@@ -40,24 +49,30 @@ struct ProfileView: View {
                     )
                     .padding(.horizontal, AppSpacing.m)
                     
-                    // Logout Button
-                    Button(action: handleLogout) {
-                        Text("Logout")
-                            .font(AppFonts.headline)
-                            .foregroundColor(AppColors.error)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 50)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: AppCornerRadius.medium)
-                                    .stroke(AppColors.error, lineWidth: 2)
-                            )
-                    }
-                    .padding(.horizontal, AppSpacing.m)
-                    .padding(.top, AppSpacing.l)
-                }
-                .padding(.bottom, AppSpacing.l)
+        // Logout Button
+        Button(action: handleLogout) {
+            HStack(spacing: AppSpacing.s) {
+                Text("👋")
+                    .font(.system(size: 24))
+                Text("Logout")
+                    .font(AppFonts.button)
+                    .foregroundColor(AppColors.error)
             }
-            .background(AppColors.lightGray)
+            .frame(maxWidth: .infinity)
+            .frame(height: 60)
+            .background(Color.white)
+            .overlay(
+                RoundedRectangle(cornerRadius: AppCornerRadius.large)
+                    .stroke(AppColors.error, lineWidth: 3)
+            )
+            .shadow(color: AppColors.error.opacity(0.2), radius: 5, x: 0, y: 2)
+        }
+        .padding(.horizontal, AppSpacing.m)
+        .padding(.top, AppSpacing.l)
+                    }
+                    .padding(.bottom, AppSpacing.l)
+                }
+            }
             .navigationTitle("My Profile")
             .navigationBarTitleDisplayMode(.large)
         }
@@ -74,29 +89,38 @@ struct ProfileHeaderCard: View {
     
     var body: some View {
         VStack(spacing: AppSpacing.m) {
-            // Avatar
-            Circle()
-                .fill(AppColors.mediumGray)
-                .frame(width: 100, height: 100)
-                .overlay(
-                    Image(systemName: "person.fill")
-                        .font(.system(size: 48))
-                        .foregroundColor(.white)
-                )
+            // Avatar with fun gradient
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [AppColors.primaryBlue, AppColors.primaryPurple],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 120, height: 120)
+                
+                Text("👤")
+                    .font(.system(size: 60))
+            }
+            .shadow(color: AppColors.primaryBlue.opacity(0.3), radius: 10, x: 0, y: 5)
             
             Text(displayName)
                 .font(AppFonts.title)
-                .foregroundColor(AppColors.black)
+                .foregroundColor(AppColors.primaryPurple)
             
             Text(email)
-                .font(AppFonts.caption)
+                .font(AppFonts.body)
                 .foregroundColor(AppColors.darkGray)
         }
         .frame(maxWidth: .infinity)
-        .padding(AppSpacing.l)
-        .background(Color.white)
-        .cornerRadius(AppCornerRadius.large)
-        .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+        .padding(AppSpacing.xl)
+        .background(
+            RoundedRectangle(cornerRadius: AppCornerRadius.extraLarge)
+                .fill(Color.white)
+                .shadow(color: AppColors.primaryBlue.opacity(0.2), radius: 10, x: 0, y: 5)
+        )
     }
 }
 
@@ -106,33 +130,51 @@ struct VerificationCard: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.m) {
-            Text("Verification Status")
-                .font(AppFonts.headline)
-                .foregroundColor(AppColors.black)
+            HStack {
+                Text("✅")
+                    .font(.system(size: 24))
+                Text("Verification Status")
+                    .font(AppFonts.headline)
+                    .foregroundColor(AppColors.primaryPurple)
+            }
             
-            VStack(alignment: .leading, spacing: AppSpacing.s) {
-                HStack {
-                    Image(systemName: parentVerified ? "checkmark.circle.fill" : "xmark.circle.fill")
-                        .foregroundColor(parentVerified ? AppColors.success : AppColors.error)
+            VStack(alignment: .leading, spacing: AppSpacing.m) {
+                HStack(spacing: AppSpacing.m) {
+                    ZStack {
+                        Circle()
+                            .fill(parentVerified ? AppColors.success.opacity(0.2) : AppColors.error.opacity(0.2))
+                            .frame(width: 50, height: 50)
+                        Text(parentVerified ? "✓" : "✗")
+                            .font(.system(size: 24, weight: .bold))
+                            .foregroundColor(parentVerified ? AppColors.success : AppColors.error)
+                    }
                     Text("Parent Verified")
-                        .font(AppFonts.caption)
+                        .font(AppFonts.body)
                         .foregroundColor(parentVerified ? AppColors.success : AppColors.error)
                 }
                 
-                HStack {
-                    Image(systemName: schoolVerified ? "checkmark.circle.fill" : "xmark.circle.fill")
-                        .foregroundColor(schoolVerified ? AppColors.success : AppColors.error)
+                HStack(spacing: AppSpacing.m) {
+                    ZStack {
+                        Circle()
+                            .fill(schoolVerified ? AppColors.success.opacity(0.2) : AppColors.error.opacity(0.2))
+                            .frame(width: 50, height: 50)
+                        Text(schoolVerified ? "✓" : "✗")
+                            .font(.system(size: 24, weight: .bold))
+                            .foregroundColor(schoolVerified ? AppColors.success : AppColors.error)
+                    }
                     Text("School Verified")
-                        .font(AppFonts.caption)
+                        .font(AppFonts.body)
                         .foregroundColor(schoolVerified ? AppColors.success : AppColors.error)
                 }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(AppSpacing.m)
-        .background(Color.white)
-        .cornerRadius(AppCornerRadius.medium)
-        .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
+        .padding(AppSpacing.xl)
+        .background(
+            RoundedRectangle(cornerRadius: AppCornerRadius.large)
+                .fill(Color.white)
+                .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
+        )
     }
 }
 
@@ -141,30 +183,40 @@ struct ProfileInfoCard: View {
     let grade: String
     
     var body: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.m) {
-            VStack(alignment: .leading, spacing: AppSpacing.xs) {
-                Text("School")
-                    .font(AppFonts.small)
-                    .foregroundColor(AppColors.darkGray)
-                Text(school)
-                    .font(AppFonts.body)
-                    .foregroundColor(AppColors.black)
+        VStack(alignment: .leading, spacing: AppSpacing.l) {
+            HStack(spacing: AppSpacing.m) {
+                Text("🏫")
+                    .font(.system(size: 32))
+                VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                    Text("School")
+                        .font(AppFonts.small)
+                        .foregroundColor(AppColors.darkGray)
+                    Text(school)
+                        .font(AppFonts.headline)
+                        .foregroundColor(AppColors.primaryBlue)
+                }
             }
             
-            VStack(alignment: .leading, spacing: AppSpacing.xs) {
-                Text("Grade")
-                    .font(AppFonts.small)
-                    .foregroundColor(AppColors.darkGray)
-                Text(grade)
-                    .font(AppFonts.body)
-                    .foregroundColor(AppColors.black)
+            HStack(spacing: AppSpacing.m) {
+                Text("📚")
+                    .font(.system(size: 32))
+                VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                    Text("Grade")
+                        .font(AppFonts.small)
+                        .foregroundColor(AppColors.darkGray)
+                    Text(grade)
+                        .font(AppFonts.headline)
+                        .foregroundColor(AppColors.primaryPurple)
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(AppSpacing.m)
-        .background(Color.white)
-        .cornerRadius(AppCornerRadius.medium)
-        .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
+        .padding(AppSpacing.xl)
+        .background(
+            RoundedRectangle(cornerRadius: AppCornerRadius.large)
+                .fill(Color.white)
+                .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
+        )
     }
 }
 

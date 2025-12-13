@@ -11,11 +11,14 @@
 		4463F1A3C84FEA03317D9BD6 /* FamilyNovaKidsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 206973E0C1713B23F609D729 /* FamilyNovaKidsApp.swift */; };
 		519ED126EA82D46A15D93073 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F0FEEE7038CCEF7EF42DA61 /* DesignSystem.swift */; };
 		54FFEB9881A7C3B3848A3618 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6D39A49A834774DDFD8E2B7 /* LoginView.swift */; };
+		8054A230FA2DF40CE19DF2A7 /* EducationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73DE3C61121D8F6D0DB7FF9C /* EducationView.swift */; };
 		8F636396DBAB52C1F90DF6EE /* MessagesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0051B2974DE8FA660890E611 /* MessagesView.swift */; };
 		9A8D44996AB6CF80DAFCB44E /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00188477EA5B502DE4C288C2 /* AuthManager.swift */; };
+		CAC35341889E28F34AA7A3E4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 65479BA558886B586601276F /* Assets.xcassets */; };
 		D05C101A27983DB12DCF7E9C /* FriendsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 112E215FADA87ECCBE53F955 /* FriendsView.swift */; };
 		DE3AB865D3DE533DEF86786C /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 688D19148AD62EDE7929F9D0 /* HomeView.swift */; };
 		E813DFBD8158522FB43F7A76 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C0C9B4F8FC40872F07654D /* ProfileView.swift */; };
+		F873E143C32F4B60C0C9C0C8 /* ApiService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40AEF65FC52B3BD80E8834BB /* ApiService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -23,8 +26,11 @@
 		0051B2974DE8FA660890E611 /* MessagesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagesView.swift; sourceTree = "<group>"; };
 		112E215FADA87ECCBE53F955 /* FriendsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsView.swift; sourceTree = "<group>"; };
 		206973E0C1713B23F609D729 /* FamilyNovaKidsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FamilyNovaKidsApp.swift; sourceTree = "<group>"; };
+		40AEF65FC52B3BD80E8834BB /* ApiService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiService.swift; sourceTree = "<group>"; };
 		5F0FEEE7038CCEF7EF42DA61 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
+		65479BA558886B586601276F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		688D19148AD62EDE7929F9D0 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		73DE3C61121D8F6D0DB7FF9C /* EducationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EducationView.swift; sourceTree = "<group>"; };
 		C1C0C9B4F8FC40872F07654D /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		D903125BCE0D887035F56615 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
 		DB2B479B42E54CFD539EF29C /* FamilyNovaKids.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FamilyNovaKids.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -40,6 +46,14 @@
 			path = Utils;
 			sourceTree = "<group>";
 		};
+		45CE99314806EC4A3E05A935 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				65479BA558886B586601276F /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
 		50DCDC78DDE5E39AF1CA204C /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -51,6 +65,7 @@
 		66E646E3C01D7856C6976420 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				73DE3C61121D8F6D0DB7FF9C /* EducationView.swift */,
 				112E215FADA87ECCBE53F955 /* FriendsView.swift */,
 				688D19148AD62EDE7929F9D0 /* HomeView.swift */,
 				F6D39A49A834774DDFD8E2B7 /* LoginView.swift */,
@@ -59,6 +74,14 @@
 				C1C0C9B4F8FC40872F07654D /* ProfileView.swift */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		70A08E2F59064810CDA218F4 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				40AEF65FC52B3BD80E8834BB /* ApiService.swift */,
+			);
+			path = Services;
 			sourceTree = "<group>";
 		};
 		720CAC8AA0018EA1BB0235AD = {
@@ -82,6 +105,8 @@
 			children = (
 				206973E0C1713B23F609D729 /* FamilyNovaKidsApp.swift */,
 				8D7F77356E06C4A585647AD1 /* Models */,
+				45CE99314806EC4A3E05A935 /* Resources */,
+				70A08E2F59064810CDA218F4 /* Services */,
 				0A76BC655F39C0AF50ABE993 /* Utils */,
 				66E646E3C01D7856C6976420 /* Views */,
 			);
@@ -96,6 +121,7 @@
 			buildConfigurationList = 485B82F18C587B7952B9D8FE /* Build configuration list for PBXNativeTarget "FamilyNovaKids" */;
 			buildPhases = (
 				6F52B2A3943420F2CEDD0348 /* Sources */,
+				A074456E2C1ACE033D62F389 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -135,13 +161,26 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		A074456E2C1ACE033D62F389 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CAC35341889E28F34AA7A3E4 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		6F52B2A3943420F2CEDD0348 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F873E143C32F4B60C0C9C0C8 /* ApiService.swift in Sources */,
 				9A8D44996AB6CF80DAFCB44E /* AuthManager.swift in Sources */,
 				519ED126EA82D46A15D93073 /* DesignSystem.swift in Sources */,
+				8054A230FA2DF40CE19DF2A7 /* EducationView.swift in Sources */,
 				4463F1A3C84FEA03317D9BD6 /* FamilyNovaKidsApp.swift in Sources */,
 				D05C101A27983DB12DCF7E9C /* FriendsView.swift in Sources */,
 				DE3AB865D3DE533DEF86786C /* HomeView.swift in Sources */,

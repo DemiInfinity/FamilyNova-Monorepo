@@ -16,14 +16,13 @@ struct LoginView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
-                // Logo/Icon Area - Using FamilyNova logo (shield represents protection/monitoring)
-                Image(systemName: "person.2.badge.shield.checkmark.fill")
+                // Logo
+                Image("Logo")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 120, height: 120)
-                    .foregroundColor(ParentAppColors.primaryNavy)
+                    .frame(width: 180, height: 180)
                     .padding(.top, ParentAppSpacing.xxl)
-                    // TODO: Replace with custom FamilyNova logo asset when available
+                    .shadow(color: ParentAppColors.primaryNavy.opacity(0.2), radius: 10, x: 0, y: 5)
                 
                 // Title
                 Text("Parent Portal")

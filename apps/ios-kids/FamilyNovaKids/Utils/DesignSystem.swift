@@ -6,24 +6,32 @@
 import SwiftUI
 
 struct AppColors {
-    // Primary Colors (Kids App - Fun & Friendly)
-    static let primaryBlue = Color(hex: "4A90E2")
-    static let primaryGreen = Color(hex: "50C878")
-    static let primaryOrange = Color(hex: "FF6B35")
-    static let primaryPurple = Color(hex: "9B59B6")
+    // Primary Colors (Kids App - Fun & Friendly - More Vibrant!)
+    static let primaryBlue = Color(hex: "00A8FF")      // Bright blue
+    static let primaryGreen = Color(hex: "00D4AA")     // Bright green
+    static let primaryOrange = Color(hex: "FF6B9D")    // Pink-orange
+    static let primaryPurple = Color(hex: "A855F7")     // Bright purple
+    static let primaryYellow = Color(hex: "FFD93D")     // Sunny yellow
+    static let primaryPink = Color(hex: "FF6B9D")        // Fun pink
+    
+    // Gradient Colors for Fun Backgrounds
+    static let gradientStart = Color(hex: "667EEA")
+    static let gradientEnd = Color(hex: "764BA2")
+    static let gradientBlue = Color(hex: "4FACFE")
+    static let gradientPurple = Color(hex: "00F2FE")
     
     // Neutral Colors
     static let white = Color.white
-    static let lightGray = Color(hex: "F5F5F5")
-    static let mediumGray = Color(hex: "CCCCCC")
-    static let darkGray = Color(hex: "666666")
-    static let black = Color.black
+    static let lightGray = Color(hex: "F8F9FA")
+    static let mediumGray = Color(hex: "DEE2E6")
+    static let darkGray = Color(hex: "495057")
+    static let black = Color(hex: "212529")
     
-    // Status Colors
-    static let success = Color(hex: "27AE60")
-    static let warning = Color(hex: "F39C12")
-    static let error = Color(hex: "E74C3C")
-    static let info = Color(hex: "3498DB")
+    // Status Colors (More Vibrant)
+    static let success = Color(hex: "00D4AA")
+    static let warning = Color(hex: "FFD93D")
+    static let error = Color(hex: "FF6B9D")
+    static let info = Color(hex: "00A8FF")
 }
 
 extension Color {
@@ -53,11 +61,13 @@ extension Color {
 }
 
 struct AppFonts {
-    static let title = Font.system(size: 28, weight: .bold)
-    static let headline = Font.system(size: 20, weight: .semibold)
-    static let body = Font.system(size: 16, weight: .regular)
-    static let caption = Font.system(size: 14, weight: .regular)
-    static let small = Font.system(size: 12, weight: .regular)
+    // Bigger, bolder fonts for kids
+    static let title = Font.system(size: 32, weight: .bold, design: .rounded)
+    static let headline = Font.system(size: 24, weight: .bold, design: .rounded)
+    static let body = Font.system(size: 18, weight: .medium, design: .rounded)
+    static let caption = Font.system(size: 16, weight: .semibold, design: .rounded)
+    static let small = Font.system(size: 14, weight: .medium, design: .rounded)
+    static let button = Font.system(size: 18, weight: .bold, design: .rounded)
 }
 
 struct AppSpacing {
@@ -70,9 +80,10 @@ struct AppSpacing {
 }
 
 struct AppCornerRadius {
-    static let small: CGFloat = 8
-    static let medium: CGFloat = 12
-    static let large: CGFloat = 16
+    static let small: CGFloat = 12
+    static let medium: CGFloat = 20
+    static let large: CGFloat = 24
     static let round: CGFloat = 50
+    static let extraLarge: CGFloat = 30
 }
 
