@@ -101,30 +101,57 @@ class RealTimeService: ObservableObject {
                 }
             
             // Check for new messages
-            let cachedMessages = DataManager.shared.getCachedMessagesForConversation(with: friendId) ?? []
+            let cachedMessages = DataManager.shared.getCachedMessagesForConversation(with: friendId, currentUserId: userId) ?? []
             let cachedMessageIds = Set(cachedMessages.map { $0.id })
             
             let actuallyNewMessages = newMessages.filter { !cachedMessageIds.contains($0.id) }
             
             if !actuallyNewMessages.isEmpty {
-                // Update cache
-                var allMessages = cachedMessages + actuallyNewMessages
-                allMessages = Array(Set(allMessages.map { $0.id })).compactMap { id in
-                    allMessages.first { $0.id == id }
-                }
-                DataManager.shared.cacheMessages(allMessages)
+                // Only add new messages to cache (append, don't replace)
+                // Get all cached messages for this user (not just this conversation)
+                let allCachedMessages = DataManager.shared.getCachedMessages(userId: userId) ?? []
+                let allCachedMessageIds = Set(allCachedMessages.map { $0.id })
                 
-                // Notify about new messages
-                await MainActor.run {
-                    self.newMessages[conversationId] = actuallyNewMessages
+                // Filter out any that are already in the global cache
+                let trulyNewMessages = actuallyNewMessages.filter { !allCachedMessageIds.contains($0.id) }
+                
+                if !trulyNewMessages.isEmpty {
+                    // Append only the new messages to the cache
+                    var updatedMessages = allCachedMessages + trulyNewMessages
+                    // Remove duplicates by keeping unique IDs
+                    var seenIds = Set<String>()
+                    updatedMessages = updatedMessages.filter { message in
+                        if seenIds.contains(message.id) {
+                            return false
+                        }
+                        seenIds.insert(message.id)
+                        return true
+                    }
+                    DataManager.shared.cacheMessages(updatedMessages, userId: userId)
                     
-                    // Trigger notification for messages from friend
-                    let messagesFromFriend = actuallyNewMessages.filter { $0.senderId.lowercased() == friendId.lowercased() }
-                    if !messagesFromFriend.isEmpty {
-                        NotificationManager.shared.scheduleMessageNotification(
-                            from: "Friend",
-                            content: messagesFromFriend.first?.content ?? "New message"
+                    // Notify about new messages and trigger view update
+                    await MainActor.run {
+                        // Create a new dictionary to trigger onChange
+                        var updatedDict = self.newMessages
+                        updatedDict[conversationId] = trulyNewMessages
+                        // Assign new dictionary to trigger @Published change
+                        self.newMessages = updatedDict
+                        
+                        // Also trigger a manual reload by posting a notification
+                        NotificationCenter.default.post(
+                            name: NSNotification.Name("NewMessagesReceived"),
+                            object: nil,
+                            userInfo: ["conversationId": conversationId]
                         )
+                        
+                        // Trigger notification for messages from friend
+                        let messagesFromFriend = trulyNewMessages.filter { $0.senderId.lowercased() == friendId.lowercased() }
+                        if !messagesFromFriend.isEmpty {
+                            NotificationManager.shared.scheduleMessageNotification(
+                                from: "Friend",
+                                content: messagesFromFriend.first?.content ?? "New message"
+                            )
+                        }
                     }
                 }
             }

@@ -252,6 +252,17 @@ router.get('/', async (req, res) => {
       if (!childrenError && children) {
         childIds = children.map(c => c.child_id);
       }
+      
+      // Get friends (other parents/adults)
+      const { data: friendships, error: friendsError } = await supabase
+        .from('friendships')
+        .select('friend_id')
+        .eq('user_id', req.user.id)
+        .eq('status', 'accepted');
+      
+      if (!friendsError && friendships) {
+        friendIds = friendships.map(f => f.friend_id);
+      }
     }
     
     // Get all unique author IDs to batch fetch their user types
@@ -311,12 +322,16 @@ router.get('/', async (req, res) => {
           // Parents can see:
           // 1. Their own posts
           // 2. Their children's posts (always visible to parent)
-          // 3. Other adult/parent posts (where visible_to_adults = true)
-          // 4. Other children's posts (where visible_to_adults = true AND they're in approved_adults)
+          // 3. Their friends' posts (other parents/adults they're friends with)
+          // 4. Other adult/parent posts (where visible_to_adults = true)
+          // 5. Other children's posts (where visible_to_adults = true AND they're in approved_adults)
           if (postAuthorId === req.user.id) {
             canSeePost = true;
           } else if (authorType === 'kid' && childIds.includes(postAuthorId)) {
             // Parent can always see their own children's posts
+            canSeePost = true;
+          } else if (authorType === 'parent' && friendIds.includes(postAuthorId)) {
+            // Parent can see their friends' posts
             canSeePost = true;
           } else if (authorType === 'parent' && visibleToAdults) {
             // Other parent posts visible to adults

@@ -92,18 +92,22 @@ struct SplashScreenView: View {
         }
         
         // Step 2: Load user profile
-        await updateProgress(0.4, message: "Loading profile...")
+        await updateProgress(0.3, message: "Loading profile...")
         await loadUserProfile(token: token)
         
-        // Step 3: Load friends
+        // Step 3: Load children
+        await updateProgress(0.4, message: "Loading children...")
+        await loadChildren(token: token)
+        
+        // Step 4: Load friends
         await updateProgress(0.6, message: "Loading friends...")
         await loadFriends(token: token)
         
-        // Step 4: Load posts
+        // Step 5: Load posts
         await updateProgress(0.8, message: "Loading posts...")
         await loadPosts(token: token)
         
-        // Step 5: Load messages
+        // Step 6: Load messages
         await updateProgress(0.9, message: "Loading messages...")
         await loadMessages(token: token)
         
@@ -153,12 +157,62 @@ struct SplashScreenView: View {
                 token: token
             )
             
-            // Cache profile data
-            if let encoded = try? JSONEncoder().encode(response.user) {
-                UserDefaults.standard.set(encoded, forKey: "cached_user_profile")
-            }
+            // Cache profile data using DataManager
+            let cachedProfile = CachedProfile(
+                id: response.user.id,
+                email: response.user.email,
+                displayName: response.user.profile.displayName ?? "Unknown",
+                avatar: response.user.profile.avatar,
+                banner: response.user.profile.banner,
+                postsCount: response.user.postsCount ?? 0,
+                friendsCount: response.user.friendsCount ?? 0
+            )
+            DataManager.shared.cacheProfile(cachedProfile, userId: response.user.id)
+            // Store user ID for cache key lookups
+            UserDefaults.standard.set(response.user.id, forKey: "current_user_id")
         } catch {
             print("[SplashScreen] Error loading profile: \(error)")
+        }
+    }
+    
+    private func loadChildren(token: String) async {
+        do {
+            let apiService = ApiService.shared
+            
+            struct DashboardResponse: Codable {
+                let parent: ParentDashboardData
+            }
+            
+            struct ParentDashboardData: Codable {
+                let id: String
+                let profile: ParentProfile
+                let children: [Child]
+                let parentConnections: [ParentConnection]?
+            }
+            
+            struct ParentProfile: Codable {
+                let firstName: String?
+                let lastName: String?
+                let displayName: String?
+                let avatar: String?
+            }
+            
+            struct ParentConnection: Codable {
+                let id: String
+            }
+            
+            let response: DashboardResponse = try await apiService.makeRequest(
+                endpoint: "parents/dashboard",
+                method: "GET",
+                token: token
+            )
+            
+            // Cache children using DataManager
+            DataManager.shared.cacheChildren(response.parent.children, userId: response.parent.id)
+            // Store user ID for cache key lookups
+            UserDefaults.standard.set(response.parent.id, forKey: "current_user_id")
+        } catch {
+            print("[SplashScreen] Error loading children: \(error)")
         }
     }
     
@@ -187,9 +241,18 @@ struct SplashScreenView: View {
                 token: token
             )
             
-            // Cache friends
-            if let encoded = try? JSONEncoder().encode(response.friends) {
-                UserDefaults.standard.set(encoded, forKey: "cached_friends")
+            // Cache friends using DataManager
+            let cachedFriends = response.friends.map { friend in
+                CachedFriend(
+                    id: friend.id,
+                    displayName: friend.profile.displayName ?? "Unknown",
+                    avatar: friend.profile.avatar,
+                    isVerified: friend.isVerified
+                )
+            }
+            // Get user ID from profile or use default
+            if let userId = UserDefaults.standard.string(forKey: "current_user_id") {
+                DataManager.shared.cacheFriends(cachedFriends, userId: userId)
             }
         } catch {
             print("[SplashScreen] Error loading friends: \(error)")
@@ -238,11 +301,32 @@ struct SplashScreenView: View {
                 token: token
             )
             
-            // Cache posts (limit to 50 most recent)
-            let postsToCache = Array(response.posts.prefix(50))
-            if let encoded = try? JSONEncoder().encode(postsToCache) {
-                UserDefaults.standard.set(encoded, forKey: "cached_posts")
-                UserDefaults.standard.set(Date(), forKey: "cached_posts_timestamp")
+            // Cache posts using DataManager
+            let dateFormatter = ISO8601DateFormatter()
+            dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            
+            let cachedPosts = response.posts
+                .prefix(50)
+                .compactMap { postResponse -> CachedPost? in
+                    guard let createdAt = dateFormatter.date(from: postResponse.createdAt) else { return nil }
+                    
+                    return CachedPost(
+                        id: postResponse.id,
+                        content: postResponse.content,
+                        imageUrl: postResponse.imageUrl,
+                        authorId: postResponse.author.id,
+                        authorName: postResponse.author.profile.displayName ?? "Unknown",
+                        authorAvatar: postResponse.author.profile.avatar,
+                        likes: postResponse.likes?.count ?? 0,
+                        comments: postResponse.comments?.count ?? 0,
+                        createdAt: createdAt,
+                        status: postResponse.status
+                    )
+                }
+            
+            // Get user ID from profile or use default
+            if let userId = UserDefaults.standard.string(forKey: "current_user_id") {
+                DataManager.shared.cachePosts(cachedPosts, userId: userId)
             }
         } catch {
             print("[SplashScreen] Error loading posts: \(error)")
@@ -280,10 +364,28 @@ struct SplashScreenView: View {
                 token: token
             )
             
-            // Cache messages
-            if let encoded = try? JSONEncoder().encode(response.messages) {
-                UserDefaults.standard.set(encoded, forKey: "cached_messages")
-                UserDefaults.standard.set(Date(), forKey: "cached_messages_timestamp")
+            // Convert to CachedMessage format and cache
+            let dateFormatter = ISO8601DateFormatter()
+            dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            
+            let cachedMessages = response.messages
+                .filter { $0.status == "approved" }
+                .map { messageResponse in
+                    let createdAt = dateFormatter.date(from: messageResponse.createdAt) ?? Date()
+                    return CachedMessage(
+                        id: messageResponse.id,
+                        senderId: messageResponse.sender.id,
+                        receiverId: messageResponse.receiver.id,
+                        content: messageResponse.content,
+                        createdAt: createdAt,
+                        status: messageResponse.status
+                    )
+                }
+            
+            // Cache messages using DataManager
+            // Get user ID from profile or use default
+            if let userId = UserDefaults.standard.string(forKey: "current_user_id") {
+                DataManager.shared.cacheMessages(cachedMessages, userId: userId)
             }
         } catch {
             print("[SplashScreen] Error loading messages: \(error)")

@@ -112,9 +112,13 @@ struct MessagesView: View {
                 }
             }
             .onAppear {
+                // Load from cache immediately
+                loadConversationsFromCache()
+                
                 if let initialFriend = initialFriend {
                     selectedFriend = initialFriend
                 } else {
+                    // Then load from API
                     loadConversations()
                 }
             }
@@ -173,7 +177,9 @@ struct MessagesView: View {
                     isVerified: friend.isVerified
                 )
             }
-            DataManager.shared.cacheFriends(cachedFriends)
+            if let currentUserId = authManager.currentUser?.id {
+                DataManager.shared.cacheFriends(cachedFriends, userId: currentUserId)
+            }
             
             // Get messages to find last message for each friend
             struct MessagesResponse: Codable {
@@ -254,7 +260,9 @@ struct MessagesView: View {
                             status: messageResponse.status
                         )
                     }
-                dataManager.cacheMessages(cachedMessages)
+                if let currentUserId = authManager.currentUser?.id {
+                    dataManager.cacheMessages(cachedMessages, userId: currentUserId)
+                }
                 
                 self.isLoading = false
             }
@@ -271,10 +279,9 @@ struct MessagesView: View {
     }
     
     private func loadConversationsFromCache() {
-        guard let cachedFriends = dataManager.getCachedFriends(),
-              let cachedMessages = dataManager.getCachedMessages() else { return }
-        
-        let currentUserId = authManager.currentUser?.id ?? ""
+        guard let currentUserId = authManager.currentUser?.id else { return }
+        guard let cachedFriends = dataManager.getCachedFriends(userId: currentUserId),
+              let cachedMessages = dataManager.getCachedMessages(userId: currentUserId) else { return }
         
         conversations = cachedFriends.map { cachedFriend in
             let friend = Friend(
@@ -581,6 +588,10 @@ struct ChatView: View {
             .background(Color.white)
         }
         .onAppear {
+            // Always load from cache first to preserve messages when re-entering
+            loadMessagesFromCache()
+            
+            // Then load from API to get latest (will append new ones)
             loadMessages()
             
             // Start real-time polling
@@ -603,29 +614,22 @@ struct ChatView: View {
             }
         }
         .onChange(of: realTimeService.newMessages) { newMessagesDict in
-            // Update messages when new ones arrive
+            // When new messages arrive, reload from cache to get all messages (including new ones)
             if let userId = authManager.currentUser?.id {
                 let conversationId = "\(userId)_\(friend.id.uuidString)"
-                if let newMessages = newMessagesDict[conversationId] {
-                    let dateFormatter = ISO8601DateFormatter()
-                    dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-                    
-                    let currentUserId = authManager.currentUser?.id ?? ""
-                    let newMessageObjects = newMessages.map { cachedMessage in
-                        let isFromMe = cachedMessage.senderId.lowercased() == currentUserId.lowercased()
-                        return Message(
-                            id: UUID(uuidString: cachedMessage.id) ?? UUID(),
-                            content: cachedMessage.content,
-                            sender: isFromMe ? "You" : friend.displayName,
-                            timestamp: cachedMessage.createdAt
-                        )
-                    }
-                    
-                    // Add new messages to existing ones (avoid duplicates)
-                    let existingMessageIds = Set(messages.map { $0.id.uuidString })
-                    let uniqueNewMessages = newMessageObjects.filter { !existingMessageIds.contains($0.id.uuidString) }
-                    messages.append(contentsOf: uniqueNewMessages)
-                    messages.sort { $0.timestamp < $1.timestamp }
+                if let newMessages = newMessagesDict[conversationId], !newMessages.isEmpty {
+                    // Reload from cache which now includes the new messages
+                    loadMessagesFromCache()
+                }
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("NewMessagesReceived"))) { notification in
+            // Also listen for notification-based updates as backup
+            if let userId = authManager.currentUser?.id {
+                let conversationId = "\(userId)_\(friend.id.uuidString)"
+                if let receivedConversationId = notification.userInfo?["conversationId"] as? String,
+                   receivedConversationId == conversationId {
+                    loadMessagesFromCache()
                 }
             }
         }
@@ -639,8 +643,8 @@ struct ChatView: View {
     }
     
     private func loadMessagesAsync() async {
-        // First, try to load from cache for instant display
-        loadMessagesFromCache()
+        // Don't load from cache here - it's already loaded in onAppear
+        // This prevents clearing messages when API call happens
         
         guard let token = authManager.getValidatedToken() else {
             await MainActor.run {
@@ -704,10 +708,13 @@ struct ChatView: View {
                     )
                 }
             
-            dataManager.cacheMessages(cachedMessages)
+            if let currentUserId = authManager.currentUser?.id {
+                dataManager.cacheMessages(cachedMessages, userId: currentUserId)
+            }
             
             await MainActor.run {
-                self.messages = cachedMessages
+                // Convert cached messages to Message objects
+                let newMessageObjects = cachedMessages
                     .sorted { $0.createdAt < $1.createdAt }
                     .map { cachedMessage in
                         let isFromMe = cachedMessage.senderId.lowercased() == currentUserId.lowercased()
@@ -718,6 +725,22 @@ struct ChatView: View {
                             timestamp: cachedMessage.createdAt
                         )
                     }
+                
+                // Always merge with existing messages, avoiding duplicates
+                // Never replace - only append new ones
+                let existingMessageIds = Set(messages.map { $0.id.uuidString })
+                let uniqueNewMessages = newMessageObjects.filter { message in
+                    !existingMessageIds.contains(message.id.uuidString)
+                }
+                
+                if !uniqueNewMessages.isEmpty {
+                    // Append new messages
+                    messages.append(contentsOf: uniqueNewMessages)
+                    messages.sort { $0.timestamp < $1.timestamp }
+                } else if messages.isEmpty {
+                    // Only set if we have no messages at all
+                    messages = newMessageObjects
+                }
                 
                 self.isLoading = false
             }
@@ -734,20 +757,40 @@ struct ChatView: View {
     }
     
     private func loadMessagesFromCache() {
-        guard let cachedMessages = dataManager.getCachedMessagesForConversation(with: friend.id.uuidString) else { return }
+        guard let currentUserId = authManager.currentUser?.id else { return }
+        guard let cachedMessages = dataManager.getCachedMessagesForConversation(with: friend.id.uuidString, currentUserId: currentUserId) else {
+            // If no cached messages, don't return early - let API load them
+            return
+        }
         
-        let currentUserId = authManager.currentUser?.id ?? ""
+        guard !cachedMessages.isEmpty else { return }
         
-        messages = cachedMessages
+        let loadedMessages = cachedMessages
             .sorted { $0.createdAt < $1.createdAt }
             .map { cachedMessage in
                 let isFromMe = cachedMessage.senderId.lowercased() == currentUserId.lowercased()
                 return Message(
+                    id: UUID(uuidString: cachedMessage.id) ?? UUID(),
                     content: cachedMessage.content,
                     sender: isFromMe ? "You" : friend.displayName,
                     timestamp: cachedMessage.createdAt
                 )
             }
+        
+        // If messages are empty, set them from cache
+        // Otherwise, only append new messages that aren't already displayed
+        if messages.isEmpty {
+            messages = loadedMessages
+        } else {
+            // Append only new messages
+            let existingIds = Set(messages.map { $0.id.uuidString })
+            let newMessages = loadedMessages.filter { !existingIds.contains($0.id.uuidString) }
+            
+            if !newMessages.isEmpty {
+                messages.append(contentsOf: newMessages)
+                messages.sort { $0.timestamp < $1.timestamp }
+            }
+        }
     }
     
     private func sendMessage() {
@@ -794,7 +837,9 @@ struct ChatView: View {
                     createdAt: newMessageDate,
                     status: "approved"
                 )
-                dataManager.addCachedMessage(cachedMessage)
+                if let currentUserId = authManager.currentUser?.id {
+                    dataManager.addCachedMessage(cachedMessage, userId: currentUserId)
+                }
                 
                 await MainActor.run {
                     let newMessage = Message(
@@ -838,30 +883,55 @@ struct Message: Identifiable {
 struct MessageBubble: View {
     let message: Message
     
+    var isFromMe: Bool {
+        message.sender == "You"
+    }
+    
     var body: some View {
         HStack {
-            VStack(alignment: .leading, spacing: ParentAppSpacing.xs) {
-                Text(message.content)
-                    .font(ParentAppFonts.body)
-                    .foregroundColor(.white)
+            if !isFromMe {
+                // Receiver's message on the left
+                VStack(alignment: .leading, spacing: ParentAppSpacing.xs) {
+                    Text(message.content)
+                        .font(ParentAppFonts.body)
+                        .foregroundColor(ParentAppColors.black)
+                    
+                    Text(message.timestamp, style: .time)
+                        .font(ParentAppFonts.small)
+                        .foregroundColor(ParentAppColors.darkGray.opacity(0.7))
+                }
+                .padding(ParentAppSpacing.l)
+                .background(Color.white)
+                .cornerRadius(ParentAppCornerRadius.large)
+                .shadow(color: Color.black.opacity(0.1), radius: 3, x: 0, y: 2)
                 
-                Text(message.timestamp, style: .time)
-                    .font(ParentAppFonts.small)
-                    .foregroundColor(.white.opacity(0.8))
-            }
-            .padding(ParentAppSpacing.l)
-            .background(
-                LinearGradient(
-                    colors: [ParentAppColors.primaryBlue, ParentAppColors.primaryPurple],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
+                Spacer()
+            } else {
+                // Sender's message on the right
+                Spacer()
+                
+                VStack(alignment: .trailing, spacing: ParentAppSpacing.xs) {
+                    Text(message.content)
+                        .font(ParentAppFonts.body)
+                        .foregroundColor(.white)
+                    
+                    Text(message.timestamp, style: .time)
+                        .font(ParentAppFonts.small)
+                        .foregroundColor(.white.opacity(0.8))
+                }
+                .padding(ParentAppSpacing.l)
+                .background(
+                    LinearGradient(
+                        colors: [ParentAppColors.primaryBlue, ParentAppColors.primaryPurple],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
                 )
-            )
-            .cornerRadius(ParentAppCornerRadius.large)
-            .shadow(color: ParentAppColors.primaryBlue.opacity(0.2), radius: 5, x: 0, y: 2)
-            
-            Spacer()
+                .cornerRadius(ParentAppCornerRadius.large)
+                .shadow(color: ParentAppColors.primaryBlue.opacity(0.2), radius: 5, x: 0, y: 2)
+            }
         }
+        .padding(.horizontal, ParentAppSpacing.m)
     }
 }
 

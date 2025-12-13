@@ -75,6 +75,8 @@ class AuthManager: ObservableObject {
                 if let token = self.token {
                     UserDefaults.standard.set(token, forKey: "authToken")
                 }
+                // Store user ID for cache key lookups
+                UserDefaults.standard.set(result.user.id, forKey: "current_user_id")
             }
         } else {
             let errorData = try? JSONDecoder().decode(ErrorResponse.self, from: data)
@@ -140,6 +142,8 @@ class AuthManager: ObservableObject {
                 if let token = self.token {
                     UserDefaults.standard.set(token, forKey: "authToken")
                 }
+                // Store user ID for cache key lookups
+                UserDefaults.standard.set(result.user.id, forKey: "current_user_id")
             }
         } else {
             let errorData = try? JSONDecoder().decode(ErrorResponse.self, from: data)
@@ -152,6 +156,7 @@ class AuthManager: ObservableObject {
         self.isAuthenticated = false
         self.currentUser = nil
         UserDefaults.standard.removeObject(forKey: "authToken")
+        UserDefaults.standard.removeObject(forKey: "current_user_id")
     }
     
     /// Gets a validated token, or returns nil if invalid

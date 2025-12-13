@@ -68,6 +68,7 @@ struct HomeFeedView: View {
                 .environmentObject(authManager)
             }
             .onAppear {
+                // Always refresh from API when view appears
                 loadPosts()
             }
             .refreshable {
@@ -80,6 +81,7 @@ struct HomeFeedView: View {
         // First, try to load from cache for instant display
         loadPostsFromCache()
         
+        // Always fetch fresh data from API
         isLoading = true
         Task {
             await loadPostsAsync()
@@ -87,10 +89,18 @@ struct HomeFeedView: View {
     }
     
     private func loadPostsFromCache() {
-        guard let cachedPosts = DataManager.shared.getCachedPosts() else { return }
+        guard let userId = authManager.currentUser?.id else { return }
+        guard let cachedPosts = DataManager.shared.getCachedPosts(userId: userId) else { return }
         
-        posts = cachedPosts.map { cachedPost in
-            Post(
+        // Map cached posts to Post objects, ensuring dates are valid
+        posts = cachedPosts.compactMap { cachedPost in
+            // Ensure the date is valid (not a zero date or invalid)
+            guard cachedPost.createdAt.timeIntervalSince1970 > 0 else {
+                print("[HomeFeed] Invalid date for post \(cachedPost.id): \(cachedPost.createdAt)")
+                return nil
+            }
+            
+            return Post(
                 id: UUID(uuidString: cachedPost.id) ?? UUID(),
                 author: cachedPost.authorName,
                 authorAvatar: cachedPost.authorAvatar,
@@ -197,7 +207,9 @@ struct HomeFeedView: View {
                         status: postResponse.status
                     )
                 }
-                DataManager.shared.cachePosts(cachedPosts)
+                    if let userId = authManager.currentUser?.id {
+                        DataManager.shared.cachePosts(cachedPosts, userId: userId)
+                    }
                 
                 self.isLoading = false
             }
@@ -247,9 +259,16 @@ struct CosmicPostCard: View {
                     Text(post.author)
                         .font(CosmicFonts.headline)
                         .foregroundColor(CosmicColors.textPrimary)
-                    Text(post.createdAt, style: .relative)
-                        .font(CosmicFonts.small)
-                        .foregroundColor(CosmicColors.textMuted)
+                    // Display relative time, with fallback to absolute time if relative fails
+                    if post.createdAt.timeIntervalSince1970 > 0 {
+                        Text(post.createdAt, style: .relative)
+                            .font(CosmicFonts.small)
+                            .foregroundColor(CosmicColors.textMuted)
+                    } else {
+                        Text("Just now")
+                            .font(CosmicFonts.small)
+                            .foregroundColor(CosmicColors.textMuted)
+                    }
                 }
                 
                 Spacer()
