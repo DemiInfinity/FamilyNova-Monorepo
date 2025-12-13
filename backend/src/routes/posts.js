@@ -3,6 +3,8 @@ const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const Post = require('../models/Post');
 const User = require('../models/User');
+const Comment = require('../models/Comment');
+const Reaction = require('../models/Reaction');
 const { auth, requireUserType } = require('../middleware/auth');
 const { getSupabase } = require('../config/database');
 
@@ -31,14 +33,14 @@ router.post('/', requireUserType('kid'), [
     
     const status = author.monitoringLevel === 'full' ? 'pending' : 'approved';
     
-    // Create post using Post model
+    // Create post using Post model (likes and comments are now in separate tables)
     const post = await Post.create({
       authorId: req.user.id,
       content: content.trim(),
       imageUrl: imageUrl || null,
       status: status,
-      likes: [],
-      comments: []
+      likes: [], // Keep for backward compatibility, but reactions table is primary
+      comments: [] // Keep for backward compatibility, but comments table is primary
     });
     
     // Get author info for response
@@ -136,18 +138,112 @@ router.get('/', async (req, res) => {
         });
       }
       
-      // Combine posts with author info
+      // Get all post IDs to fetch comments and reactions
+      const postIds = postsData.map(p => p.id);
+      
+      // Fetch comments for all posts
+      const { data: commentsData, error: commentsError } = await supabase
+        .from('comments')
+        .select('*')
+        .in('post_id', postIds)
+        .order('created_at', { ascending: true });
+      
+      // Get author IDs for comments
+      const commentAuthorIds = commentsData ? [...new Set(commentsData.map(c => c.author_id))] : [];
+      
+      // Fetch comment authors
+      const { data: commentAuthorsData, error: commentAuthorsError } = commentAuthorIds.length > 0
+        ? await supabase
+            .from('users')
+            .select('id, profile')
+            .in('id', commentAuthorIds)
+        : { data: [], error: null };
+      
+      const commentAuthorsMap = new Map();
+      if (!commentAuthorsError && commentAuthorsData) {
+        commentAuthorsData.forEach(author => {
+          commentAuthorsMap.set(author.id, author);
+        });
+      }
+      
+      // Fetch reactions for all posts
+      const { data: reactionsData, error: reactionsError } = await supabase
+        .from('reactions')
+        .select('*')
+        .in('post_id', postIds);
+      
+      // Group comments and reactions by post ID
+      const commentsByPost = new Map();
+      if (!commentsError && commentsData) {
+        for (const comment of commentsData) {
+          if (!commentsByPost.has(comment.post_id)) {
+            commentsByPost.set(comment.post_id, []);
+          }
+          const author = commentAuthorsMap.get(comment.author_id);
+          const authorProfile = author?.profile || {};
+          commentsByPost.get(comment.post_id).push({
+            id: comment.id,
+            content: comment.content,
+            author: {
+              id: comment.author_id,
+              profile: {
+                displayName: authorProfile.displayName || 'Unknown'
+              }
+            },
+            createdAt: comment.created_at
+          });
+        }
+      }
+      
+      const reactionsByPost = new Map();
+      const userReactionsByPost = new Map();
+      if (!reactionsError && reactionsData) {
+        for (const reaction of reactionsData) {
+          if (!reactionsByPost.has(reaction.post_id)) {
+            reactionsByPost.set(reaction.post_id, []);
+          }
+          reactionsByPost.get(reaction.post_id).push(reaction.user_id);
+          
+          // Track user's reactions
+          if (reaction.user_id === req.user.id) {
+            if (!userReactionsByPost.has(reaction.post_id)) {
+              userReactionsByPost.set(reaction.post_id, []);
+            }
+            userReactionsByPost.get(reaction.post_id).push(reaction.reaction_type);
+          }
+        }
+      }
+      
+      // Combine posts with author info, comments, and reactions
       for (const postData of postsData) {
         const author = authorsMap.get(postData.author_id);
         const authorProfile = author?.profile || {};
+        const postComments = commentsByPost.get(postData.id) || [];
+        const postReactions = reactionsByPost.get(postData.id) || [];
+        const userReactions = userReactionsByPost.get(postData.id) || [];
+        
+        // Get all reactions for this post grouped by type
+        const postReactionsData = reactionsData ? reactionsData.filter(r => r.post_id === postData.id) : [];
+        const reactionsByType = {};
+        postReactionsData.forEach(r => {
+          if (!reactionsByType[r.reaction_type]) {
+            reactionsByType[r.reaction_type] = [];
+          }
+          reactionsByType[r.reaction_type].push(r.user_id);
+        });
+        
+        // Check if user has liked this post
+        const isLiked = userReactions.includes('like');
         
         postsWithAuthors.push({
           id: postData.id,
           content: postData.content,
           imageUrl: postData.image_url,
           status: postData.status,
-          likes: postData.likes || [],
-          comments: postData.comments || [],
+          likes: reactionsByType.like || [], // Like reactions for backward compatibility
+          comments: postComments,
+          reactions: reactionsByType, // All reactions grouped by type
+          isLiked: isLiked,
           author: {
             id: author?.id || postData.author_id,
             profile: {
@@ -338,26 +434,70 @@ router.post('/:postId/like', requireUserType('kid'), async (req, res) => {
     }
     
     const userId = req.user.id;
-    const likes = post.likes || [];
-    const likeIndex = likes.findIndex(likeId => likeId === userId);
+    const result = await Reaction.toggle(postId, userId, 'like', '❤️');
     
-    if (likeIndex > -1) {
-      // Unlike - remove from array
-      likes.splice(likeIndex, 1);
-    } else {
-      // Like - add to array
-      likes.push(userId);
-    }
-    
-    post.likes = likes;
-    await post.save();
+    // Get updated like count
+    const allReactions = await Reaction.findByPostId(postId);
+    const likesCount = allReactions.filter(r => r.reactionType === 'like').length;
     
     res.json({
-      liked: likeIndex === -1,
-      likesCount: likes.length
+      liked: result.action === 'added',
+      likesCount: likesCount
     });
   } catch (error) {
     console.error('Error liking/unliking post:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// @route   POST /api/posts/:postId/reaction
+// @desc    Add or remove a reaction to a post (kids only)
+// @access  Private (Kid only)
+router.post('/:postId/reaction', requireUserType('kid'), [
+  body('reactionType').isIn(['like', 'love', 'laugh', 'wow', 'sad', 'angry']),
+  body('emoji').notEmpty()
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    
+    const { postId } = req.params;
+    const { reactionType, emoji } = req.body;
+    const post = await Post.findById(postId);
+    
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+    
+    if (post.status !== 'approved') {
+      return res.status(403).json({ error: 'Post not approved' });
+    }
+    
+    const userId = req.user.id;
+    const result = await Reaction.toggle(postId, userId, reactionType, emoji);
+    
+    // Get all reactions for this post
+    const allReactions = await Reaction.findByPostId(postId);
+    const reactionsByType = {};
+    allReactions.forEach(r => {
+      if (!reactionsByType[r.reactionType]) {
+        reactionsByType[r.reactionType] = [];
+      }
+      reactionsByType[r.reactionType].push(r.userId);
+    });
+    
+    res.json({
+      action: result.action,
+      reaction: result.reaction ? {
+        type: result.reaction.reactionType,
+        emoji: result.reaction.emoji
+      } : null,
+      reactions: reactionsByType
+    });
+  } catch (error) {
+    console.error('Error adding/removing reaction:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -391,30 +531,24 @@ router.post('/:postId/comment', requireUserType('kid'), [
     const author = await User.findById(req.user.id);
     const authorProfile = author?.profile || {};
     
-    // Add comment to post
-    const comments = post.comments || [];
-    const newComment = {
-      id: require('crypto').randomUUID(),
-      author: {
-        id: req.user.id,
-        profile: {
-          displayName: authorProfile.displayName || req.user.email
-        }
-      },
-      content: content.trim(),
-      createdAt: new Date().toISOString()
-    };
-    
-    comments.push(newComment);
-    post.comments = comments;
-    await post.save();
+    // Create comment in comments table
+    const comment = await Comment.create({
+      postId: postId,
+      authorId: req.user.id,
+      content: content.trim()
+    });
     
     res.status(201).json({
       comment: {
-        id: newComment.id,
-        content: newComment.content,
-        author: newComment.author,
-        createdAt: newComment.createdAt
+        id: comment.id,
+        content: comment.content,
+        author: {
+          id: req.user.id,
+          profile: {
+            displayName: authorProfile.displayName || req.user.email
+          }
+        },
+        createdAt: comment.createdAt
       }
     });
   } catch (error) {

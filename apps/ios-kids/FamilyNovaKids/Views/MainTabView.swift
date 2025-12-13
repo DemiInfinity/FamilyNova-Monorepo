@@ -7,10 +7,12 @@ import SwiftUI
 
 struct MainTabView: View {
     @State private var selectedTab = 0
+    @EnvironmentObject var authManager: AuthManager
     
     var body: some View {
         TabView(selection: $selectedTab) {
             HomeView()
+                .environmentObject(authManager)
                 .tabItem {
                     Label("Home", systemImage: "house.fill")
                 }
@@ -22,9 +24,10 @@ struct MainTabView: View {
                 }
                 .tag(1)
             
-            NewsFeedView()
+            MessagesView()
+                .environmentObject(authManager)
                 .tabItem {
-                    Label("Feed", systemImage: "house.2.fill")
+                    Label("Messages", systemImage: "message.fill")
                 }
                 .tag(2)
             
@@ -33,18 +36,6 @@ struct MainTabView: View {
                     Label("Learn", systemImage: "book.fill")
                 }
                 .tag(3)
-            
-            MessagesView()
-                .tabItem {
-                    Label("Messages", systemImage: "message.fill")
-                }
-                .tag(4)
-            
-            ProfileView()
-                .tabItem {
-                    Label("Profile", systemImage: "person.fill")
-                }
-                .tag(5)
         }
         .accentColor(AppColors.primaryBlue)
     }

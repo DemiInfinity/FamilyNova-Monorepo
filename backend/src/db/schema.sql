@@ -92,14 +92,35 @@ CREATE TABLE IF NOT EXISTS posts (
     author_id UUID REFERENCES users(id) ON DELETE CASCADE,
     content TEXT NOT NULL,
     image_url TEXT,
-    likes JSONB DEFAULT '[]',
-    comments JSONB DEFAULT '[]',
+    likes JSONB DEFAULT '[]', -- Kept for backward compatibility, but reactions table is primary
+    comments JSONB DEFAULT '[]', -- Kept for backward compatibility, but comments table is primary
     status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
     moderated_by UUID REFERENCES users(id),
     moderated_at TIMESTAMP,
     rejection_reason TEXT,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Comments table (separate table for better querying and indexing)
+CREATE TABLE IF NOT EXISTS comments (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    post_id UUID REFERENCES posts(id) ON DELETE CASCADE,
+    author_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    content TEXT NOT NULL CHECK (char_length(content) >= 1 AND char_length(content) <= 200),
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Reactions table (for emoji reactions)
+CREATE TABLE IF NOT EXISTS reactions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    post_id UUID REFERENCES posts(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    reaction_type VARCHAR(20) NOT NULL CHECK (reaction_type IN ('like', 'love', 'laugh', 'wow', 'sad', 'angry')),
+    emoji VARCHAR(10) NOT NULL, -- Store the actual emoji
+    created_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(post_id, user_id, reaction_type) -- One reaction type per user per post
 );
 
 -- Profile change requests table
@@ -199,6 +220,12 @@ CREATE INDEX IF NOT EXISTS idx_messages_receiver ON messages(receiver_id);
 CREATE INDEX IF NOT EXISTS idx_messages_status ON messages(status);
 CREATE INDEX IF NOT EXISTS idx_posts_author ON posts(author_id);
 CREATE INDEX IF NOT EXISTS idx_posts_status ON posts(status);
+CREATE INDEX IF NOT EXISTS idx_comments_post_id ON comments(post_id);
+CREATE INDEX IF NOT EXISTS idx_comments_author_id ON comments(author_id);
+CREATE INDEX IF NOT EXISTS idx_comments_created_at ON comments(created_at);
+CREATE INDEX IF NOT EXISTS idx_reactions_post_id ON reactions(post_id);
+CREATE INDEX IF NOT EXISTS idx_reactions_user_id ON reactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_reactions_post_user ON reactions(post_id, user_id);
 CREATE INDEX IF NOT EXISTS idx_education_school ON education_content(school_id);
 CREATE INDEX IF NOT EXISTS idx_school_codes_code ON school_codes(code);
 CREATE INDEX IF NOT EXISTS idx_school_codes_expires ON school_codes(expires_at);
@@ -216,6 +243,12 @@ BEGIN
     RETURN NEW;
 END;
 $$ language 'plpgsql';
+
+-- Trigger to update updated_at for comments
+CREATE TRIGGER update_comments_updated_at
+    BEFORE UPDATE ON comments
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
 
 -- Triggers to auto-update updated_at
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users

@@ -226,11 +226,17 @@ struct PostCard: View {
     let post: Post
     @State private var isLiked = false
     @State private var likesCount = 0
+    @State private var commentsCount = 0
+    @State private var showComments = false
+    @State private var showReactionPicker = false
+    @State private var selectedReaction: String? = nil
+    @EnvironmentObject var authManager: AuthManager
     
     init(post: Post) {
         self.post = post
         _isLiked = State(initialValue: post.isLiked)
         _likesCount = State(initialValue: post.likes)
+        _commentsCount = State(initialValue: post.comments)
     }
     
     var body: some View {
@@ -285,22 +291,34 @@ struct PostCard: View {
             
             // Actions
             HStack(spacing: AppSpacing.l) {
-                Button(action: toggleLike) {
-                    HStack(spacing: AppSpacing.xs) {
-                        Image(systemName: isLiked ? "heart.fill" : "heart")
-                            .foregroundColor(isLiked ? AppColors.primaryPink : AppColors.darkGray)
-                        Text("\(likesCount)")
-                            .font(AppFonts.caption)
-                            .foregroundColor(AppColors.darkGray)
+                // Like/Reaction Button
+                HStack(spacing: AppSpacing.xs) {
+                    Button(action: toggleLike) {
+                        HStack(spacing: AppSpacing.xs) {
+                            Image(systemName: isLiked ? "heart.fill" : "heart")
+                                .foregroundColor(isLiked ? AppColors.primaryPink : AppColors.darkGray)
+                            Text("\(likesCount)")
+                                .font(AppFonts.caption)
+                                .foregroundColor(AppColors.darkGray)
+                        }
                     }
+                    .buttonStyle(PlainButtonStyle())
+                    
+                    // Reaction Picker Button
+                    Button(action: { showReactionPicker.toggle() }) {
+                        Image(systemName: "face.smiling")
+                            .foregroundColor(AppColors.darkGray)
+                            .font(.system(size: 16))
+                    }
+                    .buttonStyle(PlainButtonStyle())
                 }
-                .buttonStyle(PlainButtonStyle())
                 
-                Button(action: {}) {
+                // Comment Button
+                Button(action: { showComments = true }) {
                     HStack(spacing: AppSpacing.xs) {
                         Image(systemName: "message")
                             .foregroundColor(AppColors.darkGray)
-                        Text("\(post.comments)")
+                        Text("\(commentsCount)")
                             .font(AppFonts.caption)
                             .foregroundColor(AppColors.darkGray)
                     }
@@ -317,12 +335,128 @@ struct PostCard: View {
                 .fill(Color.white)
                 .shadow(color: Color.black.opacity(0.08), radius: 10, x: 0, y: 5)
         )
+        .overlay(
+            // Reaction Picker
+            Group {
+                if showReactionPicker {
+                    ReactionPickerView(
+                        onReactionSelected: { reaction in
+                            addReaction(reaction)
+                            showReactionPicker = false
+                        },
+                        onDismiss: {
+                            showReactionPicker = false
+                        }
+                    )
+                    .offset(x: 0, y: -60)
+                }
+            },
+            alignment: .bottomLeading
+        )
+        .sheet(isPresented: $showComments, onDismiss: {
+            // Refresh comments count when sheet is dismissed
+            refreshCommentsCount()
+        }) {
+            CommentsView(postId: post.id, postAuthor: post.author, postContent: post.content)
+                .environmentObject(authManager)
+        }
     }
     
     private func toggleLike() {
+        guard let token = authManager.getValidatedToken() else { return }
+        
+        let previousLiked = isLiked
+        let previousCount = likesCount
+        
+        // Optimistic update
         isLiked.toggle()
         likesCount += isLiked ? 1 : -1
-        // TODO: Implement API call to like/unlike post
+        
+        Task {
+            do {
+                let apiService = ApiService.shared
+                let postIdString = post.id.uuidString
+                
+                struct LikeResponse: Codable {
+                    let liked: Bool
+                    let likesCount: Int
+                }
+                
+                let response: LikeResponse = try await apiService.makeRequest(
+                    endpoint: "posts/\(postIdString)/like",
+                    method: "POST",
+                    token: token
+                )
+                
+                await MainActor.run {
+                    self.isLiked = response.liked
+                    self.likesCount = response.likesCount
+                }
+            } catch {
+                // Revert on error
+                await MainActor.run {
+                    self.isLiked = previousLiked
+                    self.likesCount = previousCount
+                }
+                print("Error liking post: \(error)")
+            }
+        }
+    }
+    
+    private func addReaction(_ reaction: String) {
+        // For now, reactions are just visual - we can extend the backend later
+        // This is a placeholder for future reaction functionality
+        print("Reaction selected: \(reaction)")
+    }
+    
+    private func refreshCommentsCount() {
+        guard let token = authManager.getValidatedToken() else { return }
+        
+        Task {
+            do {
+                let apiService = ApiService.shared
+                let postIdString = post.id.uuidString
+                
+                struct PostsResponse: Codable {
+                    let posts: [PostResponse]
+                }
+                
+                struct PostResponse: Codable {
+                    let id: String
+                    let comments: [CommentResponse]?
+                }
+                
+                struct CommentResponse: Codable {
+                    let id: String
+                    let content: String
+                    let author: AuthorResponse
+                    let createdAt: String
+                }
+                
+                struct AuthorResponse: Codable {
+                    let id: String
+                    let profile: ProfileResponse
+                }
+                
+                struct ProfileResponse: Codable {
+                    let displayName: String?
+                }
+                
+                let response: PostsResponse = try await apiService.makeRequest(
+                    endpoint: "posts",
+                    method: "GET",
+                    token: token
+                )
+                
+                let postResponse = response.posts.first { $0.id == postIdString }
+                
+                await MainActor.run {
+                    self.commentsCount = postResponse?.comments?.count ?? 0
+                }
+            } catch {
+                print("Error refreshing comments count: \(error)")
+            }
+        }
     }
 }
 

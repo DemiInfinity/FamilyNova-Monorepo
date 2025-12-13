@@ -77,10 +77,11 @@ struct AddFriendView: View {
             }
             .onAppear {
                 // If initialTab was set, use it
+                // Don't load here - let onChange handle it to avoid duplicate calls
                 if let tab = initialTab {
                     selectedTab = tab
-                }
-                if selectedTab == 1 {
+                } else if selectedTab == 1 {
+                    // Only load if tab is already 1 and initialTab wasn't set
                     loadMyFriendCode()
                 }
             }

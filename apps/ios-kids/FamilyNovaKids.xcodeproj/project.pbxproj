@@ -18,9 +18,11 @@
 		54FFEB9881A7C3B3848A3618 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6D39A49A834774DDFD8E2B7 /* LoginView.swift */; };
 		8054A230FA2DF40CE19DF2A7 /* EducationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73DE3C61121D8F6D0DB7FF9C /* EducationView.swift */; };
 		8F636396DBAB52C1F90DF6EE /* MessagesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0051B2974DE8FA660890E611 /* MessagesView.swift */; };
+		90768F3726769FE1FD721736 /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 180B1EA80AA8300FD72EC45E /* NotificationsView.swift */; };
 		9A8D44996AB6CF80DAFCB44E /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00188477EA5B502DE4C288C2 /* AuthManager.swift */; };
 		CAC35341889E28F34AA7A3E4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 65479BA558886B586601276F /* Assets.xcassets */; };
 		D05C101A27983DB12DCF7E9C /* FriendsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 112E215FADA87ECCBE53F955 /* FriendsView.swift */; };
+		D37F01B5C78ED3C3C0F137D7 /* CommentsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79704BFE6F84EB26BC5BE5E7 /* CommentsView.swift */; };
 		DDDF4D778E98FFB1EA3CE5C0 /* Encryption.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C6445252107C04FA967800E /* Encryption.swift */; };
 		DE3AB865D3DE533DEF86786C /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 688D19148AD62EDE7929F9D0 /* HomeView.swift */; };
 		E45636BAEF171D7A1DF94FAA /* ShowMyFriendCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA5D07F00DAE81CC8B7FB161 /* ShowMyFriendCodeView.swift */; };
@@ -35,6 +37,7 @@
 		0B56FA8A050FF5BEE4ADEFD1 /* AddFriendView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddFriendView.swift; sourceTree = "<group>"; };
 		0C6445252107C04FA967800E /* Encryption.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Encryption.swift; sourceTree = "<group>"; };
 		112E215FADA87ECCBE53F955 /* FriendsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsView.swift; sourceTree = "<group>"; };
+		180B1EA80AA8300FD72EC45E /* NotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
 		206973E0C1713B23F609D729 /* FamilyNovaKidsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FamilyNovaKidsApp.swift; sourceTree = "<group>"; };
 		40AEF65FC52B3BD80E8834BB /* ApiService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiService.swift; sourceTree = "<group>"; };
 		586F02C3E1D8F8877F72AA0F /* QRCodeScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCodeScannerView.swift; sourceTree = "<group>"; };
@@ -43,6 +46,7 @@
 		688D19148AD62EDE7929F9D0 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		73DE3C61121D8F6D0DB7FF9C /* EducationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EducationView.swift; sourceTree = "<group>"; };
 		7696D9D7026A69E6863A4A37 /* EditProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileView.swift; sourceTree = "<group>"; };
+		79704BFE6F84EB26BC5BE5E7 /* CommentsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentsView.swift; sourceTree = "<group>"; };
 		B374F53FCBD18CF21E036022 /* ScanFriendQRView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanFriendQRView.swift; sourceTree = "<group>"; };
 		BA5D07F00DAE81CC8B7FB161 /* ShowMyFriendCodeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowMyFriendCodeView.swift; sourceTree = "<group>"; };
 		C1C0C9B4F8FC40872F07654D /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
@@ -83,6 +87,7 @@
 			isa = PBXGroup;
 			children = (
 				0B56FA8A050FF5BEE4ADEFD1 /* AddFriendView.swift */,
+				79704BFE6F84EB26BC5BE5E7 /* CommentsView.swift */,
 				7696D9D7026A69E6863A4A37 /* EditProfileView.swift */,
 				73DE3C61121D8F6D0DB7FF9C /* EducationView.swift */,
 				EE61C2599349C4239FD28BD9 /* EnterFriendCodeView.swift */,
@@ -92,6 +97,7 @@
 				D903125BCE0D887035F56615 /* MainTabView.swift */,
 				0051B2974DE8FA660890E611 /* MessagesView.swift */,
 				C7CB84A200DE992EA3C64195 /* NewsFeedView.swift */,
+				180B1EA80AA8300FD72EC45E /* NotificationsView.swift */,
 				C1C0C9B4F8FC40872F07654D /* ProfileView.swift */,
 				586F02C3E1D8F8877F72AA0F /* QRCodeScannerView.swift */,
 				B374F53FCBD18CF21E036022 /* ScanFriendQRView.swift */,
@@ -165,7 +171,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 2610;
+				LastUpgradeCheck = 1400;
 				TargetAttributes = {
 					89B6A88AE327C7DCE289611D = {
 						ProvisioningStyle = Automatic;
@@ -209,6 +215,7 @@
 				1DA80F0AEAE1E2CC5A6FA93C /* AddFriendView.swift in Sources */,
 				F873E143C32F4B60C0C9C0C8 /* ApiService.swift in Sources */,
 				9A8D44996AB6CF80DAFCB44E /* AuthManager.swift in Sources */,
+				D37F01B5C78ED3C3C0F137D7 /* CommentsView.swift in Sources */,
 				519ED126EA82D46A15D93073 /* DesignSystem.swift in Sources */,
 				4A6BCEA7AF57A5DD85DCA946 /* EditProfileView.swift in Sources */,
 				8054A230FA2DF40CE19DF2A7 /* EducationView.swift in Sources */,
@@ -221,6 +228,7 @@
 				27F22D70D0616E145F98E135 /* MainTabView.swift in Sources */,
 				8F636396DBAB52C1F90DF6EE /* MessagesView.swift in Sources */,
 				FEA4824C926E586662379738 /* NewsFeedView.swift in Sources */,
+				90768F3726769FE1FD721736 /* NotificationsView.swift in Sources */,
 				E813DFBD8158522FB43F7A76 /* ProfileView.swift in Sources */,
 				2F7334618BAED15C4ED4C184 /* QRCodeScannerView.swift in Sources */,
 				0C5C080B1B8AA7EF5CD196A8 /* ScanFriendQRView.swift in Sources */,
@@ -235,7 +243,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -267,10 +274,8 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = 2L5ZNS3KRB;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -291,7 +296,6 @@
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -304,6 +308,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 2L5ZNS3KRB;
 				INFOPLIST_FILE = Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -322,7 +327,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -354,10 +358,8 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = 2L5ZNS3KRB;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -371,7 +373,6 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
@@ -384,6 +385,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 2L5ZNS3KRB;
 				INFOPLIST_FILE = Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
