@@ -81,7 +81,7 @@ class SubscriptionService: ObservableObject {
     
     func cancelSubscription() async throws {
         guard let token = authManager?.token else {
-            throw ApiError.unauthorized
+            throw NSError(domain: "SubscriptionService", code: 401, userInfo: [NSLocalizedDescriptionKey: "Not authenticated"])
         }
         
         let _: [String: String] = try await apiService.makeRequest(

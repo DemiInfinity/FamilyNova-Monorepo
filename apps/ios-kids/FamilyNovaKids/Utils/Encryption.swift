@@ -108,17 +108,34 @@ class Encryption {
         return plainText
     }
     
+    /**
+     * Prepares encryption key (32 bytes for AES-256)
+     * Matches backend: if key is 64 hex chars, use directly; otherwise hash with SHA256
+     */
     private static func prepareKey(_ key: String) -> [UInt8] {
-        let keyData = key.data(using: .utf8) ?? Data()
-        var keyBytes = [UInt8](keyData)
-        
-        if keyBytes.count < keySize {
-            keyBytes.append(contentsOf: [UInt8](repeating: 0, count: keySize - keyBytes.count))
-        } else if keyBytes.count > keySize {
-            keyBytes = Array(keyBytes.prefix(keySize))
+        // Check if key is a 64-character hex string (32 bytes)
+        let hexChars = CharacterSet(charactersIn: "0123456789abcdefABCDEF")
+        if key.count == 64 && key.unicodeScalars.allSatisfy({ hexChars.contains($0) }) {
+            // Convert hex string to bytes
+            var keyBytes: [UInt8] = []
+            var index = key.startIndex
+            while index < key.endIndex {
+                let nextIndex = key.index(index, offsetBy: 2, limitedBy: key.endIndex) ?? key.endIndex
+                if let byte = UInt8(key[index..<nextIndex], radix: 16) {
+                    keyBytes.append(byte)
+                }
+                index = nextIndex
+            }
+            return keyBytes
+        } else {
+            // Hash the key string with SHA256 (matches backend behavior)
+            let keyData = key.data(using: .utf8) ?? Data()
+            var digest = [UInt8](repeating: 0, count: Int(CC_SHA256_DIGEST_LENGTH))
+            keyData.withUnsafeBytes { bytes in
+                _ = CC_SHA256(bytes.baseAddress, CC_LONG(keyData.count), &digest)
+            }
+            return digest
         }
-        
-        return keyBytes
     }
 }
 

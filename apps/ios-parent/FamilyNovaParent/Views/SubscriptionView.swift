@@ -8,6 +8,7 @@ import SwiftUI
 struct SubscriptionView: View {
     @StateObject private var subscriptionService = SubscriptionService.shared
     @EnvironmentObject var authManager: AuthManager
+    @Environment(\.dismiss) private var dismiss
     @State private var isLoading = false
     @State private var showError = false
     @State private var errorMessage = ""
@@ -126,6 +127,13 @@ struct SubscriptionView: View {
                 Button("OK", role: .cancel) { }
             } message: {
                 Text(errorMessage)
+            }
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
             }
         }
     }

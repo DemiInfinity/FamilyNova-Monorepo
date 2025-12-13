@@ -18,8 +18,12 @@
 		5CE0BDF764E5ED76385E0988 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68EC8D887EFC3CBBE5BF0BF9 /* SettingsView.swift */; };
 		80F9AA722184A7C50E7EACFF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8B50917360E12C4109BF372A /* Assets.xcassets */; };
 		82831F01E42B2283A77E789D /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 411F0E038FF16D34EC9666E8 /* MainTabView.swift */; };
+		860E0F62AB2B3531664C21E9 /* Encryption.swift in Sources */ = {isa = PBXBuildFile; fileRef = A29D9B6230D3B4E6EE9BF850 /* Encryption.swift */; };
 		865F30A0CE5E1A81D251DD9E /* ConnectionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FDB135486912D9735B22569 /* ConnectionsView.swift */; };
+		8A87C5738C31ABFC2A80B860 /* SubscriptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C26D4F8C94BDA1F5A571ACC4 /* SubscriptionService.swift */; };
+		A9FBF997D169FD6A77A5A5E4 /* SubscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2B6BEE8A031D5F3177EA1FA /* SubscriptionView.swift */; };
 		AE6CE438AFE580AE0998F713 /* FamilyNovaParentApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 404DE0FB7A2C9F4DEC4A6EF0 /* FamilyNovaParentApp.swift */; };
+		B063305195AF329434678669 /* Subscription.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8DEB7C47C8850693B2BE259 /* Subscription.swift */; };
 		B8B3AAAD5EC87D7ED72E7673 /* HomeworkView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2477775C97DAFC2A27119BEE /* HomeworkView.swift */; };
 		C8AFA3888CE7D23F8F4A208B /* RegisterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFC2DCE579D198E7C0AAEA02 /* RegisterView.swift */; };
 		DDCFD8619CD87B6F127C906F /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90B12BDBCE5FB3505F4DFF86 /* DashboardView.swift */; };
@@ -38,11 +42,15 @@
 		8B50917360E12C4109BF372A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		90B12BDBCE5FB3505F4DFF86 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		98193E8D50A12BFE76D0E4CF /* FamilyNovaParent.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FamilyNovaParent.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A29D9B6230D3B4E6EE9BF850 /* Encryption.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Encryption.swift; sourceTree = "<group>"; };
+		A8DEB7C47C8850693B2BE259 /* Subscription.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Subscription.swift; sourceTree = "<group>"; };
 		AFC2DCE579D198E7C0AAEA02 /* RegisterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegisterView.swift; sourceTree = "<group>"; };
 		BA3DF5584C3C1C13C32CF070 /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
+		C26D4F8C94BDA1F5A571ACC4 /* SubscriptionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionService.swift; sourceTree = "<group>"; };
 		C58E9DA80AFD04BF258FDF03 /* CreateChildAccountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateChildAccountView.swift; sourceTree = "<group>"; };
 		CC148EDCB0C10E310E3F123A /* MonitoringView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonitoringView.swift; sourceTree = "<group>"; };
 		D2A70B764625E43C386D6CC5 /* ProfileChangeApprovalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileChangeApprovalView.swift; sourceTree = "<group>"; };
+		E2B6BEE8A031D5F3177EA1FA /* SubscriptionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -66,6 +74,7 @@
 			isa = PBXGroup;
 			children = (
 				BA3DF5584C3C1C13C32CF070 /* AuthManager.swift */,
+				A8DEB7C47C8850693B2BE259 /* Subscription.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -84,6 +93,7 @@
 				D2A70B764625E43C386D6CC5 /* ProfileChangeApprovalView.swift */,
 				AFC2DCE579D198E7C0AAEA02 /* RegisterView.swift */,
 				68EC8D887EFC3CBBE5BF0BF9 /* SettingsView.swift */,
+				E2B6BEE8A031D5F3177EA1FA /* SubscriptionView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -100,6 +110,7 @@
 			isa = PBXGroup;
 			children = (
 				75934214D37B149BF6775DA6 /* ApiService.swift */,
+				C26D4F8C94BDA1F5A571ACC4 /* SubscriptionService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -121,6 +132,7 @@
 			isa = PBXGroup;
 			children = (
 				2E139914E755FEAA3736F68E /* DesignSystem.swift */,
+				A29D9B6230D3B4E6EE9BF850 /* Encryption.swift */,
 			);
 			path = Utils;
 			sourceTree = "<group>";
@@ -195,6 +207,7 @@
 				29BC15483869DA9E425439EC /* CreateChildAccountView.swift in Sources */,
 				DDCFD8619CD87B6F127C906F /* DashboardView.swift in Sources */,
 				4DD00A14495B83280F0B489E /* DesignSystem.swift in Sources */,
+				860E0F62AB2B3531664C21E9 /* Encryption.swift in Sources */,
 				AE6CE438AFE580AE0998F713 /* FamilyNovaParentApp.swift in Sources */,
 				B8B3AAAD5EC87D7ED72E7673 /* HomeworkView.swift in Sources */,
 				35BBE194A0C0AE78B5802195 /* LoginView.swift in Sources */,
@@ -204,6 +217,9 @@
 				308553DBF5366FF3F12958F9 /* ProfileChangeApprovalView.swift in Sources */,
 				C8AFA3888CE7D23F8F4A208B /* RegisterView.swift in Sources */,
 				5CE0BDF764E5ED76385E0988 /* SettingsView.swift in Sources */,
+				B063305195AF329434678669 /* Subscription.swift in Sources */,
+				8A87C5738C31ABFC2A80B860 /* SubscriptionService.swift in Sources */,
+				A9FBF997D169FD6A77A5A5E4 /* SubscriptionView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

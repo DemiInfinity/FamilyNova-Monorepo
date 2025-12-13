@@ -2,7 +2,8 @@ const crypto = require('crypto');
 
 // Encryption key - should be stored in environment variables
 // In production, use a strong random key: crypto.randomBytes(32).toString('hex')
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || crypto.randomBytes(32);
+// Default key matches iOS app default (for development only - MUST set ENCRYPTION_KEY in production!)
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'your-32-byte-encryption-key-here-must-match-backend';
 const ALGORITHM = 'aes-256-cbc'; // Using CBC for compatibility with mobile apps
 const IV_LENGTH = 16; // 16 bytes for AES
 

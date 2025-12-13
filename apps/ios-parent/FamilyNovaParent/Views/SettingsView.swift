@@ -74,18 +74,8 @@ struct SettingsView: View {
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.large)
             .sheet(isPresented: $showSubscription) {
-                NavigationView {
-                    SubscriptionView()
-                        .environmentObject(authManager)
-                        .navigationBarTitleDisplayMode(.inline)
-                        .toolbar {
-                            ToolbarItem(placement: .navigationBarTrailing) {
-                                Button("Done") {
-                                    showSubscription = false
-                                }
-                            }
-                        }
-                }
+                SubscriptionView()
+                    .environmentObject(authManager)
             }
         }
     }
