@@ -64,7 +64,7 @@ class AuthManager: ObservableObject {
             
             struct Session: Codable {
                 let access_token: String
-                let refresh_token: String
+                let refresh_token: String?
                 let expires_in: Int
                 let expires_at: Int?
             }
@@ -77,12 +77,16 @@ class AuthManager: ObservableObject {
             
             let result = try JSONDecoder().decode(LoginResponse.self, from: data)
             
-            DispatchQueue.main.async {
+            await MainActor.run {
                 // Store access token (Supabase session token)
                 if let session = result.session {
                     self.token = session.access_token
-                    // Store refresh token separately
-                    UserDefaults.standard.set(session.refresh_token, forKey: "refreshToken")
+                    // Store refresh token separately if available
+                    if let refreshToken = session.refresh_token, !refreshToken.isEmpty {
+                        UserDefaults.standard.set(refreshToken, forKey: "refreshToken")
+                    } else {
+                        UserDefaults.standard.removeObject(forKey: "refreshToken")
+                    }
                 } else {
                     self.token = nil
                 }
@@ -153,7 +157,11 @@ class AuthManager: ObservableObject {
             await MainActor.run {
                 if let session = result.session {
                     self.token = session.access_token
-                    UserDefaults.standard.set(session.refresh_token, forKey: "refreshToken")
+                    if let refreshToken = session.refresh_token, !refreshToken.isEmpty {
+                        UserDefaults.standard.set(refreshToken, forKey: "refreshToken")
+                    } else {
+                        UserDefaults.standard.removeObject(forKey: "refreshToken")
+                    }
                 } else {
                     self.token = nil
                 }

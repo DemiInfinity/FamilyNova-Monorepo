@@ -333,29 +333,29 @@ router.post('/login-code', [
     // For now, we'll return the user ID as a token and the client will need to handle it
     // In production, you'd want to use Supabase's proper session management
     
-    // Create a session using Supabase's generateLink to get a proper token
-    // We'll use magiclink type which generates a token we can use
+    // Create a session using Supabase Admin API
+    // Use generateLink to create a magic link with a token
     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
       type: 'magiclink',
-      email: child.email
+      email: child.email,
+      options: {
+        redirectTo: 'familynovakids://login'
+      }
     });
     
     let accessToken = null;
     
+    // Try to extract token from the generated link
     if (!linkError && linkData && linkData.properties) {
-      // Extract the token from the magic link URL
-      // The link contains a token hash we can use
       const linkUrl = linkData.properties.action_link;
       if (linkUrl) {
         try {
+          // Supabase magic links have tokens in the URL
+          // Format: https://...supabase.co/auth/v1/verify?token=...&type=magiclink&redirect_to=...
           const urlObj = new URL(linkUrl);
-          // The token is in the URL hash or as a parameter
-          // Supabase magic links have the token in the hash fragment
-          const hash = urlObj.hash;
-          if (hash) {
-            // Extract token from hash (format: #access_token=...&type=...)
-            const params = new URLSearchParams(hash.substring(1));
-            accessToken = params.get('access_token') || params.get('token');
+          const tokenParam = urlObj.searchParams.get('token');
+          if (tokenParam) {
+            accessToken = tokenParam;
           }
         } catch (e) {
           console.error('Error parsing link URL:', e);
@@ -363,23 +363,19 @@ router.post('/login-code', [
       }
     }
     
-    // If we couldn't extract a token from the link, use a workaround
-    // We'll create a session by using the child's ID as a temporary token
-    // The middleware will need to handle this, or we use Supabase's session creation
+    // If we still don't have a token, use a workaround
+    // We'll create a session by using Supabase's session creation
+    // For code-based login, we can use the child's auth user to create a session
     if (!accessToken) {
-      // Fallback: Use Supabase client to create a session
-      // Since we can't sign in without password, we'll use the admin API
-      // to create a session token directly
-      const { createClient } = require('@supabase/supabase-js');
-      const anonKey = process.env.SUPABASE_ANON_KEY;
-      const supabaseClient = createClient(process.env.SUPABASE_URL, anonKey);
-      
-      // Use admin API to create a session
-      // We'll use generateLink result or create a custom token
-      // For now, we'll return the child ID as token (temporary solution)
-      // The client will need to handle this differently
-      accessToken = child.id; // Temporary - will be replaced with proper session
+      // Use Supabase client with anon key to sign in
+      // But we don't have password, so we need another approach
+      // For now, we'll use the child ID as a temporary token
+      // The middleware will verify this is a valid child user
+      accessToken = `code_login_${child.id}_${Date.now()}`;
     }
+    
+    // Update last login
+    await User.findByIdAndUpdate(child.id, { lastLogin: new Date() });
     
     // Update last login
     await User.findByIdAndUpdate(child.id, { lastLogin: new Date() });
@@ -387,7 +383,7 @@ router.post('/login-code', [
     res.json({
       session: {
         access_token: accessToken,
-        refresh_token: '', // Code-based login doesn't provide refresh token
+        refresh_token: null, // Code-based login doesn't provide refresh token
         expires_in: 3600,
         expires_at: Math.floor(Date.now() / 1000) + 3600
       },
