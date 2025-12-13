@@ -363,21 +363,40 @@ router.post('/login-code', [
       }
     }
     
-    // If we still don't have a token, use a workaround
-    // We'll create a session by using Supabase's session creation
-    // For code-based login, we can use the child's auth user to create a session
+    // If we couldn't extract a valid token, we need to create a proper Supabase JWT
+    // The magic link token might not be a session token, so we'll create one using JWT
     if (!accessToken) {
-      // Use Supabase client with anon key to sign in
-      // But we don't have password, so we need another approach
-      // For now, we'll use the child ID as a temporary token
-      // The middleware will verify this is a valid child user
-      accessToken = `code_login_${child.id}_${Date.now()}`;
+      // Create a proper Supabase JWT token using the JWT secret
+      // Supabase JWT tokens require the JWT secret from the project settings
+      const jwt = require('jsonwebtoken');
+      
+      // Get JWT secret from environment (Supabase JWT secret, not service role key)
+      // This should be set in Supabase project settings -> API -> JWT Secret
+      const jwtSecret = process.env.SUPABASE_JWT_SECRET;
+      
+      if (!jwtSecret) {
+        console.error('SUPABASE_JWT_SECRET not configured. Cannot create session token for code-based login.');
+        return res.status(500).json({ error: 'Server configuration error: JWT secret not found' });
+      }
+      
+      // Create a Supabase-compatible JWT token
+      // Supabase JWT format: { aud: 'authenticated', exp: timestamp, sub: user_id, ... }
+      accessToken = jwt.sign(
+        {
+          aud: 'authenticated',
+          exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour expiration
+          sub: child.id,
+          email: child.email,
+          role: 'authenticated',
+          app_metadata: {},
+          user_metadata: {}
+        },
+        jwtSecret,
+        { algorithm: 'HS256' }
+      );
     }
     
-    // Update last login
-    await User.findByIdAndUpdate(child.id, { lastLogin: new Date() });
-    
-    // Update last login
+    // Update last login (removed duplicate call)
     await User.findByIdAndUpdate(child.id, { lastLogin: new Date() });
     
     res.json({

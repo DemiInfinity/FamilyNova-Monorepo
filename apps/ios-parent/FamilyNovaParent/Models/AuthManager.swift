@@ -62,8 +62,12 @@ class AuthManager: ObservableObject {
                 // Store access token (Supabase session token)
                 if let session = result.session {
                     self.token = session.access_token
-                    // Store refresh token separately
-                    UserDefaults.standard.set(session.refresh_token, forKey: "refreshToken")
+                    // Store refresh token separately if available
+                    if let refreshToken = session.refresh_token, !refreshToken.isEmpty {
+                        UserDefaults.standard.set(refreshToken, forKey: "refreshToken")
+                    } else {
+                        UserDefaults.standard.removeObject(forKey: "refreshToken")
+                    }
                 } else {
                     self.token = nil
                 }
@@ -123,8 +127,12 @@ class AuthManager: ObservableObject {
                 // Store access token (Supabase session token)
                 if let session = result.session {
                     self.token = session.access_token
-                    // Store refresh token separately
-                    UserDefaults.standard.set(session.refresh_token, forKey: "refreshToken")
+                    // Store refresh token separately if available
+                    if let refreshToken = session.refresh_token, !refreshToken.isEmpty {
+                        UserDefaults.standard.set(refreshToken, forKey: "refreshToken")
+                    } else {
+                        UserDefaults.standard.removeObject(forKey: "refreshToken")
+                    }
                 } else {
                     self.token = nil
                 }
@@ -161,7 +169,7 @@ struct RegisterResponse: Codable {
 
 struct AuthSession: Codable {
     let access_token: String
-    let refresh_token: String
+    let refresh_token: String?
     let expires_in: Int
     let expires_at: Int?
 }
