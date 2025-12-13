@@ -15,52 +15,62 @@ router.use(requireUserType('parent'));
 // @access  Private (Parent only)
 router.get('/dashboard', async (req, res) => {
   try {
-    const parent = await User.findById(req.user._id)
-      .populate('children', 'profile verification friends lastLogin')
-      .populate('parentConnections.parent', 'profile email');
+    const { getSupabase } = require('../config/database');
+    const supabase = await getSupabase();
     
-    // Get recent activity from children
-    // For partial monitoring, only show flagged messages
-    // For full monitoring, show all messages
-    const children = await User.find({ _id: { $in: parent.children } });
-    const fullMonitoringChildren = children
-      .filter(c => c.monitoringLevel === 'full')
-      .map(c => c._id);
-    
-    let messageQuery = {
-      $or: [
-        { sender: { $in: parent.children } },
-        { receiver: { $in: parent.children } }
-      ]
-    };
-    
-    // For partial monitoring kids, only show messages that need attention
-    const partialMonitoringChildren = children
-      .filter(c => c.monitoringLevel === 'partial')
-      .map(c => c._id);
-    
-    if (partialMonitoringChildren.length > 0) {
-      messageQuery.$or = [
-        { sender: { $in: fullMonitoringChildren } },
-        { receiver: { $in: fullMonitoringChildren } },
-        { sender: { $in: partialMonitoringChildren }, flagged: true },
-        { receiver: { $in: partialMonitoringChildren }, flagged: true }
-      ];
+    // Get parent user
+    const parent = await User.findById(req.user.id);
+    if (!parent) {
+      return res.status(404).json({ error: 'Parent not found' });
     }
     
-    const childrenActivity = await Message.find(messageQuery)
-    .sort({ createdAt: -1 })
-    .limit(20)
-    .populate('sender receiver', 'profile displayName monitoringLevel');
+    // Get children from parent_children table
+    const { data: parentChildren, error: childrenError } = await supabase
+      .from('parent_children')
+      .select('child_id')
+      .eq('parent_id', req.user.id);
+
+    if (childrenError) {
+      console.error('Error fetching children:', childrenError);
+      return res.status(500).json({ error: 'Failed to fetch children' });
+    }
+
+    const childIds = parentChildren.map(pc => pc.child_id);
+    
+    // Fetch children user profiles
+    const children = [];
+    if (childIds.length > 0) {
+      const { data: childrenData, error: childrenDataError } = await supabase
+        .from('users')
+        .select('*')
+        .in('id', childIds);
+
+      if (childrenDataError) {
+        console.error('Error fetching children data:', childrenDataError);
+      } else {
+        for (const childData of childrenData || []) {
+          const child = new User(childData);
+          children.push({
+            id: child.id,
+            profile: child.profile,
+            verification: child.verification,
+            lastLogin: child.lastLogin ? new Date(child.lastLogin).toISOString() : null
+          });
+        }
+      }
+    }
+    
+    // Get recent activity from children (simplified for now)
+    // TODO: Implement message fetching with proper monitoring levels
     
     res.json({
       parent: {
-        id: parent._id,
+        id: parent.id,
         profile: parent.profile,
-        children: parent.children,
-        parentConnections: parent.parentConnections
+        children: children,
+        parentConnections: [] // TODO: Implement parent connections
       },
-      recentActivity: childrenActivity
+      recentActivity: [] // TODO: Implement recent activity
     });
   } catch (error) {
     console.error(error);
@@ -130,9 +140,11 @@ router.post('/children/create', [
     }
     
     const { email, password, firstName, lastName, displayName, dateOfBirth, school, grade } = req.body;
+    const { getSupabase } = require('../config/database');
+    const supabase = await getSupabase();
     
     // Check if user exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findByEmail(email);
     if (existingUser) {
       return res.status(400).json({ error: 'Email already in use' });
     }
@@ -150,37 +162,62 @@ router.post('/children/create', [
       monitoringLevel = age >= 13 ? 'partial' : 'full';
     }
     
-    // Create child account
-    const child = new User({
-      email,
-      password,
+    // 1. Create child account in Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email: email.toLowerCase().trim(),
+      password: password,
+      email_confirm: true // Auto-confirm email
+    });
+
+    if (authError) {
+      console.error('Supabase Auth error:', authError);
+      return res.status(400).json({ error: authError.message || 'Failed to create user' });
+    }
+
+    if (!authData.user) {
+      return res.status(500).json({ error: 'Failed to create user account' });
+    }
+    
+    // 2. Create child profile in our users table
+    const child = await User.create({
+      id: authData.user.id, // Use Supabase Auth user ID
+      email: authData.user.email,
       userType: 'kid',
       profile: {
         firstName,
         lastName,
         displayName: displayName || `${firstName} ${lastName}`,
-        dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
+        dateOfBirth: dateOfBirth ? new Date(dateOfBirth).toISOString() : undefined,
         school,
         grade
       },
-      parentAccount: req.user._id,
+      parentAccount: req.user.id,
       monitoringLevel: monitoringLevel,
       verification: {
         parentVerified: true, // Auto-verified since parent is creating it
-        verifiedAt: new Date()
+        schoolVerified: false
       }
     });
     
-    await child.save();
-    
-    // Add child to parent's children list
-    req.user.children.push(child._id);
-    await req.user.save();
+    // 3. Add parent-child relationship in parent_children table
+    const { error: relationError } = await supabase
+      .from('parent_children')
+      .insert({
+        parent_id: req.user.id,
+        child_id: child.id
+      });
+
+    if (relationError) {
+      console.error('Error creating parent-child relationship:', relationError);
+      // Try to clean up the created user
+      await supabase.auth.admin.deleteUser(child.id);
+      return res.status(500).json({ error: 'Failed to link child to parent' });
+    }
     
     res.status(201).json({
       message: 'Child account created successfully',
       child: {
-        id: child._id,
+        id: child.id,
         email: child.email,
         profile: child.profile,
         verification: child.verification

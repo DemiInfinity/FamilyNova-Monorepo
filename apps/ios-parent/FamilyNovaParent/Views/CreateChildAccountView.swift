@@ -276,17 +276,86 @@ struct CreateChildAccountView: View {
             return
         }
         
+        guard let token = authManager.token else {
+            errorMessage = "Not authenticated. Please log in again."
+            showError = true
+            return
+        }
+        
         isCreating = true
         Task {
-            // TODO: Implement API call to create child account
-            // POST /api/parents/children/create
-            // Body: { email, password, firstName, lastName, displayName, dateOfBirth, school, grade }
-            
-            // Simulate API call
-            try? await Task.sleep(nanoseconds: 1_500_000_000)
-            
-            isCreating = false
-            showSuccess = true
+            do {
+                let apiService = ApiService.shared
+                
+                // Prepare request body
+                var body: [String: Any] = [
+                    "email": email.trimmingCharacters(in: .whitespacesAndNewlines),
+                    "password": password,
+                    "firstName": firstName.trimmingCharacters(in: .whitespacesAndNewlines),
+                    "lastName": lastName.trimmingCharacters(in: .whitespacesAndNewlines)
+                ]
+                
+                if !displayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    body["displayName"] = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+                }
+                
+                // Format date of birth as ISO8601 string
+                let formatter = ISO8601DateFormatter()
+                formatter.formatOptions = [.withFullDate, .withDashSeparatorInDate]
+                body["dateOfBirth"] = formatter.string(from: dateOfBirth)
+                
+                if !school.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    body["school"] = school.trimmingCharacters(in: .whitespacesAndNewlines)
+                }
+                
+                if !grade.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    body["grade"] = grade.trimmingCharacters(in: .whitespacesAndNewlines)
+                }
+                
+                // Make API call
+                struct CreateChildResponse: Codable {
+                    let message: String
+                    let child: ChildResponse
+                }
+                
+                struct ChildResponse: Codable {
+                    let id: String
+                    let email: String
+                    let profile: ChildProfile
+                    let verification: VerificationStatus
+                }
+                
+                let response: CreateChildResponse = try await apiService.makeRequest(
+                    endpoint: "parents/children/create",
+                    method: "POST",
+                    body: body,
+                    token: token
+                )
+                
+                await MainActor.run {
+                    isCreating = false
+                    showSuccess = true
+                }
+            } catch {
+                await MainActor.run {
+                    isCreating = false
+                    if let apiError = error as? ApiError {
+                        switch apiError {
+                        case .httpError(let code):
+                            errorMessage = "Server error (code: \(code)). Please try again."
+                        case .invalidURL:
+                            errorMessage = "Invalid server URL. Please check your connection."
+                        case .invalidResponse:
+                            errorMessage = "Invalid server response. Please try again."
+                        case .decodingError:
+                            errorMessage = "Failed to parse server response. Please try again."
+                        }
+                    } else {
+                        errorMessage = error.localizedDescription
+                    }
+                    showError = true
+                }
+            }
         }
     }
 }

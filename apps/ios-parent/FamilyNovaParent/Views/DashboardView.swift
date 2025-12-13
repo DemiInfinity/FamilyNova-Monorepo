@@ -6,8 +6,10 @@
 import SwiftUI
 
 struct DashboardView: View {
+    @EnvironmentObject var authManager: AuthManager
     @State private var children: [Child] = []
     @State private var showCreateChild = false
+    @State private var isLoading = false
     
     var body: some View {
         NavigationView {
@@ -40,7 +42,14 @@ struct DashboardView: View {
                         }
                         .padding(.horizontal, ParentAppSpacing.m)
                         
-                        if children.isEmpty {
+                        if isLoading {
+                            HStack {
+                                Spacer()
+                                ProgressView()
+                                    .padding()
+                                Spacer()
+                            }
+                        } else if children.isEmpty {
                             EmptyChildrenCard(showCreateChild: $showCreateChild)
                                 .padding(.horizontal, ParentAppSpacing.m)
                         } else {
@@ -111,7 +120,66 @@ struct DashboardView: View {
             .navigationBarTitleDisplayMode(.large)
             .sheet(isPresented: $showCreateChild) {
                 CreateChildAccountView()
+                    .environmentObject(authManager)
+                    .onDisappear {
+                        // Refresh children when the sheet is dismissed
+                        Task {
+                            await loadChildren()
+                        }
+                    }
             }
+            .onAppear {
+                Task {
+                    await loadChildren()
+                }
+            }
+            .refreshable {
+                await loadChildren()
+            }
+        }
+    }
+    
+    private func loadChildren() async {
+        guard let token = authManager.token else {
+            return
+        }
+        
+        await MainActor.run {
+            isLoading = true
+        }
+        
+        do {
+            let apiService = ApiService.shared
+            
+            // Fetch dashboard data which includes children
+            struct DashboardResponse: Codable {
+                let parent: ParentDashboardData
+            }
+            
+            struct ParentDashboardData: Codable {
+                let id: String
+                let profile: ParentProfile
+                let children: [Child]
+                let parentConnections: [ParentConnection]?
+            }
+            
+            let response: DashboardResponse = try await apiService.makeRequest(
+                endpoint: "parents/dashboard",
+                method: "GET",
+                token: token
+            )
+            
+            await MainActor.run {
+                self.children = response.parent.children
+                self.isLoading = false
+            }
+        } catch {
+            // If dashboard endpoint fails, try a simpler children endpoint
+            // For now, just set loading to false
+            await MainActor.run {
+                self.isLoading = false
+            }
+            print("Error loading children: \(error)")
         }
     }
 }

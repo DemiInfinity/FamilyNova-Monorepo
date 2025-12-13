@@ -56,22 +56,9 @@ class AuthManager: ObservableObject {
         }
         
         if (200...299).contains(httpResponse.statusCode) {
-            // Handle Supabase session response
-            struct LoginResponse: Codable {
-                let session: Session?
-                let user: UserResponse
-            }
-            
-            struct Session: Codable {
-                let access_token: String
-                let refresh_token: String
-                let expires_in: Int
-                let expires_at: Int?
-            }
-            
             let result = try JSONDecoder().decode(LoginResponse.self, from: data)
             
-            DispatchQueue.main.async {
+            await MainActor.run {
                 // Store access token (Supabase session token)
                 if let session = result.session {
                     self.token = session.access_token
@@ -132,10 +119,19 @@ class AuthManager: ObservableObject {
         if (200...299).contains(httpResponse.statusCode) {
             let result = try JSONDecoder().decode(RegisterResponse.self, from: data)
             
-            DispatchQueue.main.async {
-                self.token = result.token
-                self.isAuthenticated = true
-                UserDefaults.standard.set(result.token, forKey: "authToken")
+            await MainActor.run {
+                // Store access token (Supabase session token)
+                if let session = result.session {
+                    self.token = session.access_token
+                    // Store refresh token separately
+                    UserDefaults.standard.set(session.refresh_token, forKey: "refreshToken")
+                } else {
+                    self.token = nil
+                }
+                self.isAuthenticated = self.token != nil
+                if let token = self.token {
+                    UserDefaults.standard.set(token, forKey: "authToken")
+                }
             }
         } else {
             let errorData = try? JSONDecoder().decode(ErrorResponse.self, from: data)
@@ -151,12 +147,26 @@ class AuthManager: ObservableObject {
     }
 }
 
-struct RegisterResponse: Codable {
-    let token: String
-    let user: UserResponse
+// Response structures for Supabase Auth
+struct LoginResponse: Codable {
+    let session: AuthSession?
+    let user: AuthUserResponse
 }
 
-struct UserResponse: Codable {
+struct RegisterResponse: Codable {
+    let session: AuthSession?
+    let user: AuthUserResponse
+    let message: String?
+}
+
+struct AuthSession: Codable {
+    let access_token: String
+    let refresh_token: String
+    let expires_in: Int
+    let expires_at: Int?
+}
+
+struct AuthUserResponse: Codable {
     let id: String
     let email: String
     let userType: String
