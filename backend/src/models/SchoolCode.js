@@ -1,82 +1,114 @@
-const mongoose = require('mongoose');
+const { getSupabase } = require('../config/database');
 
-const schoolCodeSchema = new mongoose.Schema({
-  code: {
-    type: String,
-    required: true,
-    unique: true,
-    uppercase: true
-  },
-  school: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'School',
-    required: true
-  },
-  generatedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'School',
-    required: true
-  },
-  assignedTo: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    default: null
-  },
-  grade: {
-    type: String,
-    required: true
-  },
-  expiresAt: {
-    type: Date,
-    default: function() {
-      // Codes expire after 30 days
-      const date = new Date();
-      date.setDate(date.getDate() + 30);
-      return date;
-    }
-  },
-  usedAt: Date,
-  isActive: {
-    type: Boolean,
-    default: true
+class SchoolCode {
+  constructor(data) {
+    this.id = data.id;
+    this.code = data.code;
+    this.schoolId = data.school_id;
+    this.gradeLevel = data.grade_level;
+    this.generatedBy = data.generated_by;
+    this.generatedAt = data.generated_at;
+    this.expiresAt = data.expires_at;
+    this.usedBy = data.used_by;
+    this.usedAt = data.used_at;
   }
-}, {
-  timestamps: true
-});
 
-// Generate unique code before saving
-schoolCodeSchema.pre('save', async function(next) {
-  if (!this.code) {
-    // Generate a 6-character alphanumeric code
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Exclude confusing chars
+  static async findByCode(code) {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('school_codes')
+      .select('*')
+      .eq('code', code.toUpperCase())
+      .single();
+
+    if (error || !data) return null;
+    return new SchoolCode(data);
+  }
+
+  static async find(filter = {}) {
+    const supabase = getSupabase();
+    let query = supabase.from('school_codes').select('*');
+
+    if (filter.schoolId) query = query.eq('school_id', filter.schoolId);
+    if (filter.usedBy) query = query.eq('used_by', filter.usedBy);
+
+    query = query.order('generated_at', { ascending: false });
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data ? data.map(c => new SchoolCode(c)) : [];
+  }
+
+  static async generateCode(schoolId, gradeLevel, generatedBy) {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     let code = '';
-    for (let i = 0; i < 6; i++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    
-    // Ensure uniqueness
     let isUnique = false;
+    const supabase = getSupabase();
+
     while (!isUnique) {
-      const existing = await mongoose.model('SchoolCode').findOne({ code });
+      code = '';
+      for (let i = 0; i < 6; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+
+      // Check if code exists
+      const { data: existing } = await supabase
+        .from('school_codes')
+        .select('id')
+        .eq('code', code)
+        .single();
+
       if (!existing) {
         isUnique = true;
-      } else {
-        code = '';
-        for (let i = 0; i < 6; i++) {
-          code += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
       }
     }
-    
-    this.code = code;
+
+    // Create code with 30-day expiration
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30);
+
+    const dbData = {
+      code: code,
+      school_id: schoolId,
+      grade_level: gradeLevel,
+      generated_by: generatedBy,
+      expires_at: expiresAt.toISOString()
+    };
+
+    const { data, error } = await supabase
+      .from('school_codes')
+      .insert(dbData)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return new SchoolCode(data);
   }
-  next();
-});
 
-// Indexes
-schoolCodeSchema.index({ code: 1 });
-schoolCodeSchema.index({ school: 1, isActive: 1 });
-schoolCodeSchema.index({ assignedTo: 1 });
+  async markAsUsed(userId) {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('school_codes')
+      .update({
+        used_by: userId,
+        used_at: new Date().toISOString()
+      })
+      .eq('id', this.id)
+      .select()
+      .single();
 
-module.exports = mongoose.model('SchoolCode', schoolCodeSchema);
+    if (error) throw error;
+    Object.assign(this, new SchoolCode(data));
+    return this;
+  }
 
+  isExpired() {
+    return new Date(this.expiresAt) < new Date();
+  }
+
+  isUsed() {
+    return !!this.usedBy;
+  }
+}
+
+module.exports = SchoolCode;
