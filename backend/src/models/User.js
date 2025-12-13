@@ -67,7 +67,7 @@ class User {
     const dbData = {
       id: userData.id, // Use Supabase Auth user ID
       email: userData.email.toLowerCase().trim(),
-      password: null, // No longer storing password (handled by Supabase Auth)
+      // password: explicitly omitted - Supabase Auth handles passwords
       user_type: userData.userType,
       profile: userData.profile || {},
       monitoring_level: userData.monitoringLevel || 'full',
