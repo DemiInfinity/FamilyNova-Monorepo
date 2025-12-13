@@ -278,72 +278,65 @@ struct ActivityReportsView: View {
         isLoading = true
         
         Task {
-            do {
-                guard let token = authManager.token else {
-                    await MainActor.run {
-                        isLoading = false
-                    }
-                    return
-                }
-                
-                let apiService = ApiService.shared
-                var loadedReports: [ActivityReport] = []
-                
-                // Fetch activity data for each child
-                for child in children {
-                    do {
-                        struct ActivityResponse: Codable {
-                            let childId: String
-                            let postsCount: Int
-                            let messagesCount: Int
-                            let friendsCount: Int
-                            let lastActivity: String?
-                        }
-                        
-                        let response: ActivityResponse = try await apiService.makeRequest(
-                            endpoint: "parents/children/\(child.id)/activity",
-                            method: "GET",
-                            token: token
-                        )
-                        
-                        let dateFormatter = ISO8601DateFormatter()
-                        dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-                        
-                        let lastActivityDate = response.lastActivity != nil
-                            ? dateFormatter.date(from: response.lastActivity!)
-                            : nil
-                        
-                        loadedReports.append(ActivityReport(
-                            childId: response.childId,
-                            period: selectedPeriod,
-                            messagesCount: response.messagesCount,
-                            postsCount: response.postsCount,
-                            friendsCount: response.friendsCount,
-                            lastActivity: lastActivityDate
-                        ))
-                    } catch {
-                        print("[ActivityReports] Error loading activity for child \(child.id): \(error)")
-                        // Add empty report for this child if API fails
-                        loadedReports.append(ActivityReport(
-                            childId: child.id,
-                            period: selectedPeriod,
-                            messagesCount: 0,
-                            postsCount: 0,
-                            friendsCount: 0,
-                            lastActivity: nil
-                        ))
-                    }
-                }
-                
-                await MainActor.run {
-                    reports = loadedReports
-                    isLoading = false
-                }
-            } catch {
+            guard let token = authManager.token else {
                 await MainActor.run {
                     isLoading = false
-                    print("[ActivityReports] Error loading reports: \(error)")
                 }
+                return
+            }
+            
+            let apiService = ApiService.shared
+            var loadedReports: [ActivityReport] = []
+            
+            // Fetch activity data for each child
+            for child in children {
+                do {
+                    struct ActivityResponse: Codable {
+                        let childId: String
+                        let postsCount: Int
+                        let messagesCount: Int
+                        let friendsCount: Int
+                        let lastActivity: String?
+                    }
+                    
+                    let response: ActivityResponse = try await apiService.makeRequest(
+                        endpoint: "parents/children/\(child.id)/activity",
+                        method: "GET",
+                        token: token
+                    )
+                    
+                    let dateFormatter = ISO8601DateFormatter()
+                    dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                    
+                    let lastActivityDate = response.lastActivity != nil
+                        ? dateFormatter.date(from: response.lastActivity!)
+                        : nil
+                    
+                    loadedReports.append(ActivityReport(
+                        childId: response.childId,
+                        period: selectedPeriod,
+                        messagesCount: response.messagesCount,
+                        postsCount: response.postsCount,
+                        friendsCount: response.friendsCount,
+                        lastActivity: lastActivityDate
+                    ))
+                } catch {
+                    print("[ActivityReports] Error loading activity for child \(child.id): \(error)")
+                    // Add empty report for this child if API fails
+                    loadedReports.append(ActivityReport(
+                        childId: child.id,
+                        period: selectedPeriod,
+                        messagesCount: 0,
+                        postsCount: 0,
+                        friendsCount: 0,
+                        lastActivity: nil
+                    ))
+                }
+            }
+            
+            await MainActor.run {
+                reports = loadedReports
+                isLoading = false
             }
         }
     }

@@ -170,6 +170,53 @@ struct SafetyDashboardView: View {
     private var monitoringCount: Int {
         children.count
     }
+    
+    private func loadActivityData() {
+        guard !children.isEmpty, let token = authManager.token else { return }
+        
+        isLoadingActivity = true
+        Task {
+            let apiService = ApiService.shared
+            var activityData: [String: ChildActivityStats] = [:]
+            
+            for child in children {
+                do {
+                    struct ActivityResponse: Codable {
+                        let childId: String
+                        let postsCount: Int
+                        let messagesCount: Int
+                        let friendsCount: Int
+                        let lastActivity: String?
+                    }
+                    
+                    let response: ActivityResponse = try await apiService.makeRequest(
+                        endpoint: "parents/children/\(child.id)/activity",
+                        method: "GET",
+                        token: token
+                    )
+                    
+                    activityData[child.id] = ChildActivityStats(
+                        postsCount: response.postsCount,
+                        messagesCount: response.messagesCount,
+                        friendsCount: response.friendsCount
+                    )
+                } catch {
+                    print("[SafetyDashboard] Error loading activity for child \(child.id): \(error)")
+                }
+            }
+            
+            await MainActor.run {
+                self.childActivityData = activityData
+                self.isLoadingActivity = false
+            }
+        }
+    }
+}
+
+struct ChildActivityStats {
+    let postsCount: Int
+    let messagesCount: Int
+    let friendsCount: Int
 }
 
 struct SafetyStatCard: View {

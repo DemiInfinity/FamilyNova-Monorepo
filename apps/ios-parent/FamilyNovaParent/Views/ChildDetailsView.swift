@@ -515,6 +515,7 @@ struct QRCodeLoginView: View {
     let loginCode: String
     let childName: String
     @Environment(\.dismiss) private var dismiss
+    @State private var showCopiedMessage = false
     
     var body: some View {
         NavigationView {
@@ -544,12 +545,40 @@ struct QRCodeLoginView: View {
                             .font(CosmicFonts.caption)
                             .foregroundColor(CosmicColors.textMuted)
                         
-                        Text(loginCode)
-                            .font(.system(size: 24, weight: .bold, design: .monospaced))
-                            .foregroundColor(CosmicColors.nebulaPurple)
-                            .padding()
-                            .background(CosmicColors.glassBackground.opacity(0.5))
-                            .cornerRadius(CosmicCornerRadius.medium)
+                        HStack(spacing: CosmicSpacing.s) {
+                            Text(loginCode)
+                                .font(.system(size: 24, weight: .bold, design: .monospaced))
+                                .foregroundColor(CosmicColors.nebulaPurple)
+                                .padding()
+                                .background(CosmicColors.glassBackground.opacity(0.5))
+                                .cornerRadius(CosmicCornerRadius.medium)
+                            
+                            Button(action: {
+                                UIPasteboard.general.string = loginCode
+                                withAnimation {
+                                    showCopiedMessage = true
+                                }
+                                // Hide the message after 2 seconds
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                    withAnimation {
+                                        showCopiedMessage = false
+                                    }
+                                }
+                            }) {
+                                Image(systemName: showCopiedMessage ? "checkmark.circle.fill" : "doc.on.doc")
+                                    .cosmicIcon(size: 24, color: showCopiedMessage ? CosmicColors.planetTeal : CosmicColors.nebulaPurple)
+                                    .frame(width: 50, height: 50)
+                                    .background(CosmicColors.glassBackground.opacity(0.5))
+                                    .cornerRadius(CosmicCornerRadius.medium)
+                            }
+                        }
+                        
+                        if showCopiedMessage {
+                            Text("Copied!")
+                                .font(CosmicFonts.caption)
+                                .foregroundColor(CosmicColors.planetTeal)
+                                .transition(.opacity)
+                        }
                     }
                     .padding(.horizontal, CosmicSpacing.m)
                     

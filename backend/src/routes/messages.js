@@ -26,30 +26,59 @@ router.post('/', requireUserType('kid', 'parent'), [
     const { receiverId, content } = req.body;
     const supabase = await getSupabase();
     
+    console.log(`[Messages] Sending message from ${req.user.id} (${req.user.userType}) to ${receiverId}`);
+    
     // Verify receiver is a friend
     const receiver = await User.findById(receiverId);
     if (!receiver) {
+      console.log(`[Messages] Receiver not found: ${receiverId}`);
       return res.status(404).json({ error: 'Receiver not found' });
     }
     
+    console.log(`[Messages] Receiver found: ${receiver.id} (${receiver.userType})`);
+    
     // Parents can only message other parents, kids can only message other kids
     if (req.user.userType === 'parent' && receiver.userType !== 'parent') {
+      console.log(`[Messages] User type mismatch: parent trying to message ${receiver.userType}`);
       return res.status(403).json({ error: 'Parents can only message other parents' });
     }
     if (req.user.userType === 'kid' && receiver.userType !== 'kid') {
+      console.log(`[Messages] User type mismatch: kid trying to message ${receiver.userType}`);
       return res.status(403).json({ error: 'Kids can only message other kids' });
     }
     
-    // Check if they are friends
-    const { data: friendship, error: friendError } = await supabase
+    // Check if they are friends - normalize UUIDs to lowercase for comparison
+    const senderIdLower = req.user.id.toLowerCase();
+    const receiverIdLower = receiverId.toLowerCase();
+    
+    const { data: friendships, error: friendError } = await supabase
       .from('friendships')
       .select('*')
-      .or(`and(user_id.eq.${req.user.id},friend_id.eq.${receiverId}),and(user_id.eq.${receiverId},friend_id.eq.${req.user.id})`)
-      .eq('status', 'accepted')
-      .single();
+      .or(`and(user_id.ilike.${senderIdLower},friend_id.ilike.${receiverIdLower}),and(user_id.ilike.${receiverIdLower},friend_id.ilike.${senderIdLower})`)
+      .eq('status', 'accepted');
     
-    if (friendError || !friendship) {
-      return res.status(403).json({ error: 'Can only message friends' });
+    if (friendError) {
+      console.error('[Messages] Error checking friendship:', friendError);
+      return res.status(500).json({ error: 'Failed to verify friendship' });
+    }
+    
+    console.log(`[Messages] Found ${friendships?.length || 0} friendship(s) between ${senderIdLower} and ${receiverIdLower}`);
+    
+    if (!friendships || friendships.length === 0) {
+      console.log(`[Messages] No accepted friendship found between ${senderIdLower} and ${receiverIdLower}`);
+      // Check if there's a pending friendship
+      const { data: pendingFriendships } = await supabase
+        .from('friendships')
+        .select('*')
+        .or(`and(user_id.ilike.${senderIdLower},friend_id.ilike.${receiverIdLower}),and(user_id.ilike.${receiverIdLower},friend_id.ilike.${senderIdLower})`)
+        .eq('status', 'pending');
+      
+      if (pendingFriendships && pendingFriendships.length > 0) {
+        console.log(`[Messages] Found pending friendship - needs to be accepted first`);
+        return res.status(403).json({ error: 'Friend request is pending. Please wait for acceptance.' });
+      }
+      
+      return res.status(403).json({ error: 'Can only message friends. Please add this user as a friend first.' });
     }
     
     // Check monitoring level - full monitoring means all messages are flagged for review

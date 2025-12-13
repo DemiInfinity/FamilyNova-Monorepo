@@ -6,6 +6,8 @@
 import SwiftUI
 
 struct MessagesView: View {
+    var initialFriend: Friend? = nil
+    @EnvironmentObject var authManager: AuthManager
     @State private var conversations: [Conversation] = []
     @State private var selectedFriend: Friend?
     @State private var showFriendPicker = false
@@ -24,6 +26,7 @@ struct MessagesView: View {
                 
                 if let selectedFriend = selectedFriend {
                     ChatView(friend: selectedFriend)
+                        .environmentObject(authManager)
                 } else {
                     VStack(spacing: ParentAppSpacing.l) {
                         if conversations.isEmpty {
@@ -108,15 +111,128 @@ struct MessagesView: View {
                 }
             }
             .onAppear {
-                loadConversations()
+                if let initialFriend = initialFriend {
+                    selectedFriend = initialFriend
+                } else {
+                    loadConversations()
+                }
             }
         }
     }
     
     private func loadConversations() {
         isLoading = true
-        // TODO: Implement API call to fetch conversations
-        isLoading = false
+        Task {
+            await loadConversationsAsync()
+        }
+    }
+    
+    private func loadConversationsAsync() async {
+        guard let token = authManager.getValidatedToken() else {
+            await MainActor.run {
+                isLoading = false
+            }
+            return
+        }
+        
+        do {
+            let apiService = ApiService.shared
+            
+            // Get friends list
+            struct FriendsResponse: Codable {
+                let friends: [FriendResult]
+            }
+            
+            struct FriendResult: Codable {
+                let id: String
+                let profile: ProfileResult
+                let isVerified: Bool
+            }
+            
+            struct ProfileResult: Codable {
+                let displayName: String?
+                let avatar: String?
+            }
+            
+            let friendsResponse: FriendsResponse = try await apiService.makeRequest(
+                endpoint: "friends",
+                method: "GET",
+                token: token
+            )
+            
+            // Get messages to find last message for each friend
+            struct MessagesResponse: Codable {
+                let messages: [MessageResponse]
+            }
+            
+            struct MessageResponse: Codable {
+                let id: String
+                let sender: SenderResponse
+                let receiver: ReceiverResponse
+                let content: String
+                let createdAt: String
+                let status: String
+            }
+            
+            struct SenderResponse: Codable {
+                let id: String
+            }
+            
+            struct ReceiverResponse: Codable {
+                let id: String
+            }
+            
+            let messagesResponse: MessagesResponse = try await apiService.makeRequest(
+                endpoint: "messages",
+                method: "GET",
+                token: token
+            )
+            
+            let dateFormatter = ISO8601DateFormatter()
+            dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            
+            await MainActor.run {
+                // Create conversations from friends and their last messages
+                self.conversations = friendsResponse.friends.map { friendResult in
+                    let friend = Friend(
+                        id: UUID(uuidString: friendResult.id) ?? UUID(),
+                        displayName: friendResult.profile.displayName ?? "Unknown",
+                        avatar: friendResult.profile.avatar,
+                        isVerified: friendResult.isVerified
+                    )
+                    
+                    // Find last message with this friend
+                    let friendMessages = messagesResponse.messages.filter { message in
+                        (message.sender.id.lowercased() == friendResult.id.lowercased() && message.receiver.id.lowercased() == authManager.currentUser?.id.lowercased()) ||
+                        (message.receiver.id.lowercased() == friendResult.id.lowercased() && message.sender.id.lowercased() == authManager.currentUser?.id.lowercased())
+                    }
+                    .filter { $0.status == "approved" }
+                    .sorted { msg1, msg2 in
+                        (dateFormatter.date(from: msg1.createdAt) ?? Date.distantPast) >
+                        (dateFormatter.date(from: msg2.createdAt) ?? Date.distantPast)
+                    }
+                    
+                    let lastMessage = friendMessages.first
+                    let lastMessageText = lastMessage?.content ?? "No messages yet"
+                    let lastMessageDate = lastMessage != nil ? (dateFormatter.date(from: lastMessage!.createdAt) ?? Date()) : Date()
+                    
+                    return Conversation(
+                        friend: friend,
+                        lastMessage: lastMessageText,
+                        timestamp: lastMessageDate,
+                        unreadCount: 0 // TODO: Calculate unread count
+                    )
+                }
+                .sorted { $0.timestamp > $1.timestamp }
+                
+                self.isLoading = false
+            }
+        } catch {
+            await MainActor.run {
+                isLoading = false
+                print("[MessagesView] Error loading conversations: \(error)")
+            }
+        }
     }
 }
 
@@ -203,6 +319,7 @@ struct ConversationRow: View {
 
 struct FriendPickerView: View {
     @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var authManager: AuthManager
     @State private var friends: [Friend] = []
     @State private var isLoading = false
     let onSelect: (Friend) -> Void
@@ -265,18 +382,66 @@ struct FriendPickerView: View {
     
     private func loadFriends() {
         isLoading = true
-        // TODO: Implement API call to fetch friends
-        // For now, simulate friends
-        friends = [
-            Friend(displayName: "Alex", avatar: nil, isVerified: true),
-            Friend(displayName: "Sam", avatar: nil, isVerified: false)
-        ]
-        isLoading = false
+        Task {
+            await loadFriendsAsync()
+        }
+    }
+    
+    private func loadFriendsAsync() async {
+        guard let token = authManager.getValidatedToken() else {
+            await MainActor.run {
+                isLoading = false
+            }
+            return
+        }
+        
+        do {
+            let apiService = ApiService.shared
+            
+            struct FriendsResponse: Codable {
+                let friends: [FriendResult]
+            }
+            
+            struct FriendResult: Codable {
+                let id: String
+                let profile: ProfileResult
+                let isVerified: Bool
+            }
+            
+            struct ProfileResult: Codable {
+                let displayName: String?
+                let avatar: String?
+            }
+            
+            let response: FriendsResponse = try await apiService.makeRequest(
+                endpoint: "friends",
+                method: "GET",
+                token: token
+            )
+            
+            await MainActor.run {
+                self.friends = response.friends.map { friend in
+                    Friend(
+                        id: UUID(uuidString: friend.id) ?? UUID(),
+                        displayName: friend.profile.displayName ?? "Unknown",
+                        avatar: friend.profile.avatar,
+                        isVerified: friend.isVerified
+                    )
+                }
+                self.isLoading = false
+            }
+        } catch {
+            await MainActor.run {
+                isLoading = false
+                print("[FriendPickerView] Error loading friends: \(error)")
+            }
+        }
     }
 }
 
 struct ChatView: View {
     let friend: Friend
+    @EnvironmentObject var authManager: AuthManager
     @State private var messages: [Message] = []
     @State private var messageText = ""
     @State private var isLoading = false
@@ -349,20 +514,130 @@ struct ChatView: View {
     
     private func loadMessages() {
         isLoading = true
-        // TODO: Implement API call to fetch messages with this friend
-        isLoading = false
+        Task {
+            await loadMessagesAsync()
+        }
+    }
+    
+    private func loadMessagesAsync() async {
+        guard let token = authManager.getValidatedToken() else {
+            await MainActor.run {
+                isLoading = false
+            }
+            return
+        }
+        
+        do {
+            let apiService = ApiService.shared
+            
+            struct MessagesResponse: Codable {
+                let messages: [MessageResponse]
+            }
+            
+            struct MessageResponse: Codable {
+                let id: String
+                let sender: SenderResponse
+                let receiver: ReceiverResponse
+                let content: String
+                let createdAt: String
+                let status: String
+            }
+            
+            struct SenderResponse: Codable {
+                let id: String
+            }
+            
+            struct ReceiverResponse: Codable {
+                let id: String
+            }
+            
+            let response: MessagesResponse = try await apiService.makeRequest(
+                endpoint: "messages?conversationWith=\(friend.id.uuidString)",
+                method: "GET",
+                token: token
+            )
+            
+            let dateFormatter = ISO8601DateFormatter()
+            dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            
+            let currentUserId = authManager.currentUser?.id ?? ""
+            let friendId = friend.id.uuidString.lowercased()
+            
+            await MainActor.run {
+                self.messages = response.messages
+                    .filter { message in
+                        (message.sender.id.lowercased() == friendId && message.receiver.id.lowercased() == currentUserId.lowercased()) ||
+                        (message.receiver.id.lowercased() == friendId && message.sender.id.lowercased() == currentUserId.lowercased())
+                    }
+                    .filter { $0.status == "approved" }
+                    .sorted { msg1, msg2 in
+                        (dateFormatter.date(from: msg1.createdAt) ?? Date.distantPast) <
+                        (dateFormatter.date(from: msg2.createdAt) ?? Date.distantPast)
+                    }
+                    .map { messageResponse in
+                        let isFromMe = messageResponse.sender.id.lowercased() == currentUserId.lowercased()
+                        return Message(
+                            content: messageResponse.content,
+                            sender: isFromMe ? "You" : friend.displayName,
+                            timestamp: dateFormatter.date(from: messageResponse.createdAt) ?? Date()
+                        )
+                    }
+                
+                self.isLoading = false
+            }
+        } catch {
+            await MainActor.run {
+                isLoading = false
+                print("[ChatView] Error loading messages: \(error)")
+            }
+        }
     }
     
     private func sendMessage() {
-        guard !messageText.isEmpty else { return }
-        // TODO: Send message via API
-        let newMessage = Message(
-            content: messageText,
-            sender: "You",
-            timestamp: Date()
-        )
-        messages.append(newMessage)
-        messageText = ""
+        guard !messageText.isEmpty, let token = authManager.getValidatedToken() else { return }
+        
+        Task {
+            do {
+                let apiService = ApiService.shared
+                
+                struct SendMessageResponse: Codable {
+                    let message: MessageResponse
+                }
+                
+                struct MessageResponse: Codable {
+                    let id: String
+                    let content: String
+                    let createdAt: String
+                }
+                
+                let body: [String: Any] = [
+                    "receiverId": friend.id.uuidString,
+                    "content": messageText
+                ]
+                
+                let response: SendMessageResponse = try await apiService.makeRequest(
+                    endpoint: "messages",
+                    method: "POST",
+                    body: body,
+                    token: token
+                )
+                
+                let dateFormatter = ISO8601DateFormatter()
+                dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                
+                await MainActor.run {
+                    let newMessage = Message(
+                        content: messageText,
+                        sender: "You",
+                        timestamp: dateFormatter.date(from: response.message.createdAt) ?? Date()
+                    )
+                    messages.append(newMessage)
+                    messageText = ""
+                }
+            } catch {
+                print("[ChatView] Error sending message: \(error)")
+            }
+        }
     }
 }
 
