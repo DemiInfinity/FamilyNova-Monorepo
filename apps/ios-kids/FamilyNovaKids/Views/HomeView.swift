@@ -14,6 +14,8 @@ struct HomeView: View {
     @State private var posts: [Post] = []
     @State private var isLoading = false
     @State private var showCreatePost = false
+    @State private var showPhotoPost = false
+    @State private var showImageSourcePicker = false
     
     var body: some View {
         NavigationView {
@@ -142,6 +144,15 @@ struct HomeView: View {
                         Image(systemName: "person.circle.fill")
                             .font(.system(size: 20))
                             .foregroundColor(AppColors.primaryGreen)
+                    }
+                }
+                
+                // Camera button in the middle
+                ToolbarItem(placement: .principal) {
+                    Button(action: { showImageSourcePicker = true }) {
+                        Image(systemName: "camera.fill")
+                            .font(.system(size: 22))
+                            .foregroundColor(AppColors.primaryBlue)
                     }
                 }
             }

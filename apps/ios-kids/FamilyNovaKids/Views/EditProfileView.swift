@@ -7,6 +7,7 @@ import SwiftUI
 
 struct EditProfileView: View {
     @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var authManager: AuthManager
     let currentDisplayName: String
     let currentSchool: String
     let currentGrade: String
@@ -17,6 +18,16 @@ struct EditProfileView: View {
     @State private var isSaving = false
     @State private var showError = false
     @State private var errorMessage = ""
+    @State private var avatarImage: UIImage? = nil
+    @State private var bannerImage: UIImage? = nil
+    @State private var isUploadingAvatar = false
+    @State private var isUploadingBanner = false
+    @State private var showImagePicker = false
+    @State private var imagePickerType: ImagePickerType = .avatar
+    
+    enum ImagePickerType {
+        case avatar, banner
+    }
     
     let onSave: (String, String, String) -> Void
     
@@ -56,6 +67,102 @@ struct EditProfileView: View {
                                 .padding(.horizontal, AppSpacing.xl)
                         }
                         .padding(.top, AppSpacing.xxl)
+                        
+                        // Image Upload Section
+                        VStack(spacing: AppSpacing.l) {
+                            // Banner Upload
+                            VStack(alignment: .leading, spacing: AppSpacing.s) {
+                                Text("Banner Image")
+                                    .font(AppFonts.caption)
+                                    .foregroundColor(AppColors.darkGray)
+                                
+                                Button(action: {
+                                    imagePickerType = .banner
+                                    showImagePicker = true
+                                }) {
+                                    ZStack {
+                                        if let bannerImage = bannerImage {
+                                            Image(uiImage: bannerImage)
+                                                .resizable()
+                                                .aspectRatio(contentMode: .fill)
+                                        } else {
+                                            LinearGradient(
+                                                colors: [AppColors.primaryBlue, AppColors.primaryPurple],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        }
+                                        
+                                        VStack {
+                                            Image(systemName: "camera.fill")
+                                                .font(.system(size: 30))
+                                                .foregroundColor(.white)
+                                            Text("Upload Banner")
+                                                .font(AppFonts.caption)
+                                                .foregroundColor(.white)
+                                        }
+                                        .opacity(bannerImage == nil ? 1.0 : 0.0)
+                                        
+                                        if isUploadingBanner {
+                                            ProgressView()
+                                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                        }
+                                    }
+                                    .frame(height: 150)
+                                    .frame(maxWidth: .infinity)
+                                    .cornerRadius(AppCornerRadius.medium)
+                                }
+                                .disabled(isUploadingBanner)
+                            }
+                            
+                            // Avatar Upload
+                            VStack(alignment: .leading, spacing: AppSpacing.s) {
+                                Text("Profile Picture")
+                                    .font(AppFonts.caption)
+                                    .foregroundColor(AppColors.darkGray)
+                                
+                                HStack {
+                                    Button(action: {
+                                        imagePickerType = .avatar
+                                        showImagePicker = true
+                                    }) {
+                                        ZStack {
+                                            if let avatarImage = avatarImage {
+                                                Image(uiImage: avatarImage)
+                                                    .resizable()
+                                                    .aspectRatio(contentMode: .fill)
+                                            } else {
+                                                Circle()
+                                                    .fill(
+                                                        LinearGradient(
+                                                            colors: [AppColors.primaryBlue, AppColors.primaryPurple],
+                                                            startPoint: .topLeading,
+                                                            endPoint: .bottomTrailing
+                                                        )
+                                                    )
+                                            }
+                                            
+                                            if avatarImage == nil {
+                                                Image(systemName: "camera.fill")
+                                                    .font(.system(size: 30))
+                                                    .foregroundColor(.white)
+                                            }
+                                            
+                                            if isUploadingAvatar {
+                                                ProgressView()
+                                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                            }
+                                        }
+                                        .frame(width: 120, height: 120)
+                                        .clipShape(Circle())
+                                    }
+                                    .disabled(isUploadingAvatar)
+                                    
+                                    Spacer()
+                                }
+                            }
+                        }
+                        .padding(.horizontal, AppSpacing.m)
                         
                         // Form Fields
                         VStack(spacing: AppSpacing.m) {
@@ -155,10 +262,131 @@ struct EditProfileView: View {
                     .foregroundColor(AppColors.primaryBlue)
                 }
             }
+            .sheet(isPresented: $showImagePicker) {
+                ImagePicker(
+                    sourceType: .photoLibrary,
+                    selectedImage: imagePickerType == .avatar ? $avatarImage : $bannerImage,
+                    onImageSelected: { image in
+                        if imagePickerType == .avatar {
+                            uploadAvatar(image: image)
+                        } else {
+                            uploadBanner(image: image)
+                        }
+                    }
+                )
+            }
             .alert("Error", isPresented: $showError) {
                 Button("OK", role: .cancel) { }
             } message: {
                 Text(errorMessage)
+            }
+        }
+    }
+    
+    private func uploadAvatar(image: UIImage) {
+        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
+            errorMessage = "Failed to process image"
+            showError = true
+            return
+        }
+        
+        isUploadingAvatar = true
+        Task {
+            do {
+                let apiService = ApiService.shared
+                guard let token = authManager.getValidatedToken() else {
+                    throw NSError(domain: "Not authenticated", code: 401)
+                }
+                
+                // Create multipart form data
+                let boundary = UUID().uuidString
+                var request = URLRequest(url: URL(string: "https://family-nova-monorepo.vercel.app/api/upload/profile-picture")!)
+                request.httpMethod = "POST"
+                request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+                request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+                
+                var body = Data()
+                body.append("--\(boundary)\r\n".data(using: .utf8)!)
+                body.append("Content-Disposition: form-data; name=\"image\"; filename=\"avatar.jpg\"\r\n".data(using: .utf8)!)
+                body.append("Content-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
+                body.append(imageData)
+                body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
+                
+                request.httpBody = body
+                
+                let (data, response) = try await URLSession.shared.data(for: request)
+                
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    throw NSError(domain: "Invalid response", code: 0)
+                }
+                
+                if (200...299).contains(httpResponse.statusCode) {
+                    await MainActor.run {
+                        isUploadingAvatar = false
+                    }
+                } else {
+                    throw NSError(domain: "Upload failed", code: httpResponse.statusCode)
+                }
+            } catch {
+                await MainActor.run {
+                    isUploadingAvatar = false
+                    errorMessage = "Failed to upload avatar: \(error.localizedDescription)"
+                    showError = true
+                }
+            }
+        }
+    }
+    
+    private func uploadBanner(image: UIImage) {
+        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
+            errorMessage = "Failed to process image"
+            showError = true
+            return
+        }
+        
+        isUploadingBanner = true
+        Task {
+            do {
+                let apiService = ApiService.shared
+                guard let token = authManager.getValidatedToken() else {
+                    throw NSError(domain: "Not authenticated", code: 401)
+                }
+                
+                // Create multipart form data
+                let boundary = UUID().uuidString
+                var request = URLRequest(url: URL(string: "https://family-nova-monorepo.vercel.app/api/upload/banner")!)
+                request.httpMethod = "POST"
+                request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+                request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+                
+                var body = Data()
+                body.append("--\(boundary)\r\n".data(using: .utf8)!)
+                body.append("Content-Disposition: form-data; name=\"image\"; filename=\"banner.jpg\"\r\n".data(using: .utf8)!)
+                body.append("Content-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
+                body.append(imageData)
+                body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
+                
+                request.httpBody = body
+                
+                let (data, response) = try await URLSession.shared.data(for: request)
+                
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    throw NSError(domain: "Invalid response", code: 0)
+                }
+                
+                if (200...299).contains(httpResponse.statusCode) {
+                    await MainActor.run {
+                        isUploadingBanner = false
+                    }
+                } else {
+                    throw NSError(domain: "Upload failed", code: httpResponse.statusCode)
+                }
+            } catch {
+                await MainActor.run {
+                    isUploadingBanner = false
+                    errorMessage = "Failed to upload banner: \(error.localizedDescription)"
+                    showError = true
+                }
             }
         }
     }

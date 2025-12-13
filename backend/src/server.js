@@ -57,6 +57,7 @@ app.use('/api/school-codes', require('./routes/schoolCodes'));
 app.use('/api/education', require('./routes/education'));
 app.use('/api/verification', require('./routes/verification'));
 app.use('/api/subscriptions', require('./routes/subscriptions'));
+app.use('/api/upload', require('./routes/upload'));
 
 // Health check
 app.get('/api/health', (req, res) => {

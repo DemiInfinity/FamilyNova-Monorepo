@@ -7,6 +7,7 @@ import SwiftUI
 
 struct ProfileView: View {
     @EnvironmentObject var authManager: AuthManager
+    @Environment(\.dismiss) var dismiss
     @State private var displayName = ""
     @State private var email = ""
     @State private var school: String? = nil
@@ -197,19 +198,62 @@ struct ProfileView: View {
                                         .padding(.top, AppSpacing.m)
                                     }
                                 } else {
-                                    // Photos tab (placeholder for future)
-                                    VStack(spacing: AppSpacing.l) {
-                                        Text("📷")
-                                            .font(.system(size: 60))
-                                        Text("No photos yet")
-                                            .font(AppFonts.headline)
-                                            .foregroundColor(AppColors.primaryPurple)
-                                        Text("Photos from your posts will appear here")
-                                            .font(AppFonts.body)
-                                            .foregroundColor(AppColors.darkGray)
+                                    // Photos tab - show posts with images
+                                    if isLoadingPosts && posts.isEmpty {
+                                        VStack(spacing: AppSpacing.l) {
+                                            ProgressView()
+                                            Text("Loading photos...")
+                                                .font(AppFonts.body)
+                                                .foregroundColor(AppColors.darkGray)
+                                        }
+                                        .padding(AppSpacing.xxl)
+                                    } else {
+                                        let postsWithImages = posts.filter { $0.imageUrl != nil && !$0.imageUrl!.isEmpty }
+                                        
+                                        if postsWithImages.isEmpty {
+                                            VStack(spacing: AppSpacing.l) {
+                                                Text("📷")
+                                                    .font(.system(size: 60))
+                                                Text("No photos yet")
+                                                    .font(AppFonts.headline)
+                                                    .foregroundColor(AppColors.primaryPurple)
+                                                Text("Photos from your posts will appear here")
+                                                    .font(AppFonts.body)
+                                                    .foregroundColor(AppColors.darkGray)
+                                            }
+                                            .frame(maxWidth: .infinity)
+                                            .padding(AppSpacing.xxl)
+                                        } else {
+                                            // Grid layout for photos
+                                            LazyVGrid(columns: [
+                                                GridItem(.flexible(), spacing: AppSpacing.s),
+                                                GridItem(.flexible(), spacing: AppSpacing.s),
+                                                GridItem(.flexible(), spacing: AppSpacing.s)
+                                            ], spacing: AppSpacing.s) {
+                                                ForEach(postsWithImages) { post in
+                                                    if let imageUrl = post.imageUrl, !imageUrl.isEmpty {
+                                                        NavigationLink(destination: PostDetailView(post: post)) {
+                                                            AsyncImage(url: URL(string: imageUrl)) { image in
+                                                                image
+                                                                    .resizable()
+                                                                    .aspectRatio(contentMode: .fill)
+                                                            } placeholder: {
+                                                                RoundedRectangle(cornerRadius: AppCornerRadius.medium)
+                                                                    .fill(AppColors.mediumGray.opacity(0.3))
+                                                                    .overlay(
+                                                                        ProgressView()
+                                                                    )
+                                                            }
+                                                            .frame(width: 110, height: 110)
+                                                            .clipShape(RoundedRectangle(cornerRadius: AppCornerRadius.medium))
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            .padding(.horizontal, AppSpacing.m)
+                                            .padding(.top, AppSpacing.m)
+                                        }
                                     }
-                                    .frame(maxWidth: .infinity)
-                                    .padding(AppSpacing.xxl)
                                 }
                             }
                             .background(Color.white)
@@ -219,6 +263,14 @@ struct ProfileView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: { dismiss() }) {
+                        Image(systemName: "xmark")
+                            .foregroundColor(AppColors.black)
+                            .font(.system(size: 18, weight: .semibold))
+                    }
+                }
+                
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {
                         Button(action: { showEditProfile = true }) {
@@ -267,6 +319,12 @@ struct ProfileView: View {
                 loadProfile()
                 // Load user's posts when profile appears
                 loadUserPosts()
+            }
+            .onChange(of: selectedTab) { newTab in
+                // Reload posts when switching to Photos tab to show latest photos
+                if newTab == 1 {
+                    loadUserPosts()
+                }
             }
             .alert("Error", isPresented: $showError) {
                 Button("OK", role: .cancel) { }
