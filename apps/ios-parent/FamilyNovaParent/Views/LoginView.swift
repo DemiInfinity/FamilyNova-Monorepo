@@ -46,9 +46,17 @@ struct LoginView: View {
                         .foregroundColor(ParentAppColors.darkGray)
                     
                     TextField("Email", text: $email)
-                        .textFieldStyle(RoundedTextFieldStyle())
+                        .textFieldStyle(.plain)
+                        .padding(ParentAppSpacing.m)
+                        .background(Color.white)
+                        .cornerRadius(ParentAppCornerRadius.medium)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: ParentAppCornerRadius.medium)
+                                .stroke(ParentAppColors.mediumGray, lineWidth: 1)
+                        )
                         .keyboardType(.emailAddress)
                         .autocapitalization(.none)
+                        .autocorrectionDisabled()
                 }
                 .padding(.top, ParentAppSpacing.xxl)
                 .padding(.horizontal, ParentAppSpacing.l)
@@ -60,7 +68,15 @@ struct LoginView: View {
                         .foregroundColor(ParentAppColors.darkGray)
                     
                     SecureField("Password", text: $password)
-                        .textFieldStyle(RoundedTextFieldStyle())
+                        .textFieldStyle(.plain)
+                        .padding(ParentAppSpacing.m)
+                        .background(Color.white)
+                        .cornerRadius(ParentAppCornerRadius.medium)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: ParentAppCornerRadius.medium)
+                                .stroke(ParentAppColors.mediumGray, lineWidth: 1)
+                        )
+                        .autocorrectionDisabled()
                 }
                 .padding(.top, ParentAppSpacing.m)
                 .padding(.horizontal, ParentAppSpacing.l)
@@ -98,6 +114,7 @@ struct LoginView: View {
             .padding(.bottom, ParentAppSpacing.xxl)
         }
         .background(ParentAppColors.lightGray)
+        .scrollDismissesKeyboard(.interactively)
         .alert("Error", isPresented: $showError) {
             Button("OK", role: .cancel) { }
         } message: {
@@ -135,18 +152,6 @@ struct LoginView: View {
     }
 }
 
-struct RoundedTextFieldStyle: TextFieldStyle {
-    func _body(configuration: TextField<Self._Label>) -> some View {
-        configuration
-            .padding(ParentAppSpacing.m)
-            .background(Color.white)
-            .cornerRadius(ParentAppCornerRadius.medium)
-            .overlay(
-                RoundedRectangle(cornerRadius: ParentAppCornerRadius.medium)
-                    .stroke(ParentAppColors.mediumGray, lineWidth: 1)
-            )
-    }
-}
 
 #Preview {
     LoginView()

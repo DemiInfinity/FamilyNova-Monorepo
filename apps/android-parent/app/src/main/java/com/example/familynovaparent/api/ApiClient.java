@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 
 public class ApiClient {
     private static Retrofit retrofit = null;
-    private static final String BASE_URL = "http://192.168.50.50:3000/api/";
+    private static final String BASE_URL = "http://infinityiotserver.local:3000/api/";
     
     public static Retrofit getClient(Context context) {
         if (retrofit == null) {

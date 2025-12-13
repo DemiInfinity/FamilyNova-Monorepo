@@ -44,9 +44,17 @@ struct LoginView: View {
                         .foregroundColor(AppColors.darkGray)
                     
                     TextField("Email", text: $email)
-                        .textFieldStyle(RoundedTextFieldStyle())
+                        .textFieldStyle(.plain)
+                        .padding(AppSpacing.m)
+                        .background(Color.white)
+                        .cornerRadius(AppCornerRadius.medium)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: AppCornerRadius.medium)
+                                .stroke(AppColors.mediumGray, lineWidth: 1)
+                        )
                         .keyboardType(.emailAddress)
                         .autocapitalization(.none)
+                        .autocorrectionDisabled()
                 }
                 .padding(.top, AppSpacing.xxl)
                 .padding(.horizontal, AppSpacing.l)
@@ -58,7 +66,15 @@ struct LoginView: View {
                         .foregroundColor(AppColors.darkGray)
                     
                     SecureField("Password", text: $password)
-                        .textFieldStyle(RoundedTextFieldStyle())
+                        .textFieldStyle(.plain)
+                        .padding(AppSpacing.m)
+                        .background(Color.white)
+                        .cornerRadius(AppCornerRadius.medium)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: AppCornerRadius.medium)
+                                .stroke(AppColors.mediumGray, lineWidth: 1)
+                        )
+                        .autocorrectionDisabled()
                 }
                 .padding(.top, AppSpacing.m)
                 .padding(.horizontal, AppSpacing.l)
@@ -96,6 +112,7 @@ struct LoginView: View {
             .padding(.bottom, AppSpacing.xxl)
         }
         .background(AppColors.lightGray)
+        .scrollDismissesKeyboard(.interactively)
         .alert("Error", isPresented: $showError) {
             Button("OK", role: .cancel) { }
         } message: {
@@ -133,18 +150,6 @@ struct LoginView: View {
     }
 }
 
-struct RoundedTextFieldStyle: TextFieldStyle {
-    func _body(configuration: TextField<Self._Label>) -> some View {
-        configuration
-            .padding(AppSpacing.m)
-            .background(Color.white)
-            .cornerRadius(AppCornerRadius.medium)
-            .overlay(
-                RoundedRectangle(cornerRadius: AppCornerRadius.medium)
-                    .stroke(AppColors.mediumGray, lineWidth: 1)
-            )
-    }
-}
 
 #Preview {
     LoginView()

@@ -2,7 +2,7 @@
 
 All apps are now configured to connect to the backend at:
 
-**Backend URL:** `http://192.168.50.50:3000/api`
+**Backend URL:** `http://infinityiotserver.local:3000/api`
 
 ## Configured Files
 
@@ -29,10 +29,10 @@ After deploying the backend to Portainer, test with:
 
 ```bash
 # Health check
-curl http://192.168.50.50:3000/api/health
+curl http://infinityiotserver.local:3000/api/health
 
 # Test registration
-curl -X POST http://192.168.50.50:3000/api/auth/register \
+curl -X POST http://infinityiotserver.local:3000/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "test@example.com",

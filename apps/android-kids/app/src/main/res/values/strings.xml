@@ -2,7 +2,7 @@
     <string name="app_name">FamilyNova</string>
     
     <!-- API Configuration -->
-    <string name="api_base_url">http://192.168.50.50:3000/api</string>
+    <string name="api_base_url">http://infinityiotserver.local:3000/api</string>
     
     <!-- Login Screen -->
     <string name="login_title">Welcome to FamilyNova!</string>

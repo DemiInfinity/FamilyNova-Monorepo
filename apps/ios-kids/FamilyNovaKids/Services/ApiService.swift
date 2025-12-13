@@ -8,7 +8,7 @@ import Foundation
 class ApiService {
     static let shared = ApiService()
     
-    private let baseURL = "http://192.168.50.50:3000/api"
+    private let baseURL = "http://infinityiotserver.local:3000/api"
     
     private init() {}
     
