@@ -237,64 +237,6 @@ struct ChildDetailsView: View {
             }
         }
     }
-    
-    private func handleDirectLogin() {
-        guard let details = childDetails, let token = authManager.token else {
-            errorMessage = "Unable to log in. Please try again."
-            showError = true
-            return
-        }
-        
-        AppDetection.openKidsAppWithLogin(
-            childId: details.id,
-            email: details.email,
-            token: token
-        )
-    }
-    
-    private func handleQRCodeLogin() {
-        guard let details = childDetails, let token = authManager.token else {
-            errorMessage = "Unable to generate login code. Please try again."
-            showError = true
-            return
-        }
-        
-        isGeneratingCode = true
-        Task {
-            await generateLoginCode(childId: details.id, token: token)
-        }
-    }
-    
-    private func generateLoginCode(childId: String, token: String) async {
-        do {
-            let apiService = ApiService.shared
-            
-            struct LoginCodeResponse: Codable {
-                let code: String
-                let expiresAt: String
-            }
-            
-            let requestBody: [String: Any] = ["childId": childId]
-            let response: LoginCodeResponse = try await apiService.makeRequest(
-                endpoint: "parents/children/\(childId)/login-code",
-                method: "POST",
-                body: requestBody,
-                token: token
-            )
-            
-            await MainActor.run {
-                self.loginCode = response.code
-                self.isGeneratingCode = false
-                self.showQRCode = true
-            }
-        } catch {
-            await MainActor.run {
-                self.isGeneratingCode = false
-                self.errorMessage = "Failed to generate login code: \(error.localizedDescription)"
-                self.showError = true
-            }
-        }
-    }
 }
 
 struct ChildDetails {

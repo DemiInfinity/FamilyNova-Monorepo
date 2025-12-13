@@ -20,9 +20,9 @@ struct FamilyNovaKidsApp: App {
                 LoginView()
                     .environmentObject(authManager)
             }
-        }
-        .onOpenURL { url in
-            handleURL(url)
+            .onOpenURL { url in
+                handleURL(url)
+            }
         }
     }
     
