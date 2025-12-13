@@ -11,6 +11,9 @@ struct FriendsView: View {
     @State private var searchResults: [Friend] = []
     @State private var isSearching = false
     @State private var showAddFriend = false
+    @State private var errorMessage = ""
+    @State private var showError = false
+    @EnvironmentObject var authManager: AuthManager
     
     var body: some View {
         NavigationView {
@@ -100,7 +103,9 @@ struct FriendsView: View {
                                 ScrollView {
                                     LazyVStack(spacing: AppSpacing.m) {
                                         ForEach(searchResults) { friend in
-                                            FriendRow(friend: friend, showAddButton: true)
+                                            FriendRow(friend: friend, showAddButton: true, onAdd: {
+                                                addFriend(friendId: friend.id.uuidString)
+                                            })
                                         }
                                     }
                                     .padding(.horizontal, AppSpacing.m)
@@ -147,30 +152,167 @@ struct FriendsView: View {
             .navigationBarTitleDisplayMode(.large)
             .sheet(isPresented: $showAddFriend) {
                 AddFriendView()
+                    .environmentObject(authManager)
+            }
+            .onAppear {
+                Task {
+                    await loadFriends()
+                }
+            }
+            .alert("Error", isPresented: $showError) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(errorMessage)
             }
         }
     }
     
     private func performSearch(query: String) {
-        // TODO: Implement API call to search for friends
-        // For now, simulate search results
-        searchResults = [
-            Friend(displayName: "Alex", avatar: nil, isVerified: true),
-            Friend(displayName: "Sam", avatar: nil, isVerified: false)
-        ].filter { $0.displayName.lowercased().contains(query.lowercased()) }
+        guard let token = authManager.getValidatedToken() else { return }
+        
+        Task {
+            do {
+                let apiService = ApiService.shared
+                
+                struct SearchResponse: Codable {
+                    let results: [FriendSearchResult]
+                }
+                
+                struct FriendSearchResult: Codable {
+                    let id: String
+                    let profile: ProfileResult
+                    let isVerified: Bool
+                    let isFriend: Bool
+                }
+                
+                struct ProfileResult: Codable {
+                    let displayName: String?
+                    let avatar: String?
+                }
+                
+                let response: SearchResponse = try await apiService.makeRequest(
+                    endpoint: "friends/search?query=\(query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query)",
+                    method: "GET",
+                    token: token
+                )
+                
+                await MainActor.run {
+                    self.searchResults = response.results.map { result in
+                        Friend(
+                            id: UUID(uuidString: result.id) ?? UUID(),
+                            displayName: result.profile.displayName ?? "Unknown",
+                            avatar: result.profile.avatar,
+                            isVerified: result.isVerified
+                        )
+                    }
+                }
+            } catch {
+                print("Error searching friends: \(error)")
+            }
+        }
+    }
+    
+    private func addFriend(friendId: String) {
+        guard let token = authManager.getValidatedToken() else { return }
+        
+        Task {
+            do {
+                let apiService = ApiService.shared
+                
+                struct AddFriendResponse: Codable {
+                    let message: String
+                    let friend: FriendResponse
+                }
+                
+                struct FriendResponse: Codable {
+                    let id: String
+                    let profile: ProfileResponse
+                    let isVerified: Bool
+                }
+                
+                struct ProfileResponse: Codable {
+                    let displayName: String?
+                    let avatar: String?
+                }
+                
+                let body: [String: Any] = ["friendId": friendId]
+                
+                let _: AddFriendResponse = try await apiService.makeRequest(
+                    endpoint: "friends/request",
+                    method: "POST",
+                    body: body,
+                    token: token
+                )
+                
+                // Refresh friends list
+                await loadFriends()
+            } catch {
+                print("Error adding friend: \(error)")
+            }
+        }
+    }
+    
+    private func loadFriends() async {
+        guard let token = authManager.getValidatedToken() else { return }
+        
+        do {
+            let apiService = ApiService.shared
+            
+            struct FriendsResponse: Codable {
+                let friends: [FriendResult]
+            }
+            
+            struct FriendResult: Codable {
+                let id: String
+                let profile: ProfileResult
+                let isVerified: Bool
+            }
+            
+            struct ProfileResult: Codable {
+                let displayName: String?
+                let avatar: String?
+            }
+            
+            let response: FriendsResponse = try await apiService.makeRequest(
+                endpoint: "friends",
+                method: "GET",
+                token: token
+            )
+            
+            await MainActor.run {
+                self.friends = response.friends.map { friend in
+                    Friend(
+                        id: UUID(uuidString: friend.id) ?? UUID(),
+                        displayName: friend.profile.displayName ?? "Unknown",
+                        avatar: friend.profile.avatar,
+                        isVerified: friend.isVerified
+                    )
+                }
+            }
+        } catch {
+            print("Error loading friends: \(error)")
+        }
     }
 }
 
 struct Friend: Identifiable {
-    let id = UUID()
+    let id: UUID
     let displayName: String
     let avatar: String?
     let isVerified: Bool
+    
+    init(id: UUID = UUID(), displayName: String, avatar: String?, isVerified: Bool) {
+        self.id = id
+        self.displayName = displayName
+        self.avatar = avatar
+        self.isVerified = isVerified
+    }
 }
 
 struct FriendRow: View {
     let friend: Friend
     let showAddButton: Bool
+    var onAdd: (() -> Void)? = nil
     
     var body: some View {
         HStack(spacing: AppSpacing.m) {
@@ -211,7 +353,9 @@ struct FriendRow: View {
             Spacer()
             
             if showAddButton {
-                Button(action: { addFriend() }) {
+                Button(action: {
+                    onAdd?()
+                }) {
                     Text("➕ Add")
                         .font(AppFonts.caption)
                         .foregroundColor(.white)
@@ -234,10 +378,6 @@ struct FriendRow: View {
                 .fill(Color.white)
                 .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
         )
-    }
-    
-    private func addFriend() {
-        // TODO: Implement API call to add friend
     }
 }
 

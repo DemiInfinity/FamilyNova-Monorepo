@@ -63,6 +63,16 @@ CREATE TABLE IF NOT EXISTS friendships (
     PRIMARY KEY (user_id, friend_id)
 );
 
+-- Friend codes table (for easy friend connections)
+CREATE TABLE IF NOT EXISTS friend_codes (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE UNIQUE,
+    code VARCHAR(8) UNIQUE NOT NULL,
+    expires_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
 -- Messages table
 CREATE TABLE IF NOT EXISTS messages (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -194,6 +204,9 @@ CREATE INDEX IF NOT EXISTS idx_school_codes_code ON school_codes(code);
 CREATE INDEX IF NOT EXISTS idx_school_codes_expires ON school_codes(expires_at);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_user ON subscriptions(user_id);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status);
+CREATE INDEX IF NOT EXISTS idx_friend_codes_code ON friend_codes(code);
+CREATE INDEX IF NOT EXISTS idx_friend_codes_user ON friend_codes(user_id);
+CREATE INDEX IF NOT EXISTS idx_friend_codes_expires ON friend_codes(expires_at);
 
 -- Function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -221,4 +234,10 @@ CREATE TRIGGER update_education_content_updated_at BEFORE UPDATE ON education_co
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_subscriptions_updated_at BEFORE UPDATE ON subscriptions
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_friend_codes_updated_at BEFORE UPDATE ON friend_codes
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_friend_codes_updated_at BEFORE UPDATE ON friend_codes
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

@@ -104,15 +104,15 @@ class QRCodeScanner: NSObject, ObservableObject, AVCaptureMetadataOutputObjectsD
     }
     
     func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
-        if let metadataObject = metadataObjects.first {
-            guard let readableObject = metadataObject as? AVMetadataMachineReadableCodeObject else { return }
-            guard let stringValue = readableObject.stringValue else { return }
-            
-            // Extract code from QR string (format: "FAMILYNOVA:123456" or just "123456")
-            let code = stringValue.replacingOccurrences(of: "FAMILYNOVA:", with: "")
-            if code.count == 6 {
-                onCodeFound?(code)
-            }
+        guard let metadataObject = metadataObjects.first else { return }
+        guard let readableObject = metadataObject as? AVMetadataMachineReadableCodeObject else { return }
+        guard let stringValue = readableObject.stringValue else { return }
+        
+        // Extract code from QR string (format: "FAMILYNOVA:XXXXXXXX" or just "XXXXXXXX")
+        // Supports both 6-digit login codes and 8-character friend codes
+        let code = stringValue.replacingOccurrences(of: "FAMILYNOVA:", with: "")
+        if code.count == 6 || code.count == 8 {
+            onCodeFound?(code)
         }
     }
 }

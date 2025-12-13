@@ -1,12 +1,156 @@
 const express = require('express');
 const { auth, requireUserType } = require('../middleware/auth');
 const User = require('../models/User');
+const FriendCode = require('../models/FriendCode');
 const { getSupabase } = require('../config/database');
 
 const router = express.Router();
 
 // All routes require authentication
 router.use(auth);
+
+// @route   GET /api/friends/my-code
+// @desc    Get or generate user's friend code (kids only)
+// @access  Private (Kid only)
+router.get('/my-code', requireUserType('kid'), async (req, res) => {
+  try {
+    // Generate or get existing friend code
+    const friendCode = await FriendCode.generateCode(req.user.id);
+    
+    res.json({
+      code: friendCode.code,
+      expiresAt: friendCode.expiresAt,
+      createdAt: friendCode.createdAt
+    });
+  } catch (error) {
+    console.error('Error generating friend code:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// @route   POST /api/friends/add-by-code
+// @desc    Add friend using friend code (kids only)
+// @access  Private (Kid only)
+router.post('/add-by-code', requireUserType('kid'), async (req, res) => {
+  try {
+    const { code } = req.body;
+    const supabase = await getSupabase();
+    
+    if (!code || code.length !== 8) {
+      return res.status(400).json({ error: 'Invalid friend code format' });
+    }
+    
+    // Find friend by code
+    const friendCode = await FriendCode.findByCode(code.toUpperCase());
+    
+    if (!friendCode) {
+      return res.status(404).json({ error: 'Friend code not found' });
+    }
+    
+    if (friendCode.isExpired()) {
+      return res.status(400).json({ error: 'Friend code has expired' });
+    }
+    
+    const friendId = friendCode.userId;
+    
+    // Can't add yourself
+    if (friendId === req.user.id) {
+      return res.status(400).json({ error: 'Cannot add yourself as a friend' });
+    }
+    
+    // Get friend user
+    const friend = await User.findById(friendId);
+    if (!friend || friend.userType !== 'kid') {
+      return res.status(404).json({ error: 'Friend not found' });
+    }
+    
+    // Check if already friends
+    const { data: existingFriendship, error: friendCheckError } = await supabase
+      .from('friendships')
+      .select('*')
+      .or(`and(user_id.eq.${req.user.id},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${req.user.id})`)
+      .single();
+    
+    if (!friendCheckError && existingFriendship) {
+      if (existingFriendship.status === 'accepted') {
+        return res.status(400).json({ error: 'Already friends' });
+      } else if (existingFriendship.status === 'pending') {
+        // Auto-accept if pending
+        await supabase
+          .from('friendships')
+          .update({ status: 'accepted' })
+          .or(`and(user_id.eq.${req.user.id},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${req.user.id})`);
+      }
+    } else {
+      // Create friendship (auto-accept when using friend code)
+      const { error: friendshipError } = await supabase
+        .from('friendships')
+        .insert({
+          user_id: req.user.id,
+          friend_id: friendId,
+          status: 'accepted'
+        });
+      
+      if (friendshipError) {
+        console.error('Error creating friendship:', friendshipError);
+        return res.status(500).json({ error: 'Failed to add friend' });
+      }
+      
+      // Also create reverse friendship
+      await supabase
+        .from('friendships')
+        .upsert({
+          user_id: friendId,
+          friend_id: req.user.id,
+          status: 'accepted'
+        }, {
+          onConflict: 'user_id,friend_id'
+        });
+    }
+    
+    // Auto-connect parents if both kids are verified
+    if (req.user.isFullyVerified() && friend.isFullyVerified()) {
+      const currentUser = await User.findById(req.user.id);
+      const friendUser = await User.findById(friendId);
+      
+      if (currentUser.parentAccount && friendUser.parentAccount) {
+        // Check if parents are already connected
+        const { data: existingConnection, error: connError } = await supabase
+          .from('parent_connections')
+          .select('*')
+          .or(`and(parent1_id.eq.${currentUser.parentAccount},parent2_id.eq.${friendUser.parentAccount}),and(parent1_id.eq.${friendUser.parentAccount},parent2_id.eq.${currentUser.parentAccount})`)
+          .single();
+        
+        if (connError || !existingConnection) {
+          // Create parent connection
+          await supabase
+            .from('parent_connections')
+            .insert({
+              parent1_id: currentUser.parentAccount,
+              parent2_id: friendUser.parentAccount
+            });
+        }
+      }
+    }
+    
+    const friendProfile = friend.profile || {};
+    
+    res.json({ 
+      message: 'Friend added successfully',
+      friend: {
+        id: friend.id,
+        profile: {
+          displayName: friendProfile.displayName || friend.email,
+          avatar: friendProfile.avatar
+        },
+        isVerified: friend.isFullyVerified()
+      }
+    });
+  } catch (error) {
+    console.error('Error adding friend by code:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
 // @route   POST /api/friends/request
 // @desc    Send friend request (kids only)
