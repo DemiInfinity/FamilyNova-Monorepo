@@ -609,4 +609,3 @@ struct AddFriendView: View {
     AddFriendView()
         .environmentObject(AuthManager())
 }
-
