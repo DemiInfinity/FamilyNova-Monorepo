@@ -95,11 +95,105 @@ router.post('/', [
 });
 
 // @route   GET /api/posts
-// @desc    Get approved posts for news feed with visibility filtering
+// @desc    Get approved posts for news feed with visibility filtering, or posts by a specific user if userId query param is provided
 // @access  Private
 router.get('/', async (req, res) => {
   try {
     const supabase = await getSupabase();
+    const { userId } = req.query;
+    
+    // If userId is provided, return all approved posts by that user (for profile views)
+    if (userId) {
+      const { data: userPostsData, error: userPostsError } = await supabase
+        .from('posts')
+        .select('*')
+        .eq('author_id', userId)
+        .eq('status', 'approved')
+        .order('created_at', { ascending: false })
+        .limit(100);
+      
+      if (userPostsError) {
+        console.error('Error fetching user posts:', userPostsError);
+        return res.status(500).json({ error: 'Failed to fetch user posts' });
+      }
+      
+      // Get author information
+      const author = await User.findById(userId);
+      if (!author) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      const authorProfile = author.profile || {};
+      const postIds = userPostsData ? userPostsData.map(p => p.id) : [];
+      
+      // Fetch comments and reactions for these posts
+      const { data: commentsData } = await supabase
+        .from('comments')
+        .select('*')
+        .in('post_id', postIds)
+        .order('created_at', { ascending: true });
+      
+      const { data: reactionsData } = await supabase
+        .from('reactions')
+        .select('*')
+        .in('post_id', postIds);
+      
+      // Group comments and reactions by post
+      const commentsByPost = new Map();
+      if (commentsData) {
+        for (const comment of commentsData) {
+          if (!commentsByPost.has(comment.post_id)) {
+            commentsByPost.set(comment.post_id, []);
+          }
+          commentsByPost.get(comment.post_id).push({
+            id: comment.id,
+            content: comment.content,
+            author: { id: comment.author_id },
+            createdAt: comment.created_at instanceof Date ? comment.created_at.toISOString() : comment.created_at
+          });
+        }
+      }
+      
+      const reactionsByPost = new Map();
+      if (reactionsData) {
+        for (const reaction of reactionsData) {
+          if (!reactionsByPost.has(reaction.post_id)) {
+            reactionsByPost.set(reaction.post_id, []);
+          }
+          reactionsByPost.get(reaction.post_id).push(reaction.user_id);
+        }
+      }
+      
+      // Format posts with author info
+      const postsWithAuthors = (userPostsData || []).map(postData => {
+        const postReactions = reactionsByPost.get(postData.id) || [];
+        const postComments = commentsByPost.get(postData.id) || [];
+        const isLiked = postReactions.includes(req.user.id);
+        
+        const createdAt = postData.created_at instanceof Date
+          ? postData.created_at.toISOString()
+          : (postData.created_at || new Date().toISOString());
+        
+        return {
+          id: postData.id,
+          content: postData.content,
+          imageUrl: postData.image_url,
+          status: postData.status,
+          likes: postReactions,
+          comments: postComments,
+          author: {
+            id: author.id,
+            profile: {
+              displayName: authorProfile.displayName || 'Unknown',
+              avatar: authorProfile.avatar
+            }
+          },
+          createdAt: createdAt
+        };
+      });
+      
+      return res.json({ posts: postsWithAuthors });
+    }
     
     // Get current user's type and relationships
     const currentUser = await User.findById(req.user.id);

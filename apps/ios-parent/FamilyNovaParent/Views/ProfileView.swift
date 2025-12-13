@@ -318,21 +318,19 @@ struct ProfileView: View {
                 }
                 
                 let response: PostsResponse = try await apiService.makeRequest(
-                    endpoint: "posts",
+                    endpoint: "posts?userId=\(userId)",
                     method: "GET",
                     token: token
                 )
                 
                 await MainActor.run {
-                    // Filter to only show user's own posts (posts created by this user)
-                    // Compare author.id with userId to ensure we only show posts created by the current user
+                    // All posts returned are already filtered by userId, just ensure they're approved
                     let userPosts = response.posts.filter { postResponse in
-                        // Ensure we're comparing strings correctly (case-insensitive) and only showing approved posts
-                        postResponse.author.id.lowercased() == userId.lowercased() && postResponse.status == "approved"
+                        postResponse.status == "approved"
                     }
                     
                     print("[ProfileView] Total posts from API: \(response.posts.count)")
-                    print("[ProfileView] Filtered user posts: \(userPosts.count)")
+                    print("[ProfileView] Approved posts: \(userPosts.count)")
                     print("[ProfileView] Current user ID: \(userId)")
                     
                     let dateFormatter = ISO8601DateFormatter()

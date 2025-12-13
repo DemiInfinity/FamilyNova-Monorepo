@@ -743,17 +743,16 @@ struct FriendProfileView: View {
                     let createdAt: String
                 }
                 
-                // Get all posts and filter by friend ID
+                // Get all posts by this friend using userId query parameter
                 let postsResponse: PostsResponse = try await apiService.makeRequest(
-                    endpoint: "posts",
+                    endpoint: "posts?userId=\(friend.id.uuidString)",
                     method: "GET",
                     token: token
                 )
                 
                 await MainActor.run {
-                    // Filter posts by friend ID and status
+                    // All posts returned are already filtered by userId, just ensure they're approved
                     let friendPosts = postsResponse.posts.filter { postResponse in
-                        postResponse.author.id.lowercased() == friend.id.uuidString.lowercased() &&
                         postResponse.status == "approved"
                     }
                     
