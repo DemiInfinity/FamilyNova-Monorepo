@@ -159,7 +159,7 @@ struct MessageMonitoringCard: View {
             }
             
             VStack(alignment: .leading, spacing: ParentAppSpacing.m) {
-            HStack {
+                HStack {
                 VStack(alignment: .leading, spacing: ParentAppSpacing.xs) {
                     HStack(spacing: ParentAppSpacing.xs) {
                         Text("From:")
@@ -246,6 +246,7 @@ struct MessageMonitoringCard: View {
                     
                     Spacer()
                 }
+            }
             }
         }
         .padding(ParentAppSpacing.m)
