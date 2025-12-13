@@ -327,9 +327,13 @@ struct ProfileView: View {
                     // Filter to only show user's own posts (posts created by this user)
                     // Compare author.id with userId to ensure we only show posts created by the current user
                     let userPosts = response.posts.filter { postResponse in
-                        // Ensure we're comparing strings correctly and only showing approved posts
-                        postResponse.author.id == userId && postResponse.status == "approved"
+                        // Ensure we're comparing strings correctly (case-insensitive) and only showing approved posts
+                        postResponse.author.id.lowercased() == userId.lowercased() && postResponse.status == "approved"
                     }
+                    
+                    print("[ProfileView] Total posts from API: \(response.posts.count)")
+                    print("[ProfileView] Filtered user posts: \(userPosts.count)")
+                    print("[ProfileView] Current user ID: \(userId)")
                     
                     let dateFormatter = ISO8601DateFormatter()
                     dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]

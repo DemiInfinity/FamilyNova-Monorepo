@@ -47,14 +47,11 @@ router.post('/', requireUserType('kid', 'parent'), [
       return res.status(403).json({ error: 'Kids can only message other kids' });
     }
     
-    // Check if they are friends - normalize UUIDs to lowercase for comparison
-    const senderIdLower = req.user.id.toLowerCase();
-    const receiverIdLower = receiverId.toLowerCase();
-    
+    // Check if they are friends - UUIDs are case-insensitive, use .eq
     const { data: friendships, error: friendError } = await supabase
       .from('friendships')
       .select('*')
-      .or(`and(user_id.ilike.${senderIdLower},friend_id.ilike.${receiverIdLower}),and(user_id.ilike.${receiverIdLower},friend_id.ilike.${senderIdLower})`)
+      .or(`and(user_id.eq.${req.user.id},friend_id.eq.${receiverId}),and(user_id.eq.${receiverId},friend_id.eq.${req.user.id})`)
       .eq('status', 'accepted');
     
     if (friendError) {
@@ -62,15 +59,15 @@ router.post('/', requireUserType('kid', 'parent'), [
       return res.status(500).json({ error: 'Failed to verify friendship' });
     }
     
-    console.log(`[Messages] Found ${friendships?.length || 0} friendship(s) between ${senderIdLower} and ${receiverIdLower}`);
+    console.log(`[Messages] Found ${friendships?.length || 0} friendship(s) between ${req.user.id} and ${receiverId}`);
     
     if (!friendships || friendships.length === 0) {
-      console.log(`[Messages] No accepted friendship found between ${senderIdLower} and ${receiverIdLower}`);
+      console.log(`[Messages] No accepted friendship found between ${req.user.id} and ${receiverId}`);
       // Check if there's a pending friendship
       const { data: pendingFriendships } = await supabase
         .from('friendships')
         .select('*')
-        .or(`and(user_id.ilike.${senderIdLower},friend_id.ilike.${receiverIdLower}),and(user_id.ilike.${receiverIdLower},friend_id.ilike.${senderIdLower})`)
+        .or(`and(user_id.eq.${req.user.id},friend_id.eq.${receiverId}),and(user_id.eq.${receiverId},friend_id.eq.${req.user.id})`)
         .eq('status', 'pending');
       
       if (pendingFriendships && pendingFriendships.length > 0) {

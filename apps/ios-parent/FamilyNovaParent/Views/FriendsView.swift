@@ -751,10 +751,15 @@ struct FriendProfileView: View {
                 )
                 
                 await MainActor.run {
-                    // Filter posts by friend ID
-                    let friendPosts = postsResponse.posts.filter { 
-                        $0.author.id.lowercased() == friend.id.uuidString.lowercased() 
+                    // Filter posts by friend ID and status
+                    let friendPosts = postsResponse.posts.filter { postResponse in
+                        postResponse.author.id.lowercased() == friend.id.uuidString.lowercased() &&
+                        postResponse.status == "approved"
                     }
+                    
+                    print("[FriendProfileView] Total posts from API: \(postsResponse.posts.count)")
+                    print("[FriendProfileView] Filtered friend posts: \(friendPosts.count)")
+                    print("[FriendProfileView] Friend ID: \(friend.id.uuidString)")
                     
                     let dateFormatter = ISO8601DateFormatter()
                     dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
