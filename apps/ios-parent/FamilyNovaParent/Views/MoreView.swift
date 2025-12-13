@@ -195,7 +195,9 @@ struct MoreView: View {
                 ManageChildrenView(children: $children)
                     .environmentObject(authManager)
                     .onAppear {
-                        // Reload children when modal appears
+                        print("[MoreView] ManageChildrenView sheet appeared")
+                        print("[MoreView] Current children count before reload: \(children.count)")
+                        // Reload children when modal appears to ensure fresh data
                         loadChildren()
                     }
             }
@@ -212,11 +214,11 @@ struct MoreView: View {
                     .environmentObject(authManager)
             }
             .sheet(isPresented: $showSafetyDashboard) {
-                SafetyDashboardView(children: children)
+                SafetyDashboardView()
                     .environmentObject(authManager)
             }
             .sheet(isPresented: $showActivityReports) {
-                ActivityReportsView(children: children)
+                ActivityReportsView()
                     .environmentObject(authManager)
             }
             .onAppear {
@@ -267,19 +269,54 @@ struct MoreView: View {
                 )
                 
                 await MainActor.run {
-                    print("[MoreView] Dashboard returned \(response.parent.children.count) children")
+                    print("[MoreView] ===== DASHBOARD RESPONSE =====")
+                    print("[MoreView] Parent ID: \(response.parent.id)")
+                    print("[MoreView] Children count from API: \(response.parent.children.count)")
+                    
                     for (index, child) in response.parent.children.enumerated() {
-                        print("[MoreView] Child \(index): \(child.id) - \(child.profile.displayName)")
+                        print("[MoreView] Child \(index + 1):")
+                        print("[MoreView]   - ID: \(child.id)")
+                        print("[MoreView]   - Display Name: \(child.profile.displayName)")
+                        print("[MoreView]   - Avatar: \(child.profile.avatar ?? "nil")")
+                        print("[MoreView]   - School: \(child.profile.school ?? "nil")")
+                        print("[MoreView]   - Grade: \(child.profile.grade ?? "nil")")
+                        print("[MoreView]   - Parent Verified: \(child.verification.parentVerified)")
+                        print("[MoreView]   - School Verified: \(child.verification.schoolVerified)")
+                        print("[MoreView]   - Last Login: \(child.lastLogin?.description ?? "nil")")
                     }
+                    
+                    print("[MoreView] Setting children array...")
                     self.children = response.parent.children
+                    print("[MoreView] Children array now has \(self.children.count) items")
                     self.isLoadingChildren = false
+                    print("[MoreView] ===== END DASHBOARD RESPONSE =====")
                 }
             } catch {
                 await MainActor.run {
                     self.isLoadingChildren = false
-                    print("Error loading children: \(error)")
+                    print("[MoreView] ===== ERROR LOADING CHILDREN =====")
+                    print("[MoreView] Error type: \(type(of: error))")
+                    print("[MoreView] Error description: \(error.localizedDescription)")
+                    if let decodingError = error as? DecodingError {
+                        print("[MoreView] Decoding error details:")
+                        switch decodingError {
+                        case .typeMismatch(let type, let context):
+                            print("[MoreView]   Type mismatch: expected \(type), context: \(context)")
+                        case .valueNotFound(let type, let context):
+                            print("[MoreView]   Value not found: \(type), context: \(context)")
+                        case .keyNotFound(let key, let context):
+                            print("[MoreView]   Key not found: \(key.stringValue), context: \(context)")
+                        case .dataCorrupted(let context):
+                            print("[MoreView]   Data corrupted: \(context)")
+                        @unknown default:
+                            print("[MoreView]   Unknown decoding error")
+                        }
+                    }
+                    print("[MoreView] Full error: \(error)")
+                    print("[MoreView] ===== END ERROR =====")
                     // If API fails, try to use children from currentUser
                     if self.children.isEmpty, let currentUser = authManager.currentUser {
+                        print("[MoreView] Falling back to currentUser children: \(currentUser.children.count)")
                         self.children = currentUser.children
                     }
                 }
@@ -403,11 +440,20 @@ struct ManageChildrenView: View {
                 }
             }
             .onAppear {
-                // Debug: Print current children count
-                print("ManageChildrenView appeared with \(children.count) children")
-                if let currentUser = authManager.currentUser {
-                    print("CurrentUser has \(currentUser.children.count) children")
+                print("[ManageChildrenView] ===== VIEW APPEARED =====")
+                print("[ManageChildrenView] Children count from binding: \(children.count)")
+                for (index, child) in children.enumerated() {
+                    print("[ManageChildrenView] Child \(index + 1): \(child.id) - \(child.profile.displayName)")
                 }
+                if let currentUser = authManager.currentUser {
+                    print("[ManageChildrenView] CurrentUser has \(currentUser.children.count) children")
+                    for (index, child) in currentUser.children.enumerated() {
+                        print("[ManageChildrenView] CurrentUser Child \(index + 1): \(child.id) - \(child.profile.displayName)")
+                    }
+                } else {
+                    print("[ManageChildrenView] No currentUser in authManager")
+                }
+                print("[ManageChildrenView] ===== END VIEW APPEARED =====")
             }
             .sheet(isPresented: $showLinkChild) {
                 LinkChildByEmailView(
@@ -477,7 +523,7 @@ struct ManageChildrenView: View {
                     let schoolVerified: Bool?
                 }
                 
-                let response: LinkResponse = try await apiService.makeRequest(
+                let _: LinkResponse = try await apiService.makeRequest(
                     endpoint: "parents/children/link-by-email",
                     method: "POST",
                     body: ["email": linkEmail],

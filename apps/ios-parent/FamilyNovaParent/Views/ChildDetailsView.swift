@@ -8,6 +8,7 @@ import SwiftUI
 struct ChildDetailsView: View {
     let child: Child
     @EnvironmentObject var authManager: AuthManager
+    @Environment(\.dismiss) var dismiss
     @State private var childDetails: ChildDetails?
     @State private var isLoading = false
     @State private var showError = false
@@ -17,75 +18,88 @@ struct ChildDetailsView: View {
     @State private var isGeneratingCode = false
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: ParentAppSpacing.l) {
-                if isLoading {
+        ZStack {
+            CosmicBackground()
+            
+            if isLoading {
+                VStack(spacing: CosmicSpacing.l) {
                     ProgressView()
-                        .padding()
-                } else if let details = childDetails {
-                    // Profile Section
-                    VStack(alignment: .leading, spacing: ParentAppSpacing.m) {
-                        Text("Profile Information")
-                            .font(ParentAppFonts.headline)
-                            .foregroundColor(ParentAppColors.black)
-                            .padding(.horizontal, ParentAppSpacing.m)
+                        .scaleEffect(1.5)
+                        .tint(CosmicColors.nebulaPurple)
+                    Text("Loading...")
+                        .font(CosmicFonts.body)
+                        .foregroundColor(CosmicColors.textSecondary)
+                }
+            } else if let details = childDetails {
+                ScrollView {
+                    VStack(spacing: CosmicSpacing.l) {
+                        // Profile Section
+                        VStack(alignment: .leading, spacing: CosmicSpacing.m) {
+                            Text("Profile Information")
+                                .font(CosmicFonts.headline)
+                                .foregroundColor(CosmicColors.textPrimary)
+                                .padding(.horizontal, CosmicSpacing.m)
+                            
+                            ProfileInfoCard(details: details)
+                                .padding(.horizontal, CosmicSpacing.m)
+                        }
+                        .padding(.top, CosmicSpacing.m)
                         
-                        ProfileInfoCard(details: details)
-                            .padding(.horizontal, ParentAppSpacing.m)
-                    }
-                    .padding(.top, ParentAppSpacing.m)
-                    
-                    // Login Information Section
-                    VStack(alignment: .leading, spacing: ParentAppSpacing.m) {
-                        Text("Login Information")
-                            .font(ParentAppFonts.headline)
-                            .foregroundColor(ParentAppColors.black)
-                            .padding(.horizontal, ParentAppSpacing.m)
+                        // Login Information Section
+                        VStack(alignment: .leading, spacing: CosmicSpacing.m) {
+                            Text("Login Information")
+                                .font(CosmicFonts.headline)
+                                .foregroundColor(CosmicColors.textPrimary)
+                                .padding(.horizontal, CosmicSpacing.m)
+                            
+                            LoginInfoCard(email: details.email)
+                                .padding(.horizontal, CosmicSpacing.m)
+                        }
                         
-                        LoginInfoCard(email: details.email)
-                            .padding(.horizontal, ParentAppSpacing.m)
-                    }
-                    
-                    // Verification Status
-                    VStack(alignment: .leading, spacing: ParentAppSpacing.m) {
-                        Text("Verification Status")
-                            .font(ParentAppFonts.headline)
-                            .foregroundColor(ParentAppColors.black)
-                            .padding(.horizontal, ParentAppSpacing.m)
+                        // Verification Status
+                        VStack(alignment: .leading, spacing: CosmicSpacing.m) {
+                            Text("Verification Status")
+                                .font(CosmicFonts.headline)
+                                .foregroundColor(CosmicColors.textPrimary)
+                                .padding(.horizontal, CosmicSpacing.m)
+                            
+                            VerificationCard(verification: details.verification)
+                                .padding(.horizontal, CosmicSpacing.m)
+                        }
                         
-                        VerificationCard(verification: details.verification)
-                            .padding(.horizontal, ParentAppSpacing.m)
-                    }
-                    
-                    // Activity Information
-                    VStack(alignment: .leading, spacing: ParentAppSpacing.m) {
-                        Text("Activity")
-                            .font(ParentAppFonts.headline)
-                            .foregroundColor(ParentAppColors.black)
-                            .padding(.horizontal, ParentAppSpacing.m)
+                        // Activity Information
+                        VStack(alignment: .leading, spacing: CosmicSpacing.m) {
+                            Text("Activity")
+                                .font(CosmicFonts.headline)
+                                .foregroundColor(CosmicColors.textPrimary)
+                                .padding(.horizontal, CosmicSpacing.m)
+                            
+                            ChildActivityCard(lastLogin: details.lastLogin)
+                                .padding(.horizontal, CosmicSpacing.m)
+                        }
                         
-                        ChildActivityCard(lastLogin: details.lastLogin)
-                            .padding(.horizontal, ParentAppSpacing.m)
+                        // Quick Login Section
+                        VStack(alignment: .leading, spacing: CosmicSpacing.m) {
+                            Text("Quick Login")
+                                .font(CosmicFonts.headline)
+                                .foregroundColor(CosmicColors.textPrimary)
+                                .padding(.horizontal, CosmicSpacing.m)
+                            
+                            QuickLoginCard(
+                                childId: details.id,
+                                email: details.email,
+                                onDirectLogin: handleDirectLogin,
+                                onQRCodeLogin: handleQRCodeLogin,
+                                isGeneratingCode: isGeneratingCode
+                            )
+                            .padding(.horizontal, CosmicSpacing.m)
+                        }
                     }
-                    
-                    // Quick Login Section
-                    VStack(alignment: .leading, spacing: ParentAppSpacing.m) {
-                        Text("Quick Login")
-                            .font(ParentAppFonts.headline)
-                            .foregroundColor(ParentAppColors.black)
-                            .padding(.horizontal, ParentAppSpacing.m)
-                        
-                        QuickLoginCard(
-                            childId: details.id,
-                            email: details.email,
-                            onDirectLogin: handleDirectLogin,
-                            onQRCodeLogin: handleQRCodeLogin,
-                            isGeneratingCode: isGeneratingCode
-                        )
-                        .padding(.horizontal, ParentAppSpacing.m)
-                    }
-                } else {
-                    // Show basic info from child object if details not loaded
+                    .padding(.bottom, CosmicSpacing.xl)
+                }
+            } else {
+                // Show basic info from child object if details not loaded
+                ScrollView {
                     ProfileInfoCard(details: ChildDetails(
                         id: child.id,
                         email: "Loading...",
@@ -93,15 +107,21 @@ struct ChildDetailsView: View {
                         verification: child.verification,
                         lastLogin: child.lastLogin
                     ))
-                    .padding(.horizontal, ParentAppSpacing.m)
-                    .padding(.top, ParentAppSpacing.m)
+                    .padding(.horizontal, CosmicSpacing.m)
+                    .padding(.top, CosmicSpacing.m)
                 }
             }
-            .padding(.bottom, ParentAppSpacing.l)
         }
-        .background(ParentAppColors.lightGray)
         .navigationTitle(child.profile.displayName)
         .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button("Done") {
+                    dismiss()
+                }
+                .foregroundColor(CosmicColors.nebulaPurple)
+            }
+        }
         .onAppear {
             Task {
                 await loadChildDetails()
@@ -207,10 +227,6 @@ struct ChildDetailsView: View {
         do {
             let apiService = ApiService.shared
             
-            struct LoginCodeRequest: Codable {
-                let childId: String
-            }
-            
             struct LoginCodeResponse: Codable {
                 let code: String
                 let expiresAt: String
@@ -251,27 +267,45 @@ struct ProfileInfoCard: View {
     let details: ChildDetails
     
     var body: some View {
-        VStack(alignment: .leading, spacing: ParentAppSpacing.m) {
+        VStack(alignment: .leading, spacing: CosmicSpacing.m) {
             HStack {
                 // Avatar
-                Circle()
-                    .fill(ParentAppColors.primaryTeal)
-                    .frame(width: 80, height: 80)
-                    .overlay(
-                        Text(details.profile.displayName.prefix(1).uppercased())
-                            .font(.system(size: 32, weight: .bold))
-                            .foregroundColor(.white)
-                    )
+                Group {
+                    if let avatarUrl = details.profile.avatar, !avatarUrl.isEmpty {
+                        AsyncImage(url: URL(string: avatarUrl)) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                        } placeholder: {
+                            Circle()
+                                .fill(CosmicColors.primaryGradient)
+                        }
+                    } else {
+                        Circle()
+                            .fill(CosmicColors.primaryGradient)
+                            .overlay(
+                                Text(details.profile.displayName.prefix(1).uppercased())
+                                    .font(.system(size: 32, weight: .bold))
+                                    .foregroundColor(.white)
+                            )
+                    }
+                }
+                .frame(width: 80, height: 80)
+                .clipShape(Circle())
+                .overlay(
+                    Circle()
+                        .stroke(CosmicColors.nebulaPurple.opacity(0.3), lineWidth: 2)
+                )
                 
-                VStack(alignment: .leading, spacing: ParentAppSpacing.xs) {
+                VStack(alignment: .leading, spacing: CosmicSpacing.xs) {
                     Text(details.profile.displayName)
-                        .font(ParentAppFonts.title)
-                        .foregroundColor(ParentAppColors.black)
+                        .font(CosmicFonts.title)
+                        .foregroundColor(CosmicColors.textPrimary)
                     
                     if let school = details.profile.school {
                         Text(school)
-                            .font(ParentAppFonts.body)
-                            .foregroundColor(ParentAppColors.darkGray)
+                            .font(CosmicFonts.body)
+                            .foregroundColor(CosmicColors.textSecondary)
                     }
                 }
                 
@@ -279,8 +313,9 @@ struct ProfileInfoCard: View {
             }
             
             Divider()
+                .background(CosmicColors.glassBorder.opacity(0.3))
             
-            VStack(alignment: .leading, spacing: ParentAppSpacing.s) {
+            VStack(alignment: .leading, spacing: CosmicSpacing.s) {
                 if let school = details.profile.school {
                     ChildInfoRow(label: "School", value: school)
                 }
@@ -290,10 +325,8 @@ struct ProfileInfoCard: View {
                 }
             }
         }
-        .padding(ParentAppSpacing.m)
-        .background(Color.white)
-        .cornerRadius(ParentAppCornerRadius.medium)
-        .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
+        .padding(CosmicSpacing.m)
+        .cosmicCard()
     }
 }
 
@@ -301,33 +334,31 @@ struct LoginInfoCard: View {
     let email: String
     
     var body: some View {
-        VStack(alignment: .leading, spacing: ParentAppSpacing.m) {
+        VStack(alignment: .leading, spacing: CosmicSpacing.m) {
             ChildInfoRow(label: "Email", value: email)
             
             Text("Password")
-                .font(ParentAppFonts.caption)
-                .foregroundColor(ParentAppColors.darkGray)
+                .font(CosmicFonts.caption)
+                .foregroundColor(CosmicColors.textMuted)
             
             HStack {
                 Text("••••••••")
-                    .font(ParentAppFonts.body)
-                    .foregroundColor(ParentAppColors.black)
+                    .font(CosmicFonts.body)
+                    .foregroundColor(CosmicColors.textPrimary)
                 
                 Spacer()
                 
                 Text("Set by parent")
-                    .font(ParentAppFonts.small)
-                    .foregroundColor(ParentAppColors.mediumGray)
+                    .font(CosmicFonts.small)
+                    .foregroundColor(CosmicColors.textMuted)
                     .italic()
             }
-            .padding(ParentAppSpacing.s)
-            .background(ParentAppColors.lightGray)
-            .cornerRadius(ParentAppCornerRadius.small)
+            .padding(CosmicSpacing.s)
+            .background(CosmicColors.glassBackground.opacity(0.3))
+            .cornerRadius(CosmicCornerRadius.small)
         }
-        .padding(ParentAppSpacing.m)
-        .background(Color.white)
-        .cornerRadius(ParentAppCornerRadius.medium)
-        .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
+        .padding(CosmicSpacing.m)
+        .cosmicCard()
     }
 }
 
@@ -335,7 +366,7 @@ struct VerificationCard: View {
     let verification: VerificationStatus
     
     var body: some View {
-        VStack(alignment: .leading, spacing: ParentAppSpacing.s) {
+        VStack(alignment: .leading, spacing: CosmicSpacing.s) {
             VerificationRow(
                 title: "Parent Verification",
                 isVerified: verification.parentVerified,
@@ -348,10 +379,8 @@ struct VerificationCard: View {
                 icon: "building.2.fill.checkmark"
             )
         }
-        .padding(ParentAppSpacing.m)
-        .background(Color.white)
-        .cornerRadius(ParentAppCornerRadius.medium)
-        .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
+        .padding(CosmicSpacing.m)
+        .cosmicCard()
     }
 }
 
@@ -361,29 +390,28 @@ struct VerificationRow: View {
     let icon: String
     
     var body: some View {
-        HStack(spacing: ParentAppSpacing.m) {
+        HStack(spacing: CosmicSpacing.m) {
             Image(systemName: icon)
-                .foregroundColor(isVerified ? ParentAppColors.success : ParentAppColors.mediumGray)
-                .font(.system(size: 20))
+                .cosmicIcon(size: 20, color: isVerified ? CosmicColors.planetTeal : CosmicColors.textMuted)
             
             Text(title)
-                .font(ParentAppFonts.body)
-                .foregroundColor(ParentAppColors.black)
+                .font(CosmicFonts.body)
+                .foregroundColor(CosmicColors.textPrimary)
             
             Spacer()
             
             if isVerified {
-                HStack(spacing: ParentAppSpacing.xs) {
+                HStack(spacing: CosmicSpacing.xs) {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(ParentAppColors.success)
+                        .foregroundColor(CosmicColors.planetTeal)
                     Text("Verified")
-                        .font(ParentAppFonts.small)
-                        .foregroundColor(ParentAppColors.success)
+                        .font(CosmicFonts.small)
+                        .foregroundColor(CosmicColors.planetTeal)
                 }
             } else {
                 Text("Pending")
-                    .font(ParentAppFonts.small)
-                    .foregroundColor(ParentAppColors.warning)
+                    .font(CosmicFonts.small)
+                    .foregroundColor(CosmicColors.starGold)
             }
         }
     }
@@ -393,17 +421,15 @@ struct ChildActivityCard: View {
     let lastLogin: Date?
     
     var body: some View {
-        VStack(alignment: .leading, spacing: ParentAppSpacing.s) {
+        VStack(alignment: .leading, spacing: CosmicSpacing.s) {
             if let lastLogin = lastLogin {
                 ChildInfoRow(label: "Last Login", value: formatDate(lastLogin))
             } else {
                 ChildInfoRow(label: "Last Login", value: "Never")
             }
         }
-        .padding(ParentAppSpacing.m)
-        .background(Color.white)
-        .cornerRadius(ParentAppCornerRadius.medium)
-        .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
+        .padding(CosmicSpacing.m)
+        .cosmicCard()
     }
     
     private func formatDate(_ date: Date) -> String {
@@ -421,14 +447,14 @@ struct ChildInfoRow: View {
     var body: some View {
         HStack {
             Text(label)
-                .font(ParentAppFonts.caption)
-                .foregroundColor(ParentAppColors.darkGray)
+                .font(CosmicFonts.caption)
+                .foregroundColor(CosmicColors.textMuted)
             
             Spacer()
             
             Text(value)
-                .font(ParentAppFonts.body)
-                .foregroundColor(ParentAppColors.black)
+                .font(CosmicFonts.body)
+                .foregroundColor(CosmicColors.textPrimary)
         }
     }
 }
@@ -445,24 +471,24 @@ struct QuickLoginCard: View {
     }
     
     var body: some View {
-        VStack(spacing: ParentAppSpacing.m) {
+        VStack(spacing: CosmicSpacing.m) {
             if isKidsAppInstalled {
                 Button(action: onDirectLogin) {
-                    HStack(spacing: ParentAppSpacing.s) {
+                    HStack(spacing: CosmicSpacing.s) {
                         Image(systemName: "arrow.right.circle.fill")
-                        Text("Log into Kid App")
-                            .font(ParentAppFonts.button)
+                        Text("Log into Nova App")
+                            .font(CosmicFonts.button)
                     }
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 50)
-                    .background(ParentAppColors.primaryTeal)
-                    .cornerRadius(ParentAppCornerRadius.medium)
+                    .background(CosmicColors.nebulaPurple)
+                    .cornerRadius(CosmicCornerRadius.medium)
                 }
             }
             
             Button(action: onQRCodeLogin) {
-                HStack(spacing: ParentAppSpacing.s) {
+                HStack(spacing: CosmicSpacing.s) {
                     if isGeneratingCode {
                         ProgressView()
                             .progressViewStyle(CircularProgressViewStyle(tint: .white))
@@ -470,20 +496,18 @@ struct QuickLoginCard: View {
                         Image(systemName: "qrcode")
                     }
                     Text(isKidsAppInstalled ? "Show QR Code" : "Generate QR Code")
-                        .font(ParentAppFonts.button)
+                        .font(CosmicFonts.button)
                 }
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .frame(height: 50)
-                .background(isGeneratingCode ? ParentAppColors.mediumGray : ParentAppColors.primaryNavy)
-                .cornerRadius(ParentAppCornerRadius.medium)
+                .background(isGeneratingCode ? CosmicColors.textMuted : CosmicColors.nebulaBlue)
+                .cornerRadius(CosmicCornerRadius.medium)
             }
             .disabled(isGeneratingCode)
         }
-        .padding(ParentAppSpacing.m)
-        .background(Color.white)
-        .cornerRadius(ParentAppCornerRadius.medium)
-        .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
+        .padding(CosmicSpacing.m)
+        .cosmicCard()
     }
 }
 
@@ -494,40 +518,44 @@ struct QRCodeLoginView: View {
     
     var body: some View {
         NavigationView {
-            VStack(spacing: ParentAppSpacing.l) {
-                VStack(spacing: ParentAppSpacing.m) {
-                    Text("Scan to Log In")
-                        .font(ParentAppFonts.title)
-                        .foregroundColor(ParentAppColors.primaryNavy)
-                    
-                    Text("Have \(childName) scan this QR code with the Nova app")
-                        .font(ParentAppFonts.body)
-                        .foregroundColor(ParentAppColors.darkGray)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, ParentAppSpacing.m)
-                }
-                .padding(.top, ParentAppSpacing.xl)
+            ZStack {
+                CosmicBackground()
                 
-                QRCodeView(qrCodeString: "FAMILYNOVA:\(loginCode)")
-                    .padding()
-                
-                VStack(spacing: ParentAppSpacing.s) {
-                    Text("Or enter this code manually:")
-                        .font(ParentAppFonts.caption)
-                        .foregroundColor(ParentAppColors.darkGray)
+                VStack(spacing: CosmicSpacing.l) {
+                    VStack(spacing: CosmicSpacing.m) {
+                        Text("Scan to Log In")
+                            .font(CosmicFonts.title)
+                            .foregroundColor(CosmicColors.textPrimary)
+                        
+                        Text("Have \(childName) scan this QR code with the Nova app")
+                            .font(CosmicFonts.body)
+                            .foregroundColor(CosmicColors.textSecondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, CosmicSpacing.m)
+                    }
+                    .padding(.top, CosmicSpacing.xl)
                     
-                    Text(loginCode)
-                        .font(.system(size: 24, weight: .bold, design: .monospaced))
-                        .foregroundColor(ParentAppColors.primaryTeal)
+                    QRCodeView(qrCodeString: "FAMILYNOVA:\(loginCode)")
                         .padding()
-                        .background(ParentAppColors.lightGray)
-                        .cornerRadius(ParentAppCornerRadius.medium)
+                        .cosmicCard()
+                    
+                    VStack(spacing: CosmicSpacing.s) {
+                        Text("Or enter this code manually:")
+                            .font(CosmicFonts.caption)
+                            .foregroundColor(CosmicColors.textMuted)
+                        
+                        Text(loginCode)
+                            .font(.system(size: 24, weight: .bold, design: .monospaced))
+                            .foregroundColor(CosmicColors.nebulaPurple)
+                            .padding()
+                            .background(CosmicColors.glassBackground.opacity(0.5))
+                            .cornerRadius(CosmicCornerRadius.medium)
+                    }
+                    .padding(.horizontal, CosmicSpacing.m)
+                    
+                    Spacer()
                 }
-                .padding(.horizontal, ParentAppSpacing.m)
-                
-                Spacer()
             }
-            .background(ParentAppColors.lightGray)
             .navigationTitle("QR Code Login")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -535,29 +563,9 @@ struct QRCodeLoginView: View {
                     Button("Done") {
                         dismiss()
                     }
+                    .foregroundColor(CosmicColors.nebulaPurple)
                 }
             }
         }
     }
 }
-
-#Preview {
-    NavigationView {
-        ChildDetailsView(child: Child(
-            id: "123",
-            profile: ChildProfile(
-                displayName: "John Doe",
-                avatar: nil,
-                school: "Elementary School",
-                grade: "5th Grade"
-            ),
-            verification: VerificationStatus(
-                parentVerified: true,
-                schoolVerified: false
-            ),
-            lastLogin: Date()
-        ))
-        .environmentObject(AuthManager())
-    }
-}
-

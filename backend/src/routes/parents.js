@@ -319,6 +319,92 @@ router.get('/children/:childId', async (req, res) => {
   }
 });
 
+// @route   GET /api/parents/children/:childId/activity
+// @desc    Get child's activity stats (posts, messages, friends counts)
+// @access  Private (Parent only)
+router.get('/children/:childId/activity', async (req, res) => {
+  try {
+    const { childId } = req.params;
+    const { getSupabase } = require('../config/database');
+    const supabase = await getSupabase();
+    
+    // Verify child belongs to parent
+    const { data: parentChild, error: relationError } = await supabase
+      .from('parent_children')
+      .select('child_id')
+      .eq('parent_id', req.user.id)
+      .eq('child_id', childId)
+      .single();
+
+    if (relationError || !parentChild) {
+      return res.status(403).json({ error: 'Child not found or not linked to this parent' });
+    }
+    
+    // Get posts count
+    const { count: postsCount, error: postsError } = await supabase
+      .from('posts')
+      .select('*', { count: 'exact', head: true })
+      .eq('author_id', childId)
+      .eq('status', 'approved');
+    
+    // Get messages count
+    const { count: messagesCount, error: messagesError } = await supabase
+      .from('messages')
+      .select('*', { count: 'exact', head: true })
+      .or(`sender_id.eq.${childId},receiver_id.eq.${childId}`);
+    
+    // Get friends count
+    const { count: friendsCount, error: friendsError } = await supabase
+      .from('friendships')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', childId)
+      .eq('status', 'accepted');
+    
+    // Get last activity (most recent post or message)
+    let lastActivity = null;
+    const { data: recentPost } = await supabase
+      .from('posts')
+      .select('created_at')
+      .eq('author_id', childId)
+      .eq('status', 'approved')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+    
+    const { data: recentMessage } = await supabase
+      .from('messages')
+      .select('created_at')
+      .or(`sender_id.eq.${childId},receiver_id.eq.${childId}`)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+    
+    if (recentPost?.created_at || recentMessage?.created_at) {
+      const postDate = recentPost?.created_at ? new Date(recentPost.created_at) : null;
+      const messageDate = recentMessage?.created_at ? new Date(recentMessage.created_at) : null;
+      
+      if (postDate && messageDate) {
+        lastActivity = postDate > messageDate ? postDate.toISOString() : messageDate.toISOString();
+      } else if (postDate) {
+        lastActivity = postDate.toISOString();
+      } else if (messageDate) {
+        lastActivity = messageDate.toISOString();
+      }
+    }
+    
+    res.json({
+      childId: childId,
+      postsCount: postsCount || 0,
+      messagesCount: messagesCount || 0,
+      friendsCount: friendsCount || 0,
+      lastActivity: lastActivity
+    });
+  } catch (error) {
+    console.error('Error fetching child activity:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // @route   POST /api/parents/children/create
 // @desc    Create a child account (parents only)
 // @access  Private (Parent only)

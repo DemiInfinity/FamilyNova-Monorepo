@@ -212,14 +212,14 @@ struct ParentProfile: Codable {
     let avatar: String?
 }
 
-struct Child: Codable, Identifiable {
+struct Child: Codable, Identifiable, Equatable {
     let id: String
     let profile: ChildProfile
     let verification: VerificationStatus
     let lastLogin: Date?
 }
 
-struct ChildProfile: Codable {
+struct ChildProfile: Codable, Equatable {
     let displayName: String
     let avatar: String?
     let school: String?
@@ -232,7 +232,7 @@ struct ParentConnection: Codable, Identifiable {
     let connectedAt: Date
 }
 
-struct VerificationStatus: Codable {
+struct VerificationStatus: Codable, Equatable {
     let parentVerified: Bool
     let schoolVerified: Bool
 }

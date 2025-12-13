@@ -335,7 +335,6 @@ struct EditProfileView: View {
         isUploadingAvatar = true
         Task {
             do {
-                let apiService = ApiService.shared
                 guard let token = authManager.getValidatedToken() else {
                     throw NSError(domain: "Not authenticated", code: 401)
                 }
@@ -400,7 +399,6 @@ struct EditProfileView: View {
         isUploadingBanner = true
         Task {
             do {
-                let apiService = ApiService.shared
                 guard let token = authManager.getValidatedToken() else {
                     throw NSError(domain: "Not authenticated", code: 401)
                 }

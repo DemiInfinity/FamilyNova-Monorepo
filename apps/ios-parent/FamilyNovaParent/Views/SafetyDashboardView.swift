@@ -7,11 +7,13 @@
 import SwiftUI
 
 struct SafetyDashboardView: View {
-    let children: [Child]
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var authManager: AuthManager
     @State private var selectedChild: Child? = nil
     @State private var isLoading = false
+    @State private var isLoadingActivity = false
+    @State private var children: [Child] = []
+    @State private var childActivityData: [String: ChildActivityStats] = [:]
     
     var body: some View {
         NavigationView {
@@ -68,7 +70,10 @@ struct SafetyDashboardView: View {
                                     .padding(.horizontal, CosmicSpacing.m)
                                 
                                 ForEach(children) { child in
-                                    SafetyChildCard(child: child)
+                                    SafetyChildCard(
+                                        child: child,
+                                        activityStats: childActivityData[child.id]
+                                    )
                                         .padding(.horizontal, CosmicSpacing.m)
                                         .onTapGesture {
                                             selectedChild = child
@@ -94,6 +99,62 @@ struct SafetyDashboardView: View {
             .sheet(item: $selectedChild) { child in
                 ChildDetailsView(child: child)
                     .environmentObject(authManager)
+            }
+            .onAppear {
+                loadChildren()
+            }
+            .onChange(of: children) { _ in
+                loadActivityData()
+            }
+        }
+    }
+    
+    private func loadChildren() {
+        // First try to get from currentUser
+        if let currentUser = authManager.currentUser, !currentUser.children.isEmpty {
+            self.children = currentUser.children
+        }
+        
+        // Then load from API for latest data
+        guard let token = authManager.token else {
+            return
+        }
+        
+        isLoading = true
+        Task {
+            do {
+                let apiService = ApiService.shared
+                
+                struct DashboardResponse: Codable {
+                    let parent: ParentDashboardData
+                }
+                
+                struct ParentDashboardData: Codable {
+                    let id: String
+                    let profile: ParentProfile
+                    let children: [Child]
+                    let parentConnections: [ParentConnection]?
+                }
+                
+                let response: DashboardResponse = try await apiService.makeRequest(
+                    endpoint: "parents/dashboard",
+                    method: "GET",
+                    token: token
+                )
+                
+                await MainActor.run {
+                    self.children = response.parent.children
+                    self.isLoading = false
+                }
+            } catch {
+                await MainActor.run {
+                    self.isLoading = false
+                    print("[SafetyDashboard] Error loading children: \(error)")
+                    // Keep children from currentUser if API fails
+                    if self.children.isEmpty, let currentUser = authManager.currentUser {
+                        self.children = currentUser.children
+                    }
+                }
             }
         }
     }
@@ -138,6 +199,7 @@ struct SafetyStatCard: View {
 
 struct SafetyChildCard: View {
     let child: Child
+    let activityStats: ChildActivityStats?
     
     var body: some View {
         HStack(spacing: CosmicSpacing.m) {
@@ -193,6 +255,33 @@ struct SafetyChildCard: View {
             }
             
             Spacer()
+            
+            // Activity Stats
+            if let stats = activityStats {
+                VStack(alignment: .trailing, spacing: CosmicSpacing.xs) {
+                    HStack(spacing: CosmicSpacing.xs) {
+                        Image(systemName: "square.and.pencil")
+                            .cosmicIcon(size: 12, color: CosmicColors.textMuted)
+                        Text("\(stats.postsCount)")
+                            .font(CosmicFonts.caption)
+                            .foregroundColor(CosmicColors.textMuted)
+                    }
+                    HStack(spacing: CosmicSpacing.xs) {
+                        Image(systemName: "message.fill")
+                            .cosmicIcon(size: 12, color: CosmicColors.textMuted)
+                        Text("\(stats.messagesCount)")
+                            .font(CosmicFonts.caption)
+                            .foregroundColor(CosmicColors.textMuted)
+                    }
+                    HStack(spacing: CosmicSpacing.xs) {
+                        Image(systemName: "person.2.fill")
+                            .cosmicIcon(size: 12, color: CosmicColors.textMuted)
+                        Text("\(stats.friendsCount)")
+                            .font(CosmicFonts.caption)
+                            .foregroundColor(CosmicColors.textMuted)
+                    }
+                }
+            }
             
             Image(systemName: "chevron.right")
                 .cosmicIcon(size: 14, color: CosmicColors.textMuted)

@@ -1,0 +1,179 @@
+{
+	"info": {
+		"_postman_id": "test-parents-dashboard",
+		"name": "Test Parents Dashboard",
+		"description": "Test the /api/parents/dashboard endpoint to check if children are being returned correctly",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Login as Parent (Get Token)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Save the token for subsequent requests",
+							"if (pm.response.code === 200) {",
+							"    const jsonData = pm.response.json();",
+							"    if (jsonData.token) {",
+							"        pm.environment.set('auth_token', jsonData.token);",
+							"        console.log('Token saved:', jsonData.token.substring(0, 50) + '...');",
+							"    } else if (jsonData.access_token) {",
+							"        pm.environment.set('auth_token', jsonData.access_token);",
+							"        console.log('Token saved:', jsonData.access_token.substring(0, 50) + '...');",
+							"    }",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"YOUR_PARENT_EMAIL@example.com\",\n    \"password\": \"YOUR_PASSWORD\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/auth/login",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"auth",
+						"login"
+					]
+				},
+				"description": "Login as a parent user to get an authentication token. Replace YOUR_PARENT_EMAIL@example.com and YOUR_PASSWORD with your actual credentials."
+			},
+			"response": []
+		},
+		{
+			"name": "2. Get Parents Dashboard",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Response has parent object', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('parent');",
+							"});",
+							"",
+							"pm.test('Parent has children array', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.parent).to.have.property('children');",
+							"    pm.expect(jsonData.parent.children).to.be.an('array');",
+							"});",
+							"",
+							"pm.test('Log children count and details', function () {",
+							"    const jsonData = pm.response.json();",
+							"    const children = jsonData.parent.children || [];",
+							"    console.log('=== DASHBOARD RESPONSE ===');",
+							"    console.log('Parent ID:', jsonData.parent.id);",
+							"    console.log('Children Count:', children.length);",
+							"    ",
+							"    if (children.length > 0) {",
+							"        console.log('Children Details:');",
+							"        children.forEach((child, index) => {",
+							"            console.log(`  Child ${index + 1}:`);",
+							"            console.log(`    ID: ${child.id}`);",
+							"            console.log(`    Display Name: ${child.profile?.displayName || 'N/A'}`);",
+							"            console.log(`    Avatar: ${child.profile?.avatar || 'N/A'}`);",
+							"            console.log(`    School: ${child.profile?.school || 'N/A'}`);",
+							"            console.log(`    Grade: ${child.profile?.grade || 'N/A'}`);",
+							"            console.log(`    Parent Verified: ${child.verification?.parentVerified || false}`);",
+							"            console.log(`    School Verified: ${child.verification?.schoolVerified || false}`);",
+							"        });",
+							"    } else {",
+							"        console.log('⚠️  NO CHILDREN FOUND!');",
+							"        console.log('This might indicate:');",
+							"        console.log('  1. No children linked in parent_children table');",
+							"        console.log('  2. No children with parent_account_id matching parent ID');",
+							"        console.log('  3. Children exist but are not being returned by the query');",
+							"    }",
+							"    ",
+							"    console.log('Full Response:', JSON.stringify(jsonData, null, 2));",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{auth_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/parents/dashboard",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"parents",
+						"dashboard"
+					]
+				},
+				"description": "Get the parent dashboard which includes all linked children. This endpoint requires:\n- Authorization header with Bearer token\n- User must be of type 'parent'\n\nIt checks both:\n1. parent_children table for linked children\n2. users table with parent_account_id matching the parent's ID\n\nIf children are found via parent_account_id but not in parent_children, it will automatically create the relationships."
+			},
+			"response": []
+		},
+		{
+			"name": "3. Check Parent Children Table (Direct DB Query)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{auth_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/parents/profile",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"parents",
+						"profile"
+					]
+				},
+				"description": "Get parent profile which also includes children. This can help verify if children are being returned from a different endpoint."
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "https://family-nova-monorepo.vercel.app",
+			"type": "string"
+		},
+		{
+			"key": "auth_token",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
+

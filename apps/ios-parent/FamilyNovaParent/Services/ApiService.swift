@@ -53,6 +53,36 @@ class ApiService {
         }
         
         let decoder = JSONDecoder()
+        // Set date decoding strategy to handle ISO8601 date strings (with or without fractional seconds)
+        decoder.dateDecodingStrategy = .custom { decoder in
+            let container = try decoder.singleValueContainer()
+            let dateString = try container.decode(String.self)
+            
+            print("[ApiService] Decoding date string: \(dateString)")
+            
+            // Try with fractional seconds first (e.g., "2025-12-13T20:01:07.376Z")
+            let formatterWithFractional = ISO8601DateFormatter()
+            formatterWithFractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            if let date = formatterWithFractional.date(from: dateString) {
+                print("[ApiService] Successfully decoded date with fractional seconds: \(date)")
+                return date
+            }
+            
+            // Fallback to standard ISO8601 without fractional seconds
+            let formatterStandard = ISO8601DateFormatter()
+            formatterStandard.formatOptions = [.withInternetDateTime]
+            if let date = formatterStandard.date(from: dateString) {
+                print("[ApiService] Successfully decoded date without fractional seconds: \(date)")
+                return date
+            }
+            
+            // If all else fails, throw an error
+            print("[ApiService] Failed to decode date string: \(dateString)")
+            throw DecodingError.dataCorruptedError(
+                in: container,
+                debugDescription: "Invalid date format: \(dateString)"
+            )
+        }
         return try decoder.decode(T.self, from: data)
     }
 }
