@@ -29,7 +29,7 @@ router.use(auth);
 // @route   POST /api/upload/profile-picture
 // @desc    Upload profile picture (avatar)
 // @access  Private
-router.post('/profile-picture', requireUserType('kid'), upload.single('image'), async (req, res) => {
+router.post('/profile-picture', requireUserType('kid', 'parent'), upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No image file provided' });
@@ -104,7 +104,7 @@ router.post('/profile-picture', requireUserType('kid'), upload.single('image'), 
 // @route   POST /api/upload/banner
 // @desc    Upload profile banner
 // @access  Private
-router.post('/banner', requireUserType('kid'), upload.single('image'), async (req, res) => {
+router.post('/banner', requireUserType('kid', 'parent'), upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No image file provided' });
@@ -179,7 +179,7 @@ router.post('/banner', requireUserType('kid'), upload.single('image'), async (re
 // @route   POST /api/upload/post-image
 // @desc    Upload image for a post
 // @access  Private
-router.post('/post-image', requireUserType('kid'), upload.single('image'), async (req, res) => {
+router.post('/post-image', requireUserType('kid', 'parent'), upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No image file provided' });

@@ -10,9 +10,9 @@ const router = express.Router();
 router.use(auth);
 
 // @route   GET /api/friends/my-code
-// @desc    Get or generate user's friend code (kids only)
-// @access  Private (Kid only)
-router.get('/my-code', requireUserType('kid'), async (req, res) => {
+// @desc    Get or generate user's friend code (kids and parents)
+// @access  Private
+router.get('/my-code', requireUserType('kid', 'parent'), async (req, res) => {
   try {
     // Generate or get existing friend code
     const friendCode = await FriendCode.generateCode(req.user.id);
@@ -29,9 +29,9 @@ router.get('/my-code', requireUserType('kid'), async (req, res) => {
 });
 
 // @route   POST /api/friends/add-by-code
-// @desc    Add friend using friend code (kids only)
-// @access  Private (Kid only)
-router.post('/add-by-code', requireUserType('kid'), async (req, res) => {
+// @desc    Add friend using friend code (kids and parents)
+// @access  Private
+router.post('/add-by-code', requireUserType('kid', 'parent'), async (req, res) => {
   try {
     const { code } = req.body;
     const supabase = await getSupabase();
@@ -60,8 +60,16 @@ router.post('/add-by-code', requireUserType('kid'), async (req, res) => {
     
     // Get friend user
     const friend = await User.findById(friendId);
-    if (!friend || friend.userType !== 'kid') {
+    if (!friend) {
       return res.status(404).json({ error: 'Friend not found' });
+    }
+    
+    // Parents can only add other parents as friends, kids can only add other kids
+    if (req.user.userType === 'parent' && friend.userType !== 'parent') {
+      return res.status(403).json({ error: 'Parents can only add other parents as friends' });
+    }
+    if (req.user.userType === 'kid' && friend.userType !== 'kid') {
+      return res.status(403).json({ error: 'Kids can only add other kids as friends' });
     }
     
     // Check if already friends
@@ -109,10 +117,10 @@ router.post('/add-by-code', requireUserType('kid'), async (req, res) => {
     }
     
     // Auto-connect parents if both kids are verified
-    if (req.user.isFullyVerified() && friend.isFullyVerified()) {
-      const currentUser = await User.findById(req.user.id);
-      const friendUser = await User.findById(friendId);
-      
+    const currentUser = await User.findById(req.user.id);
+    const friendUser = await User.findById(friendId);
+    
+    if (currentUser && friendUser && currentUser.isFullyVerified() && friendUser.isFullyVerified()) {
       if (currentUser.parentAccount && friendUser.parentAccount) {
         // Check if parents are already connected
         const { data: existingConnection, error: connError } = await supabase
@@ -133,17 +141,17 @@ router.post('/add-by-code', requireUserType('kid'), async (req, res) => {
       }
     }
     
-    const friendProfile = friend.profile || {};
+    const friendProfile = friendUser.profile || {};
     
     res.json({ 
       message: 'Friend added successfully',
       friend: {
-        id: friend.id,
+        id: friendUser.id,
         profile: {
-          displayName: friendProfile.displayName || friend.email,
+          displayName: friendProfile.displayName || friendUser.email,
           avatar: friendProfile.avatar
         },
-        isVerified: friend.isFullyVerified()
+        isVerified: friendUser.isFullyVerified()
       }
     });
   } catch (error) {
@@ -153,9 +161,9 @@ router.post('/add-by-code', requireUserType('kid'), async (req, res) => {
 });
 
 // @route   POST /api/friends/request
-// @desc    Send friend request (kids only)
-// @access  Private (Kid only)
-router.post('/request', requireUserType('kid'), async (req, res) => {
+// @desc    Send friend request (kids and parents)
+// @access  Private
+router.post('/request', requireUserType('kid', 'parent'), async (req, res) => {
   try {
     const { friendId } = req.body;
     const supabase = await getSupabase();
@@ -165,8 +173,16 @@ router.post('/request', requireUserType('kid'), async (req, res) => {
     }
     
     const friend = await User.findById(friendId);
-    if (!friend || friend.userType !== 'kid') {
+    if (!friend) {
       return res.status(404).json({ error: 'Friend not found' });
+    }
+    
+    // Parents can only add other parents as friends, kids can only add other kids
+    if (req.user.userType === 'parent' && friend.userType !== 'parent') {
+      return res.status(403).json({ error: 'Parents can only add other parents as friends' });
+    }
+    if (req.user.userType === 'kid' && friend.userType !== 'kid') {
+      return res.status(403).json({ error: 'Kids can only add other kids as friends' });
     }
     
     // Check if already friends
@@ -203,10 +219,10 @@ router.post('/request', requireUserType('kid'), async (req, res) => {
     }
     
     // Auto-connect parents if both kids are verified
-    if (req.user.isFullyVerified() && friend.isFullyVerified()) {
-      const currentUser = await User.findById(req.user.id);
-      const friendUser = await User.findById(friendId);
-      
+    const currentUser = await User.findById(req.user.id);
+    const friendUser = await User.findById(friendId);
+    
+    if (currentUser && friendUser && currentUser.isFullyVerified() && friendUser.isFullyVerified()) {
       if (currentUser.parentAccount && friendUser.parentAccount) {
         // Check if parents are already connected
         const { data: existingConnection, error: connError } = await supabase
@@ -227,17 +243,17 @@ router.post('/request', requireUserType('kid'), async (req, res) => {
       }
     }
     
-    const friendProfile = friend.profile || {};
+    const friendProfile = friendUser.profile || {};
     
     res.json({ 
       message: 'Friend request sent successfully',
       friend: {
-        id: friend.id,
+        id: friendUser.id,
         profile: {
-          displayName: friendProfile.displayName || friend.email,
+          displayName: friendProfile.displayName || friendUser.email,
           avatar: friendProfile.avatar
         },
-        isVerified: friend.isFullyVerified()
+        isVerified: friendUser.isFullyVerified()
       }
     });
   } catch (error) {
@@ -247,9 +263,9 @@ router.post('/request', requireUserType('kid'), async (req, res) => {
 });
 
 // @route   POST /api/friends/accept
-// @desc    Accept friend request (kids only)
-// @access  Private (Kid only)
-router.post('/accept', requireUserType('kid'), async (req, res) => {
+// @desc    Accept friend request (kids and parents)
+// @access  Private
+router.post('/accept', requireUserType('kid', 'parent'), async (req, res) => {
   try {
     const { friendId } = req.body;
     const supabase = await getSupabase();
@@ -295,9 +311,9 @@ router.post('/accept', requireUserType('kid'), async (req, res) => {
 });
 
 // @route   GET /api/friends/search
-// @desc    Search for friends (kids only)
-// @access  Private (Kid only)
-router.get('/search', requireUserType('kid'), async (req, res) => {
+// @desc    Search for friends (kids and parents)
+// @access  Private
+router.get('/search', requireUserType('kid', 'parent'), async (req, res) => {
   try {
     const { query: searchQuery } = req.query;
     const supabase = await getSupabase();
@@ -316,11 +332,13 @@ router.get('/search', requireUserType('kid'), async (req, res) => {
     const friendIds = friendships ? friendships.map(f => f.friend_id) : [];
     
     // Search for users matching the query
-    // Note: Supabase doesn't support full-text search on JSONB easily, so we'll fetch all kids and filter
+    // Note: Supabase doesn't support full-text search on JSONB easily, so we'll fetch all users and filter
+    // Parents can search for other parents, kids can search for other kids
+    const userTypeFilter = req.user.userType === 'parent' ? 'parent' : 'kid';
     const { data: usersData, error: usersError } = await supabase
       .from('users')
       .select('id, profile, verification')
-      .eq('user_type', 'kid')
+      .eq('user_type', userTypeFilter)
       .eq('is_active', true)
       .neq('id', req.user.id);
     
@@ -366,9 +384,9 @@ router.get('/search', requireUserType('kid'), async (req, res) => {
 });
 
 // @route   GET /api/friends
-// @desc    Get friends list (kids only)
-// @access  Private (Kid only)
-router.get('/', requireUserType('kid'), async (req, res) => {
+// @desc    Get friends list (kids and parents)
+// @access  Private
+router.get('/', requireUserType('kid', 'parent'), async (req, res) => {
   try {
     const supabase = await getSupabase();
     

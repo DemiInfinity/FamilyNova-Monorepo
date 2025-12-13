@@ -9,6 +9,109 @@ const router = express.Router();
 router.use(auth);
 router.use(requireUserType('parent'));
 
+// @route   GET /api/parents/profile
+// @desc    Get parent's profile
+// @access  Private (Parent only)
+router.get('/profile', async (req, res) => {
+  try {
+    const { getSupabase } = require('../config/database');
+    const supabase = await getSupabase();
+    const user = await User.findById(req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Get friends (parents can have friends too)
+    const { data: friendships, error: friendsError } = await supabase
+      .from('friendships')
+      .select('friend_id')
+      .eq('user_id', req.user.id)
+      .eq('status', 'accepted');
+    
+    const friendIds = friendships ? friendships.map(f => f.friend_id) : [];
+    
+    let friends = [];
+    if (friendIds.length > 0) {
+      const { data: friendsData, error: friendsDataError } = await supabase
+        .from('users')
+        .select('id, profile, verification')
+        .in('id', friendIds);
+      
+      if (!friendsDataError && friendsData) {
+        friends = friendsData.map(friend => {
+          const profile = friend.profile || {};
+          return {
+            id: friend.id,
+            profile: {
+              displayName: profile.displayName || 'Unknown',
+              avatar: profile.avatar
+            },
+            verification: friend.verification || { parentVerified: false, schoolVerified: false }
+          };
+        });
+      }
+    }
+    
+    // Get children
+    const { data: parentChildren, error: childrenError } = await supabase
+      .from('parent_children')
+      .select('child_id')
+      .eq('parent_id', req.user.id);
+
+    const childIds = parentChildren ? parentChildren.map(pc => pc.child_id) : [];
+    
+    let children = [];
+    if (childIds.length > 0) {
+      const { data: childrenData, error: childrenDataError } = await supabase
+        .from('users')
+        .select('id, profile, verification')
+        .in('id', childIds);
+      
+      if (!childrenDataError && childrenData) {
+        children = childrenData.map(child => {
+          const profile = child.profile || {};
+          return {
+            id: child.id,
+            profile: {
+              displayName: profile.displayName || 'Unknown',
+              avatar: profile.avatar,
+              school: profile.school,
+              grade: profile.grade
+            },
+            verification: child.verification || { parentVerified: false, schoolVerified: false }
+          };
+        });
+      }
+    }
+    
+    // Get posts count (user's own posts)
+    const { count: postsCount, error: postsError } = await supabase
+      .from('posts')
+      .select('*', { count: 'exact', head: true })
+      .eq('author_id', req.user.id);
+    
+    const finalPostsCount = postsCount || 0;
+    
+    res.json({ 
+      user: {
+        id: user.id,
+        email: user.email,
+        profile: user.profile,
+        verification: user.verification,
+        friends: friends,
+        friendsCount: friends.length,
+        children: children,
+        childrenCount: children.length,
+        postsCount: finalPostsCount
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching parent profile:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // @route   GET /api/parents/dashboard
 // @desc    Get parent dashboard data
 // @access  Private (Parent only)

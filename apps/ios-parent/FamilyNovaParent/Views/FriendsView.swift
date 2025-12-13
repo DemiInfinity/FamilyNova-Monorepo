@@ -21,25 +21,19 @@ struct FriendsView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                // Fun gradient background
-                LinearGradient(
-                    colors: [ParentAppColors.gradientBlue.opacity(0.1), ParentAppColors.gradientPurple.opacity(0.1)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
+                CosmicBackground()
                 
                 VStack(spacing: 0) {
                     // Fun Search Bar
-                    HStack(spacing: ParentAppSpacing.m) {
+                    HStack(spacing: CosmicSpacing.m) {
                         Image(systemName: "magnifyingglass")
                             .font(.system(size: 20))
-                            .foregroundColor(ParentAppColors.primaryBlue)
+                            .foregroundColor(CosmicColors.nebulaBlue)
                         
                         TextField("Search for friends...", text: $searchText)
                             .textFieldStyle(.plain)
-                            .foregroundColor(ParentAppColors.black)
-                            .font(ParentAppFonts.body)
+                            .foregroundColor(CosmicColors.textPrimary)
+                            .font(CosmicFonts.body)
                             .onChange(of: searchText) { newValue in
                                 if !newValue.isEmpty {
                                     isSearching = true
@@ -50,80 +44,80 @@ struct FriendsView: View {
                                 }
                             }
                     }
-                    .padding(ParentAppSpacing.l)
+                    .padding(CosmicSpacing.l)
                     .background(
-                        RoundedRectangle(cornerRadius: ParentAppCornerRadius.large)
+                        RoundedRectangle(cornerRadius: CosmicCornerRadius.large)
                             .fill(Color.white)
-                            .shadow(color: ParentAppColors.primaryBlue.opacity(0.2), radius: 5, x: 0, y: 2)
+                            .shadow(color: CosmicColors.nebulaBlue.opacity(0.2), radius: 5, x: 0, y: 2)
                     )
-                    .padding(.horizontal, ParentAppSpacing.m)
-                    .padding(.top, ParentAppSpacing.m)
+                    .padding(.horizontal, CosmicSpacing.m)
+                    .padding(.top, CosmicSpacing.m)
                     
                     // Add Friend Buttons
-                    VStack(spacing: ParentAppSpacing.m) {
+                    VStack(spacing: CosmicSpacing.m) {
                         // Main Add Friend Button
                         Button(action: {
                             showAddFriend = true
                         }) {
-                            HStack(spacing: ParentAppSpacing.s) {
+                            HStack(spacing: CosmicSpacing.s) {
                                 Text("➕")
                                     .font(.system(size: 24))
                                 Text("Add New Friend")
-                                    .font(ParentAppFonts.button)
+                                    .font(CosmicFonts.button)
                                     .foregroundColor(.white)
                             }
                             .frame(maxWidth: .infinity)
                             .frame(height: 60)
                             .background(
                                 LinearGradient(
-                                    colors: [ParentAppColors.primaryGreen, ParentAppColors.primaryBlue],
+                                    colors: [CosmicColors.planetTeal, CosmicColors.nebulaBlue],
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 )
                             )
-                            .cornerRadius(ParentAppCornerRadius.large)
-                            .shadow(color: ParentAppColors.primaryGreen.opacity(0.3), radius: 8, x: 0, y: 4)
+                            .cornerRadius(CosmicCornerRadius.large)
+                            .shadow(color: CosmicColors.planetTeal.opacity(0.3), radius: 8, x: 0, y: 4)
                         }
                         
                         // Quick Add Options
-                        HStack(spacing: ParentAppSpacing.m) {
+                        HStack(spacing: CosmicSpacing.m) {
                             Button(action: {
                                 showScanQR = true
                             }) {
-                                HStack(spacing: ParentAppSpacing.xs) {
+                                HStack(spacing: CosmicSpacing.xs) {
                                     Image(systemName: "qrcode.viewfinder")
                                         .font(.system(size: 18))
                                     Text("Scan QR")
-                                        .font(ParentAppFonts.caption)
-                                        .foregroundColor(ParentAppColors.primaryBlue)
+                                        .font(CosmicFonts.caption)
+                                        .foregroundColor(CosmicColors.nebulaBlue)
                                 }
                                 .frame(maxWidth: .infinity)
-                                .padding(.vertical, ParentAppSpacing.s)
+                                .padding(.vertical, CosmicSpacing.s)
                                 .background(Color.white)
-                                .cornerRadius(ParentAppCornerRadius.medium)
+                                .cornerRadius(CosmicCornerRadius.medium)
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: ParentAppCornerRadius.medium)
-                                        .stroke(ParentAppColors.primaryBlue, lineWidth: 2)
+                                    RoundedRectangle(cornerRadius: CosmicCornerRadius.medium)
+                                        .stroke(CosmicColors.nebulaBlue, lineWidth: 2)
                                 )
                             }
                             
                             Button(action: {
                                 showEnterCode = true
                             }) {
-                                HStack(spacing: ParentAppSpacing.xs) {
+                                HStack(spacing: CosmicSpacing.xs) {
                                     Image(systemName: "keyboard")
                                         .font(.system(size: 18))
                                     Text("Enter Code")
-                                        .font(ParentAppFonts.caption)
-                                        .foregroundColor(ParentAppColors.primaryPurple)
+                                        .font(CosmicFonts.caption)
+                                        .foregroundColor(CosmicColors.nebulaPurple)
                                 }
                                 .frame(maxWidth: .infinity)
-                                .padding(.vertical, ParentAppSpacing.s)
+                                .padding(.vertical, CosmicSpacing.s)
                                 .background(Color.white)
-                                .cornerRadius(ParentAppCornerRadius.medium)
+                                .cornerRadius(CosmicCornerRadius.medium)
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: ParentAppCornerRadius.medium)
-                                        .stroke(ParentAppColors.primaryPurple, lineWidth: 2)
+                                    RoundedRectangle(cornerRadius: CosmicCornerRadius.medium)
+                                        .stroke(CosmicColors.nebulaPurple, lineWidth: 2)
                                 )
                             }
                         }
@@ -132,89 +126,89 @@ struct FriendsView: View {
                         Button(action: {
                             showMyCode = true
                         }) {
-                            HStack(spacing: ParentAppSpacing.xs) {
+                            HStack(spacing: CosmicSpacing.xs) {
                                 Image(systemName: "qrcode")
                                     .font(.system(size: 18))
                                 Text("Show My Code")
-                                    .font(ParentAppFonts.caption)
-                                    .foregroundColor(ParentAppColors.primaryGreen)
+                                    .font(CosmicFonts.caption)
+                                    .foregroundColor(CosmicColors.planetTeal)
                             }
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, ParentAppSpacing.s)
+                            .padding(.vertical, CosmicSpacing.s)
                             .background(Color.white)
-                            .cornerRadius(ParentAppCornerRadius.medium)
+                            .cornerRadius(CosmicCornerRadius.medium)
                             .overlay(
-                                RoundedRectangle(cornerRadius: ParentAppCornerRadius.medium)
-                                    .stroke(ParentAppColors.primaryGreen, lineWidth: 2)
+                                RoundedRectangle(cornerRadius: CosmicCornerRadius.medium)
+                                    .stroke(CosmicColors.planetTeal, lineWidth: 2)
                             )
                         }
-                        .padding(.top, ParentAppSpacing.xs)
+                        .padding(.top, CosmicSpacing.xs)
                     }
-                    .padding(.horizontal, ParentAppSpacing.m)
-                    .padding(.top, ParentAppSpacing.m)
+                    .padding(.horizontal, CosmicSpacing.m)
+                    .padding(.top, CosmicSpacing.m)
                     
                     // Friends List or Search Results
-                    VStack(alignment: .leading, spacing: ParentAppSpacing.m) {
+                    VStack(alignment: .leading, spacing: CosmicSpacing.m) {
                         if isSearching {
                             Text("🔍 Search Results")
-                                .font(ParentAppFonts.headline)
-                                .foregroundColor(ParentAppColors.primaryPurple)
-                                .padding(.horizontal, ParentAppSpacing.m)
-                                .padding(.top, ParentAppSpacing.l)
+                                .font(CosmicFonts.headline)
+                                .foregroundColor(CosmicColors.nebulaPurple)
+                                .padding(.horizontal, CosmicSpacing.m)
+                                .padding(.top, CosmicSpacing.l)
                             
                             if searchResults.isEmpty && !searchText.isEmpty {
-                                VStack(spacing: ParentAppSpacing.m) {
+                                VStack(spacing: CosmicSpacing.m) {
                                     Text("😕")
                                         .font(.system(size: 60))
                                     Text("No friends found")
-                                        .font(ParentAppFonts.body)
-                                        .foregroundColor(ParentAppColors.darkGray)
+                                        .font(CosmicFonts.body)
+                                        .foregroundColor(CosmicColors.textSecondary)
                                 }
                                 .frame(maxWidth: .infinity)
-                                .padding(ParentAppSpacing.xxl)
+                                .padding(CosmicSpacing.xxl)
                             } else {
                                 ScrollView {
-                                    LazyVStack(spacing: ParentAppSpacing.m) {
+                                    LazyVStack(spacing: CosmicSpacing.m) {
                                         ForEach(searchResults) { friend in
                                             FriendRow(friend: friend, showAddButton: true, onAdd: {
                                                 addFriend(friendId: friend.id.uuidString)
                                             })
                                         }
                                     }
-                                    .padding(.horizontal, ParentAppSpacing.m)
+                                    .padding(.horizontal, CosmicSpacing.m)
                                 }
                             }
                         } else {
                             Text("👥 My Friends")
-                                .font(ParentAppFonts.headline)
-                                .foregroundColor(ParentAppColors.primaryPurple)
-                                .padding(.horizontal, ParentAppSpacing.m)
-                                .padding(.top, ParentAppSpacing.l)
+                                .font(CosmicFonts.headline)
+                                .foregroundColor(CosmicColors.nebulaPurple)
+                                .padding(.horizontal, CosmicSpacing.m)
+                                .padding(.top, CosmicSpacing.l)
                             
                             if friends.isEmpty {
                                 Spacer()
-                                VStack(spacing: ParentAppSpacing.l) {
+                                VStack(spacing: CosmicSpacing.l) {
                                     Text("👋")
                                         .font(.system(size: 80))
                                     Text("No friends yet!")
-                                        .font(ParentAppFonts.headline)
-                                        .foregroundColor(ParentAppColors.primaryBlue)
+                                        .font(CosmicFonts.headline)
+                                        .foregroundColor(CosmicColors.nebulaBlue)
                                     Text("Start adding friends to connect and have fun together!")
-                                        .font(ParentAppFonts.body)
-                                        .foregroundColor(ParentAppColors.darkGray)
+                                        .font(CosmicFonts.body)
+                                        .foregroundColor(CosmicColors.textSecondary)
                                         .multilineTextAlignment(.center)
-                                        .padding(.horizontal, ParentAppSpacing.xl)
+                                        .padding(.horizontal, CosmicSpacing.xl)
                                 }
-                                .padding(ParentAppSpacing.xxl)
+                                .padding(CosmicSpacing.xxl)
                                 Spacer()
                             } else {
                                 ScrollView {
-                                    LazyVStack(spacing: ParentAppSpacing.m) {
+                                    LazyVStack(spacing: CosmicSpacing.m) {
                                         ForEach(friends) { friend in
                                             FriendRow(friend: friend, showAddButton: false)
                                         }
                                     }
-                                    .padding(.horizontal, ParentAppSpacing.m)
+                                    .padding(.horizontal, CosmicSpacing.m)
                                 }
                             }
                         }
@@ -400,13 +394,13 @@ struct FriendRow: View {
     var onAdd: (() -> Void)? = nil
     
     var body: some View {
-        HStack(spacing: ParentAppSpacing.m) {
+        HStack(spacing: CosmicSpacing.m) {
             // Avatar with fun gradient
             ZStack {
                 Circle()
                     .fill(
                         LinearGradient(
-                            colors: [ParentAppColors.primaryBlue, ParentAppColors.primaryPurple],
+                            colors: [CosmicColors.nebulaBlue, CosmicColors.nebulaPurple],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -418,19 +412,19 @@ struct FriendRow: View {
             }
             
             // Friend Info
-            VStack(alignment: .leading, spacing: ParentAppSpacing.xs) {
+            VStack(alignment: .leading, spacing: CosmicSpacing.xs) {
                 Text(friend.displayName)
-                    .font(ParentAppFonts.headline)
-                    .foregroundColor(ParentAppColors.black)
+                    .font(CosmicFonts.headline)
+                    .foregroundColor(CosmicColors.textPrimary)
                 
                 if friend.isVerified {
-                    HStack(spacing: ParentAppSpacing.xs) {
+                    HStack(spacing: CosmicSpacing.xs) {
                         Image(systemName: "checkmark.seal.fill")
-                            .foregroundColor(ParentAppColors.success)
+                            .foregroundColor(CosmicColors.success)
                             .font(.system(size: 16))
                         Text("Verified Friend")
-                            .font(ParentAppFonts.small)
-                            .foregroundColor(ParentAppColors.success)
+                            .font(CosmicFonts.small)
+                            .foregroundColor(CosmicColors.success)
                     }
                 }
             }
@@ -442,24 +436,24 @@ struct FriendRow: View {
                     onAdd?()
                 }) {
                     Text("➕ Add")
-                        .font(ParentAppFonts.caption)
+                        .font(CosmicFonts.caption)
                         .foregroundColor(.white)
-                        .padding(.horizontal, ParentAppSpacing.m)
-                        .padding(.vertical, ParentAppSpacing.s)
+                        .padding(.horizontal, CosmicSpacing.m)
+                        .padding(.vertical, CosmicSpacing.s)
                         .background(
                             LinearGradient(
-                                colors: [ParentAppColors.primaryGreen, ParentAppColors.primaryBlue],
+                                colors: [CosmicColors.planetTeal, CosmicColors.nebulaBlue],
                                 startPoint: .leading,
                                 endPoint: .trailing
                             )
                         )
-                        .cornerRadius(ParentAppCornerRadius.medium)
+                        .cornerRadius(CosmicCornerRadius.medium)
                 }
             }
         }
-        .padding(ParentAppSpacing.l)
+        .padding(CosmicSpacing.l)
         .background(
-            RoundedRectangle(cornerRadius: ParentAppCornerRadius.large)
+            RoundedRectangle(cornerRadius: CosmicCornerRadius.large)
                 .fill(Color.white)
                 .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
         )

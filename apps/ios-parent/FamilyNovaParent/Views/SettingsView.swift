@@ -2,82 +2,196 @@
 //  SettingsView.swift
 //  FamilyNovaParent
 //
+//  Settings view with cosmic theme
 
 import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject var authManager: AuthManager
+    @Environment(\.dismiss) var dismiss
     @State private var showSubscription = false
+    @State private var showAbout = false
+    @State private var moderationToolsEnabled = false
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: ParentAppSpacing.m) {
-                    // Profile Section
-                    SettingsSection(title: "Profile") {
-                        SettingsRow(icon: "person.fill", title: "Edit Profile", action: {})
-                        SettingsRow(icon: "bell.fill", title: "Notifications", action: {})
-                    }
-                    .padding(.top, ParentAppSpacing.m)
-                    
-                    // Subscription Section
-                    SettingsSection(title: "Subscription") {
-                        Button(action: {
-                            showSubscription = true
-                        }) {
-                            HStack(spacing: ParentAppSpacing.m) {
-                                Image(systemName: "star.fill")
-                                    .foregroundColor(ParentAppColors.primaryTeal)
-                                    .frame(width: 24)
+            ZStack {
+                CosmicBackground()
+                
+                ScrollView {
+                    VStack(spacing: CosmicSpacing.l) {
+                        // Profile Section
+                        VStack(alignment: .leading, spacing: CosmicSpacing.s) {
+                            Text("Profile")
+                                .font(CosmicFonts.headline)
+                                .foregroundColor(CosmicColors.textPrimary)
+                                .padding(.horizontal, CosmicSpacing.m)
+                            
+                            SettingsMenuRow(icon: "person.fill", title: "Edit Profile", action: {})
+                            SettingsMenuRow(icon: "bell.fill", title: "Notifications", action: {})
+                        }
+                        .padding(.top, CosmicSpacing.m)
+                        
+                        // Subscription Section
+                        VStack(alignment: .leading, spacing: CosmicSpacing.s) {
+                            Text("Subscription")
+                                .font(CosmicFonts.headline)
+                                .foregroundColor(CosmicColors.textPrimary)
+                                .padding(.horizontal, CosmicSpacing.m)
+                            
+                            Button(action: {
+                                showSubscription = true
+                            }) {
+                                HStack(spacing: CosmicSpacing.m) {
+                                    Image(systemName: "star.fill")
+                                        .cosmicIcon(size: 20, color: CosmicColors.starGold)
+                                    
+                                    Text("Manage Subscription")
+                                        .font(CosmicFonts.body)
+                                        .foregroundColor(CosmicColors.textPrimary)
+                                    
+                                    Spacer()
+                                    
+                                    Image(systemName: "chevron.right")
+                                        .cosmicIcon(size: 14, color: CosmicColors.textMuted)
+                                }
+                                .padding(CosmicSpacing.m)
+                                .background(CosmicColors.glassBackground)
+                                .cornerRadius(CosmicCornerRadius.medium)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: CosmicCornerRadius.medium)
+                                        .stroke(CosmicColors.glassBorder, lineWidth: 1)
+                                )
+                            }
+                            .padding(.horizontal, CosmicSpacing.m)
+                        }
+                        
+                        // Parent Tools Section
+                        VStack(alignment: .leading, spacing: CosmicSpacing.s) {
+                            Text("Parent Tools")
+                                .font(CosmicFonts.headline)
+                                .foregroundColor(CosmicColors.textPrimary)
+                                .padding(.horizontal, CosmicSpacing.m)
+                            
+                            // Moderation Tools Toggle
+                            HStack(spacing: CosmicSpacing.m) {
+                                Image(systemName: "person.2.badge.gearshape.fill")
+                                    .cosmicIcon(size: 20, color: CosmicColors.nebulaPurple)
+                                    .frame(width: 30)
                                 
-                                Text("Manage Subscription")
-                                    .font(ParentAppFonts.body)
-                                    .foregroundColor(ParentAppColors.black)
+                                VStack(alignment: .leading, spacing: CosmicSpacing.xs) {
+                                    Text("Kids Moderation Tools")
+                                        .font(CosmicFonts.body)
+                                        .foregroundColor(CosmicColors.textPrimary)
+                                    
+                                    Text(hasChildren ? "Enabled for your children" : "No children linked")
+                                        .font(CosmicFonts.caption)
+                                        .foregroundColor(CosmicColors.textMuted)
+                                }
                                 
                                 Spacer()
                                 
-                                Image(systemName: "chevron.right")
-                                    .foregroundColor(ParentAppColors.mediumGray)
-                                    .font(.system(size: 14))
+                                Toggle("", isOn: $moderationToolsEnabled)
+                                    .labelsHidden()
+                                    .disabled(!hasChildren)
                             }
-                            .padding(ParentAppSpacing.m)
+                            .padding(CosmicSpacing.m)
+                            .background(CosmicColors.glassBackground)
+                            .cornerRadius(CosmicCornerRadius.medium)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: CosmicCornerRadius.medium)
+                                    .stroke(CosmicColors.glassBorder, lineWidth: 1)
+                            )
+                            .padding(.horizontal, CosmicSpacing.m)
                         }
-                    }
-                    
-                    // Safety Section
-                    SettingsSection(title: "Safety") {
-                        SettingsRow(icon: "shield.fill", title: "Privacy Settings", action: {})
-                        SettingsRow(icon: "lock.fill", title: "Security", action: {})
-                    }
-                    
-                    // Logout Button
-                    Button(action: handleLogout) {
-                        HStack {
-                            Image(systemName: "arrow.right.square.fill")
-                            Text("Logout")
-                                .font(ParentAppFonts.headline)
+                        .padding(.top, CosmicSpacing.m)
+                        
+                        // Safety Section
+                        VStack(alignment: .leading, spacing: CosmicSpacing.s) {
+                            Text("Safety")
+                                .font(CosmicFonts.headline)
+                                .foregroundColor(CosmicColors.textPrimary)
+                                .padding(.horizontal, CosmicSpacing.m)
+                            
+                            SettingsMenuRow(icon: "shield.fill", title: "Privacy Settings", action: {})
+                            SettingsMenuRow(icon: "lock.fill", title: "Security", action: {})
                         }
-                        .foregroundColor(ParentAppColors.error)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: ParentAppCornerRadius.medium)
-                                .stroke(ParentAppColors.error, lineWidth: 2)
-                        )
+                        .padding(.top, CosmicSpacing.m)
+                        
+                        // About Section
+                        VStack(alignment: .leading, spacing: CosmicSpacing.s) {
+                            Text("About")
+                                .font(CosmicFonts.headline)
+                                .foregroundColor(CosmicColors.textPrimary)
+                                .padding(.horizontal, CosmicSpacing.m)
+                            
+                            SettingsMenuRow(icon: "info.circle.fill", title: "About Nova+", action: {
+                                showAbout = true
+                            })
+                        }
+                        .padding(.top, CosmicSpacing.m)
+                        
+                        // Logout Button
+                        Button(action: handleLogout) {
+                            HStack(spacing: CosmicSpacing.s) {
+                                Image(systemName: "arrow.right.square.fill")
+                                    .cosmicIcon(size: 20, color: CosmicColors.error)
+                                Text("Logout")
+                                    .font(CosmicFonts.headline)
+                                    .foregroundColor(CosmicColors.error)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 60)
+                            .background(CosmicColors.glassBackground)
+                            .cornerRadius(CosmicCornerRadius.medium)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: CosmicCornerRadius.medium)
+                                    .stroke(CosmicColors.error.opacity(0.5), lineWidth: 2)
+                            )
+                        }
+                        .padding(.horizontal, CosmicSpacing.m)
+                        .padding(.top, CosmicSpacing.l)
+                        .padding(.bottom, CosmicSpacing.xxl)
                     }
-                    .padding(.horizontal, ParentAppSpacing.m)
-                    .padding(.top, ParentAppSpacing.l)
                 }
-                .padding(.bottom, ParentAppSpacing.l)
             }
-            .background(ParentAppColors.lightGray)
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .font(CosmicFonts.button)
+                    .foregroundColor(CosmicColors.nebulaPurple)
+                }
+            }
             .sheet(isPresented: $showSubscription) {
                 SubscriptionView()
                     .environmentObject(authManager)
             }
+            .sheet(isPresented: $showAbout) {
+                AboutView()
+            }
+            .onAppear {
+                // Load saved preference or set default based on whether user has children
+                if let saved = UserDefaults.standard.object(forKey: "moderationToolsEnabled") as? Bool {
+                    moderationToolsEnabled = saved
+                } else {
+                    // Default: ON if has children, OFF if no children
+                    moderationToolsEnabled = hasChildren
+                }
+            }
+            .onChange(of: moderationToolsEnabled) { newValue in
+                // Save preference
+                UserDefaults.standard.set(newValue, forKey: "moderationToolsEnabled")
+            }
         }
+    }
+    
+    private var hasChildren: Bool {
+        guard let user = authManager.currentUser else { return false }
+        return !user.children.isEmpty
     }
     
     private func handleLogout() {
@@ -85,56 +199,29 @@ struct SettingsView: View {
     }
 }
 
-struct SettingsSection<Content: View>: View {
-    let title: String
-    let content: Content
-    
-    init(title: String, @ViewBuilder content: () -> Content) {
-        self.title = title
-        self.content = content()
-    }
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: ParentAppSpacing.s) {
-            Text(title)
-                .font(ParentAppFonts.headline)
-                .foregroundColor(ParentAppColors.black)
-                .padding(.horizontal, ParentAppSpacing.m)
-            
-            VStack(spacing: 0) {
-                content
-            }
-            .background(Color.white)
-            .cornerRadius(ParentAppCornerRadius.medium)
-            .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
-            .padding(.horizontal, ParentAppSpacing.m)
-        }
-    }
-}
-
-struct SettingsRow: View {
+struct SettingsMenuRow: View {
     let icon: String
     let title: String
     let action: () -> Void
     
     var body: some View {
         Button(action: action) {
-            HStack(spacing: ParentAppSpacing.m) {
+            HStack(spacing: CosmicSpacing.m) {
                 Image(systemName: icon)
-                    .foregroundColor(ParentAppColors.primaryTeal)
-                    .frame(width: 24)
+                    .cosmicIcon(size: 20, color: CosmicColors.nebulaPurple)
+                    .frame(width: 30)
                 
                 Text(title)
-                    .font(ParentAppFonts.body)
-                    .foregroundColor(ParentAppColors.black)
+                    .font(CosmicFonts.body)
+                    .foregroundColor(CosmicColors.textPrimary)
                 
                 Spacer()
                 
                 Image(systemName: "chevron.right")
-                    .foregroundColor(ParentAppColors.mediumGray)
-                    .font(.system(size: 14))
+                    .cosmicIcon(size: 14, color: CosmicColors.textMuted)
             }
-            .padding(ParentAppSpacing.m)
+            .padding(CosmicSpacing.m)
+            .cosmicCard()
         }
     }
 }
@@ -143,4 +230,3 @@ struct SettingsRow: View {
     SettingsView()
         .environmentObject(AuthManager())
 }
-

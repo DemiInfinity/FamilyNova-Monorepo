@@ -11,9 +11,9 @@ const router = express.Router();
 router.use(auth);
 
 // @route   POST /api/messages
-// @desc    Send a message (kids only)
-// @access  Private (Kid only)
-router.post('/', requireUserType('kid'), [
+// @desc    Send a message (kids and parents)
+// @access  Private
+router.post('/', requireUserType('kid', 'parent'), [
   body('receiverId').notEmpty(),
   body('content').trim().isLength({ min: 1, max: 1000 })
 ], async (req, res) => {
@@ -28,8 +28,16 @@ router.post('/', requireUserType('kid'), [
     
     // Verify receiver is a friend
     const receiver = await User.findById(receiverId);
-    if (!receiver || receiver.userType !== 'kid') {
+    if (!receiver) {
       return res.status(404).json({ error: 'Receiver not found' });
+    }
+    
+    // Parents can only message other parents, kids can only message other kids
+    if (req.user.userType === 'parent' && receiver.userType !== 'parent') {
+      return res.status(403).json({ error: 'Parents can only message other parents' });
+    }
+    if (req.user.userType === 'kid' && receiver.userType !== 'kid') {
+      return res.status(403).json({ error: 'Kids can only message other kids' });
     }
     
     // Check if they are friends
@@ -45,8 +53,9 @@ router.post('/', requireUserType('kid'), [
     }
     
     // Check monitoring level - full monitoring means all messages are flagged for review
+    // Parents' messages are always approved
     const sender = await User.findById(req.user.id);
-    const status = sender.monitoringLevel === 'full' ? 'pending' : 'approved';
+    const status = (sender.userType === 'parent' || sender.monitoringLevel !== 'full') ? 'approved' : 'pending';
     
     const message = await Message.create({
       senderId: req.user.id,

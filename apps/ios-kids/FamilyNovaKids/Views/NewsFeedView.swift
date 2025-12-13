@@ -91,8 +91,11 @@ struct NewsFeedView: View {
                 // Refresh posts when the create post sheet is dismissed
                 loadPosts()
             }) {
-                CreatePostView()
-                    .environmentObject(authManager)
+                UnifiedCreatePostView(onPostCreated: {
+                    // Refresh posts after post is created
+                    loadPosts()
+                })
+                .environmentObject(authManager)
             }
             .onAppear {
                 loadPosts()
@@ -481,7 +484,7 @@ struct PostCard: View {
     }
 }
 
-struct CreatePostView: View {
+struct TextOnlyPostView: View {
     @Environment(\.dismiss) var dismiss
     @State private var postContent = ""
     @State private var isPosting = false

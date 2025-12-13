@@ -29,15 +29,16 @@ struct ProfileView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Color.white.ignoresSafeArea()
+                CosmicBackground()
                 
                 if isLoading {
-                    VStack(spacing: ParentAppSpacing.l) {
+                    VStack(spacing: CosmicSpacing.l) {
                         ProgressView()
                             .scaleEffect(1.5)
+                            .tint(CosmicColors.nebulaPurple)
                         Text("Loading profile...")
-                            .font(ParentAppFonts.body)
-                            .foregroundColor(ParentAppColors.darkGray)
+                            .font(CosmicFonts.body)
+                            .foregroundColor(CosmicColors.textSecondary)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
@@ -46,11 +47,7 @@ struct ProfileView: View {
                             // Cover Image/Banner (like Facebook/Twitter)
                             ZStack(alignment: .bottomLeading) {
                                 // Cover Banner
-                                LinearGradient(
-                                    colors: [ParentAppColors.primaryBlue, ParentAppColors.primaryPurple],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
+                                CosmicColors.spaceGradient
                                 .frame(height: 200)
                                 .overlay(
                                     // Pattern overlay for visual interest
@@ -68,13 +65,7 @@ struct ProfileView: View {
                                         .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
                                     
                                     Circle()
-                                        .fill(
-                                            LinearGradient(
-                                                colors: [ParentAppColors.primaryBlue, ParentAppColors.primaryPurple],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            )
-                                        )
+                                        .fill(CosmicColors.primaryGradient)
                                         .frame(width: 110, height: 110)
                                     
                                     Text("👤")
@@ -84,52 +75,52 @@ struct ProfileView: View {
                             }
                             
                             // User Info Section
-                            VStack(alignment: .leading, spacing: ParentAppSpacing.m) {
+                            VStack(alignment: .leading, spacing: CosmicSpacing.m) {
                                 // Name and Handle
-                                VStack(alignment: .leading, spacing: ParentAppSpacing.xs) {
-                                    HStack(spacing: ParentAppSpacing.xs) {
+                                VStack(alignment: .leading, spacing: CosmicSpacing.xs) {
+                                    HStack(spacing: CosmicSpacing.xs) {
                                         Text(displayName.isEmpty ? email : displayName)
                                             .font(.system(size: 24, weight: .bold))
-                                            .foregroundColor(ParentAppColors.black)
+                                            .foregroundColor(CosmicColors.textPrimary)
                                         
                                         // Verification badges
                                         if parentVerified {
                                             Image(systemName: "checkmark.seal.fill")
-                                                .foregroundColor(ParentAppColors.primaryBlue)
+                                                .foregroundColor(CosmicColors.nebulaBlue)
                                                 .font(.system(size: 18))
                                         }
                                         if schoolVerified {
                                             Image(systemName: "building.2.fill")
-                                                .foregroundColor(ParentAppColors.primaryPurple)
+                                                .foregroundColor(CosmicColors.nebulaPurple)
                                                 .font(.system(size: 18))
                                         }
                                     }
                                     
                                     Text("@\(email.components(separatedBy: "@").first ?? "user")")
-                                        .font(ParentAppFonts.body)
-                                        .foregroundColor(ParentAppColors.darkGray)
+                                        .font(CosmicFonts.body)
+                                        .foregroundColor(CosmicColors.textSecondary)
                                     
                                     // Bio/Info
                                     if let school = school, !school.isEmpty {
-                                        HStack(spacing: ParentAppSpacing.xs) {
+                                        HStack(spacing: CosmicSpacing.xs) {
                                             Image(systemName: "building.2")
-                                                .foregroundColor(ParentAppColors.mediumGray)
+                                                .foregroundColor(CosmicColors.textMuted)
                                                 .font(.system(size: 14))
                                             Text(school)
-                                                .font(ParentAppFonts.caption)
-                                                .foregroundColor(ParentAppColors.darkGray)
+                                                .font(CosmicFonts.caption)
+                                                .foregroundColor(CosmicColors.textSecondary)
                                         }
-                                        .padding(.top, ParentAppSpacing.xs)
+                                        .padding(.top, CosmicSpacing.xs)
                                     }
                                     
                                     if let grade = grade, !grade.isEmpty {
-                                        HStack(spacing: ParentAppSpacing.xs) {
+                                        HStack(spacing: CosmicSpacing.xs) {
                                             Image(systemName: "book")
-                                                .foregroundColor(ParentAppColors.mediumGray)
+                                                .foregroundColor(CosmicColors.textMuted)
                                                 .font(.system(size: 14))
                                             Text(grade)
-                                                .font(ParentAppFonts.caption)
-                                                .foregroundColor(ParentAppColors.darkGray)
+                                                .font(CosmicFonts.caption)
+                                                .foregroundColor(CosmicColors.textSecondary)
                                         }
                                     }
                                 }
@@ -137,14 +128,14 @@ struct ProfileView: View {
                                 .padding(.top, 70)
                                 
                                 // Stats Bar (like Twitter/Bluesky)
-                                HStack(spacing: ParentAppSpacing.xl) {
+                                HStack(spacing: CosmicSpacing.xl) {
                                     StatItem(count: postsCount, label: "Posts")
                                     StatItem(count: friendsCount, label: "Friends")
                                     StatItem(count: 0, label: "Following") // Future feature
                                 }
                                 .padding(.horizontal, 20)
-                                .padding(.top, ParentAppSpacing.m)
-                                .padding(.bottom, ParentAppSpacing.s)
+                                .padding(.top, CosmicSpacing.m)
+                                .padding(.bottom, CosmicSpacing.s)
                                 
                                 Divider()
                                     .padding(.horizontal, 20)
@@ -159,77 +150,77 @@ struct ProfileView: View {
                                     }
                                 }
                                 .padding(.horizontal, 20)
-                                .padding(.top, ParentAppSpacing.s)
+                                .padding(.top, CosmicSpacing.s)
                                 
                                 // Content based on selected tab
                                 if selectedTab == 0 {
                                     // Posts Feed
                                     if isLoadingPosts && posts.isEmpty {
-                                        VStack(spacing: ParentAppSpacing.l) {
+                                        VStack(spacing: CosmicSpacing.l) {
                                             ProgressView()
                                             Text("Loading posts...")
-                                                .font(ParentAppFonts.body)
-                                                .foregroundColor(ParentAppColors.darkGray)
+                                                .font(CosmicFonts.body)
+                                                .foregroundColor(CosmicColors.textSecondary)
                                         }
-                                        .padding(ParentAppSpacing.xxl)
+                                        .padding(CosmicSpacing.xxl)
                                     } else if posts.isEmpty {
-                                        VStack(spacing: ParentAppSpacing.l) {
+                                        VStack(spacing: CosmicSpacing.l) {
                                             Text("📝")
                                                 .font(.system(size: 60))
                                             Text("No posts yet")
-                                                .font(ParentAppFonts.headline)
-                                                .foregroundColor(ParentAppColors.primaryPurple)
+                                                .font(CosmicFonts.headline)
+                                                .foregroundColor(CosmicColors.nebulaPurple)
                                             Text("Share your first post!")
-                                                .font(ParentAppFonts.body)
-                                                .foregroundColor(ParentAppColors.darkGray)
+                                                .font(CosmicFonts.body)
+                                                .foregroundColor(CosmicColors.textSecondary)
                                         }
                                         .frame(maxWidth: .infinity)
-                                        .padding(ParentAppSpacing.xxl)
+                                        .padding(CosmicSpacing.xxl)
                                     } else {
-                                        LazyVStack(spacing: ParentAppSpacing.m) {
+                                        LazyVStack(spacing: CosmicSpacing.m) {
                                             ForEach(posts) { post in
                                                 PostCard(post: post, onDelete: {
                                                     deletePost(postId: post.id)
                                                 })
                                                     .environmentObject(authManager)
-                                                    .padding(.horizontal, ParentAppSpacing.m)
+                                                    .padding(.horizontal, CosmicSpacing.m)
                                             }
                                         }
-                                        .padding(.top, ParentAppSpacing.m)
+                                        .padding(.top, CosmicSpacing.m)
                                     }
                                 } else {
                                     // Photos tab - show posts with images
                                     if isLoadingPosts && posts.isEmpty {
-                                        VStack(spacing: ParentAppSpacing.l) {
+                                        VStack(spacing: CosmicSpacing.l) {
                                             ProgressView()
                                             Text("Loading photos...")
-                                                .font(ParentAppFonts.body)
-                                                .foregroundColor(ParentAppColors.darkGray)
+                                                .font(CosmicFonts.body)
+                                                .foregroundColor(CosmicColors.textSecondary)
                                         }
-                                        .padding(ParentAppSpacing.xxl)
+                                        .padding(CosmicSpacing.xxl)
                                     } else {
                                         let postsWithImages = posts.filter { $0.imageUrl != nil && !$0.imageUrl!.isEmpty }
                                         
                                         if postsWithImages.isEmpty {
-                                            VStack(spacing: ParentAppSpacing.l) {
+                                            VStack(spacing: CosmicSpacing.l) {
                                                 Text("📷")
                                                     .font(.system(size: 60))
                                                 Text("No photos yet")
-                                                    .font(ParentAppFonts.headline)
-                                                    .foregroundColor(ParentAppColors.primaryPurple)
+                                                    .font(CosmicFonts.headline)
+                                                    .foregroundColor(CosmicColors.nebulaPurple)
                                                 Text("Photos from your posts will appear here")
-                                                    .font(ParentAppFonts.body)
-                                                    .foregroundColor(ParentAppColors.darkGray)
+                                                    .font(CosmicFonts.body)
+                                                    .foregroundColor(CosmicColors.textSecondary)
                                             }
                                             .frame(maxWidth: .infinity)
-                                            .padding(ParentAppSpacing.xxl)
+                                            .padding(CosmicSpacing.xxl)
                                         } else {
                                             // Grid layout for photos
                                             LazyVGrid(columns: [
-                                                GridItem(.flexible(), spacing: ParentAppSpacing.s),
-                                                GridItem(.flexible(), spacing: ParentAppSpacing.s),
-                                                GridItem(.flexible(), spacing: ParentAppSpacing.s)
-                                            ], spacing: ParentAppSpacing.s) {
+                                                GridItem(.flexible(), spacing: CosmicSpacing.s),
+                                                GridItem(.flexible(), spacing: CosmicSpacing.s),
+                                                GridItem(.flexible(), spacing: CosmicSpacing.s)
+                                            ], spacing: CosmicSpacing.s) {
                                                 ForEach(postsWithImages) { post in
                                                     if let imageUrl = post.imageUrl, !imageUrl.isEmpty {
                                                         NavigationLink(destination: PostDetailView(post: post)) {
@@ -238,20 +229,20 @@ struct ProfileView: View {
                                                                     .resizable()
                                                                     .aspectRatio(contentMode: .fill)
                                                             } placeholder: {
-                                                                RoundedRectangle(cornerRadius: ParentAppCornerRadius.medium)
-                                                                    .fill(ParentAppColors.mediumGray.opacity(0.3))
+                                                                RoundedRectangle(cornerRadius: CosmicCornerRadius.medium)
+                                                                    .fill(CosmicColors.textMuted.opacity(0.3))
                                                                     .overlay(
                                                                         ProgressView()
                                                                     )
                                                             }
                                                             .frame(width: 110, height: 110)
-                                                            .clipShape(RoundedRectangle(cornerRadius: ParentAppCornerRadius.medium))
+                                                            .clipShape(RoundedRectangle(cornerRadius: CosmicCornerRadius.medium))
                                                         }
                                                     }
                                                 }
                                             }
-                                            .padding(.horizontal, ParentAppSpacing.m)
-                                            .padding(.top, ParentAppSpacing.m)
+                                            .padding(.horizontal, CosmicSpacing.m)
+                                            .padding(.top, CosmicSpacing.m)
                                         }
                                     }
                                 }
@@ -266,7 +257,7 @@ struct ProfileView: View {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: { dismiss() }) {
                         Image(systemName: "xmark")
-                            .foregroundColor(ParentAppColors.black)
+                            .foregroundColor(CosmicColors.textPrimary)
                             .font(.system(size: 18, weight: .semibold))
                     }
                 }
@@ -290,7 +281,7 @@ struct ProfileView: View {
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle")
-                            .foregroundColor(ParentAppColors.primaryBlue)
+                            .foregroundColor(CosmicColors.nebulaBlue)
                             .font(.system(size: 20))
                     }
                 }
@@ -511,6 +502,11 @@ struct ProfileView: View {
                     let email: String
                     let profile: ProfileData
                     let verification: VerificationData
+                    let friends: [FriendResponse]?
+                    let friendsCount: Int?
+                    let children: [ChildResponse]?
+                    let childrenCount: Int?
+                    let postsCount: Int?
                 }
                 
                 struct ProfileData: Codable {
@@ -527,8 +523,32 @@ struct ProfileView: View {
                     let schoolVerified: Bool?
                 }
                 
+                struct FriendResponse: Codable {
+                    let id: String
+                    let profile: FriendProfileData
+                    let verification: VerificationData?
+                }
+                
+                struct FriendProfileData: Codable {
+                    let displayName: String?
+                    let avatar: String?
+                }
+                
+                struct ChildResponse: Codable {
+                    let id: String
+                    let profile: ChildProfileData
+                    let verification: VerificationData?
+                }
+                
+                struct ChildProfileData: Codable {
+                    let displayName: String?
+                    let avatar: String?
+                    let school: String?
+                    let grade: String?
+                }
+                
                 let response: ProfileResponse = try await apiService.makeRequest(
-                    endpoint: "kids/profile",
+                    endpoint: "parents/profile",
                     method: "GET",
                     token: token
                 )
@@ -542,10 +562,30 @@ struct ProfileView: View {
                     self.grade = response.user.profile.grade
                     self.parentVerified = response.user.verification.parentVerified ?? false
                     self.schoolVerified = response.user.verification.schoolVerified ?? false
+                    
+                    // Update counts from response
+                    self.friendsCount = response.user.friendsCount ?? response.user.friends?.count ?? 0
+                    self.postsCount = response.user.postsCount ?? 0
+                    
                     self.isLoading = false
                     
                     // Update authManager's currentUser
                     if let currentUser = authManager.currentUser {
+                        // Convert children from response to Child structs
+                        let children = (response.user.children ?? []).map { childResponse in
+                            Child(
+                                id: childResponse.id,
+                                profile: ChildProfile(
+                                    displayName: childResponse.profile.displayName ?? "Unknown",
+                                    avatar: childResponse.profile.avatar,
+                                    school: childResponse.profile.school,
+                                    grade: childResponse.profile.grade
+                                ),
+                                verification: childResponse.verification ?? VerificationStatus(parentVerified: false, schoolVerified: false),
+                                lastLogin: nil
+                            )
+                        }
+                        
                         // Update the current user with fetched data
                         authManager.currentUser = ParentUser(
                             id: currentUser.id,
@@ -555,14 +595,11 @@ struct ProfileView: View {
                                 lastName: response.user.profile.lastName ?? "",
                                 displayName: self.displayName
                             ),
-                            children: currentUser.children,
+                            children: children,
                             parentConnections: currentUser.parentConnections
                         )
                     }
                 }
-                
-                // Load friends count after profile loads
-                await loadFriendsCount()
             } catch {
                 await MainActor.run {
                     self.isLoading = false
@@ -598,34 +635,34 @@ struct SchoolCodeEntryCard: View {
     
     var body: some View {
         Button(action: { showCodeEntry = true }) {
-            HStack(spacing: ParentAppSpacing.m) {
+            HStack(spacing: CosmicSpacing.m) {
                 ZStack {
                     Circle()
-                        .fill(ParentAppColors.primaryOrange.opacity(0.2))
+                        .fill(CosmicColors.starGold.opacity(0.2))
                         .frame(width: 60, height: 60)
                     
                     Text("🏫")
                         .font(.system(size: 32))
                 }
                 
-                VStack(alignment: .leading, spacing: ParentAppSpacing.xs) {
+                VStack(alignment: .leading, spacing: CosmicSpacing.xs) {
                     Text("Link Your School")
-                        .font(ParentAppFonts.headline)
-                        .foregroundColor(ParentAppColors.primaryOrange)
+                        .font(CosmicFonts.headline)
+                        .foregroundColor(CosmicColors.starGold)
                     Text("Enter your school code to verify your account")
-                        .font(ParentAppFonts.caption)
-                        .foregroundColor(ParentAppColors.darkGray)
+                        .font(CosmicFonts.caption)
+                        .foregroundColor(CosmicColors.textSecondary)
                 }
                 
                 Spacer()
                 
                 Image(systemName: "chevron.right")
-                    .foregroundColor(ParentAppColors.primaryOrange)
+                    .foregroundColor(CosmicColors.starGold)
             }
-            .padding(ParentAppSpacing.l)
+            .padding(CosmicSpacing.l)
             .background(
-                RoundedRectangle(cornerRadius: ParentAppCornerRadius.large)
-                    .fill(ParentAppColors.primaryOrange.opacity(0.1))
+                RoundedRectangle(cornerRadius: CosmicCornerRadius.large)
+                    .fill(CosmicColors.starGold.opacity(0.1))
             )
         }
         .buttonStyle(PlainButtonStyle())
@@ -646,58 +683,58 @@ struct SchoolCodeEntryView: View {
         NavigationView {
             ZStack {
                 LinearGradient(
-                    colors: [ParentAppColors.gradientBlue.opacity(0.1), ParentAppColors.gradientPurple.opacity(0.1)],
+                    colors: [CosmicColors.nebulaBlue.opacity(0.1), CosmicColors.nebulaPurple.opacity(0.1)],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
                 .ignoresSafeArea()
                 
-                VStack(spacing: ParentAppSpacing.xl) {
+                VStack(spacing: CosmicSpacing.xl) {
                     // Header
-                    VStack(spacing: ParentAppSpacing.m) {
+                    VStack(spacing: CosmicSpacing.m) {
                         Text("🏫")
                             .font(.system(size: 80))
                         Text("Enter School Code")
-                            .font(ParentAppFonts.title)
-                            .foregroundColor(ParentAppColors.primaryPurple)
+                            .font(CosmicFonts.title)
+                            .foregroundColor(CosmicColors.nebulaPurple)
                         Text("Get your 6-digit code from your school")
-                            .font(ParentAppFonts.body)
-                            .foregroundColor(ParentAppColors.darkGray)
+                            .font(CosmicFonts.body)
+                            .foregroundColor(CosmicColors.textSecondary)
                             .multilineTextAlignment(.center)
-                            .padding(.horizontal, ParentAppSpacing.xl)
+                            .padding(.horizontal, CosmicSpacing.xl)
                     }
-                    .padding(.top, ParentAppSpacing.xxl)
+                    .padding(.top, CosmicSpacing.xxl)
                     
                     // Code Input
-                    VStack(alignment: .leading, spacing: ParentAppSpacing.s) {
+                    VStack(alignment: .leading, spacing: CosmicSpacing.s) {
                         Text("School Code")
-                            .font(ParentAppFonts.caption)
-                            .foregroundColor(ParentAppColors.darkGray)
+                            .font(CosmicFonts.caption)
+                            .foregroundColor(CosmicColors.textSecondary)
                         
                         TextField("Enter 6-digit code", text: $code)
                             .textFieldStyle(.plain)
-                            .foregroundColor(ParentAppColors.black)
+                            .foregroundColor(CosmicColors.textPrimary)
                             .font(.system(size: 32, weight: .bold, design: .monospaced))
                             .multilineTextAlignment(.center)
                             .autocapitalization(.allCharacters)
                             .keyboardType(.asciiCapable)
-                            .padding(ParentAppSpacing.l)
+                            .padding(CosmicSpacing.l)
                             .background(Color.white)
-                            .cornerRadius(ParentAppCornerRadius.large)
+                            .cornerRadius(CosmicCornerRadius.large)
                             .overlay(
-                                RoundedRectangle(cornerRadius: ParentAppCornerRadius.large)
-                                    .stroke(ParentAppColors.primaryBlue, lineWidth: 2)
+                                RoundedRectangle(cornerRadius: CosmicCornerRadius.large)
+                                    .stroke(CosmicColors.nebulaBlue, lineWidth: 2)
                             )
                             .onChange(of: code) { newValue in
                                 // Limit to 6 characters and uppercase
                                 code = String(newValue.prefix(6)).uppercased()
                             }
                     }
-                    .padding(.horizontal, ParentAppSpacing.m)
+                    .padding(.horizontal, CosmicSpacing.m)
                     
                     // Submit Button
                     Button(action: submitCode) {
-                        HStack(spacing: ParentAppSpacing.s) {
+                        HStack(spacing: CosmicSpacing.s) {
                             if isSubmitting {
                                 ProgressView()
                                     .progressViewStyle(CircularProgressViewStyle(tint: .white))
@@ -705,7 +742,7 @@ struct SchoolCodeEntryView: View {
                                 Text("✅")
                                     .font(.system(size: 24))
                                 Text("Verify School")
-                                    .font(ParentAppFonts.button)
+                                    .font(CosmicFonts.button)
                                     .foregroundColor(.white)
                             }
                         }
@@ -713,15 +750,15 @@ struct SchoolCodeEntryView: View {
                         .frame(height: 60)
                         .background(
                             LinearGradient(
-                                colors: [ParentAppColors.primaryBlue, ParentAppColors.primaryPurple],
+                                colors: [CosmicColors.nebulaBlue, CosmicColors.nebulaPurple],
                                 startPoint: .leading,
                                 endPoint: .trailing
                             )
                         )
-                        .cornerRadius(ParentAppCornerRadius.large)
-                        .shadow(color: ParentAppColors.primaryBlue.opacity(0.3), radius: 8, x: 0, y: 4)
+                        .cornerRadius(CosmicCornerRadius.large)
+                        .shadow(color: CosmicColors.nebulaBlue.opacity(0.3), radius: 8, x: 0, y: 4)
                     }
-                    .padding(.horizontal, ParentAppSpacing.m)
+                    .padding(.horizontal, CosmicSpacing.m)
                     .disabled(code.count != 6 || isSubmitting)
                     .opacity(code.count == 6 ? 1.0 : 0.5)
                     
@@ -735,8 +772,8 @@ struct SchoolCodeEntryView: View {
                     Button("Cancel") {
                         dismiss()
                     }
-                    .font(ParentAppFonts.button)
-                    .foregroundColor(ParentAppColors.primaryBlue)
+                    .font(CosmicFonts.button)
+                    .foregroundColor(CosmicColors.nebulaBlue)
                 }
             }
             .alert("Error", isPresented: $showError) {
@@ -776,13 +813,13 @@ struct ProfileHeaderCard: View {
     let email: String
     
     var body: some View {
-        VStack(spacing: ParentAppSpacing.m) {
+        VStack(spacing: CosmicSpacing.m) {
             // Avatar with fun gradient
             ZStack {
                 Circle()
                     .fill(
                         LinearGradient(
-                            colors: [ParentAppColors.primaryBlue, ParentAppColors.primaryPurple],
+                            colors: [CosmicColors.nebulaBlue, CosmicColors.nebulaPurple],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -792,22 +829,22 @@ struct ProfileHeaderCard: View {
                 Text("👤")
                     .font(.system(size: 60))
             }
-            .shadow(color: ParentAppColors.primaryBlue.opacity(0.3), radius: 10, x: 0, y: 5)
+            .shadow(color: CosmicColors.nebulaBlue.opacity(0.3), radius: 10, x: 0, y: 5)
             
             Text(displayName)
-                .font(ParentAppFonts.title)
-                .foregroundColor(ParentAppColors.primaryPurple)
+                .font(CosmicFonts.title)
+                .foregroundColor(CosmicColors.nebulaPurple)
             
             Text(email)
-                .font(ParentAppFonts.body)
-                .foregroundColor(ParentAppColors.darkGray)
+                .font(CosmicFonts.body)
+                .foregroundColor(CosmicColors.textSecondary)
         }
         .frame(maxWidth: .infinity)
-        .padding(ParentAppSpacing.xl)
+        .padding(CosmicSpacing.xl)
         .background(
-            RoundedRectangle(cornerRadius: ParentAppCornerRadius.extraLarge)
+            RoundedRectangle(cornerRadius: CosmicCornerRadius.extraLarge)
                 .fill(Color.white)
-                .shadow(color: ParentAppColors.primaryBlue.opacity(0.2), radius: 10, x: 0, y: 5)
+                .shadow(color: CosmicColors.nebulaBlue.opacity(0.2), radius: 10, x: 0, y: 5)
         )
     }
 }
@@ -817,49 +854,49 @@ struct ProfileVerificationCard: View {
     let schoolVerified: Bool
     
     var body: some View {
-        VStack(alignment: .leading, spacing: ParentAppSpacing.m) {
+        VStack(alignment: .leading, spacing: CosmicSpacing.m) {
             HStack {
                 Text("✅")
                     .font(.system(size: 24))
                 Text("Verification Status")
-                    .font(ParentAppFonts.headline)
-                    .foregroundColor(ParentAppColors.primaryPurple)
+                    .font(CosmicFonts.headline)
+                    .foregroundColor(CosmicColors.nebulaPurple)
             }
             
-            VStack(alignment: .leading, spacing: ParentAppSpacing.m) {
-                HStack(spacing: ParentAppSpacing.m) {
+            VStack(alignment: .leading, spacing: CosmicSpacing.m) {
+                HStack(spacing: CosmicSpacing.m) {
                     ZStack {
                         Circle()
-                            .fill(parentVerified ? ParentAppColors.success.opacity(0.2) : ParentAppColors.error.opacity(0.2))
+                            .fill(parentVerified ? CosmicColors.success.opacity(0.2) : CosmicColors.error.opacity(0.2))
                             .frame(width: 50, height: 50)
                         Text(parentVerified ? "✓" : "✗")
                             .font(.system(size: 24, weight: .bold))
-                            .foregroundColor(parentVerified ? ParentAppColors.success : ParentAppColors.error)
+                            .foregroundColor(parentVerified ? CosmicColors.success : CosmicColors.error)
                     }
                     Text("Parent Verified")
-                        .font(ParentAppFonts.body)
-                        .foregroundColor(parentVerified ? ParentAppColors.success : ParentAppColors.error)
+                        .font(CosmicFonts.body)
+                        .foregroundColor(parentVerified ? CosmicColors.success : CosmicColors.error)
                 }
                 
-                HStack(spacing: ParentAppSpacing.m) {
+                HStack(spacing: CosmicSpacing.m) {
                     ZStack {
                         Circle()
-                            .fill(schoolVerified ? ParentAppColors.success.opacity(0.2) : ParentAppColors.error.opacity(0.2))
+                            .fill(schoolVerified ? CosmicColors.success.opacity(0.2) : CosmicColors.error.opacity(0.2))
                             .frame(width: 50, height: 50)
                         Text(schoolVerified ? "✓" : "✗")
                             .font(.system(size: 24, weight: .bold))
-                            .foregroundColor(schoolVerified ? ParentAppColors.success : ParentAppColors.error)
+                            .foregroundColor(schoolVerified ? CosmicColors.success : CosmicColors.error)
                     }
                     Text("School Verified")
-                        .font(ParentAppFonts.body)
-                        .foregroundColor(schoolVerified ? ParentAppColors.success : ParentAppColors.error)
+                        .font(CosmicFonts.body)
+                        .foregroundColor(schoolVerified ? CosmicColors.success : CosmicColors.error)
                 }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(ParentAppSpacing.xl)
+        .padding(CosmicSpacing.xl)
         .background(
-            RoundedRectangle(cornerRadius: ParentAppCornerRadius.large)
+            RoundedRectangle(cornerRadius: CosmicCornerRadius.large)
                 .fill(Color.white)
                 .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
         )
@@ -871,37 +908,37 @@ struct ProfileSchoolInfoCard: View {
     let grade: String
     
     var body: some View {
-        VStack(alignment: .leading, spacing: ParentAppSpacing.l) {
-            HStack(spacing: ParentAppSpacing.m) {
+        VStack(alignment: .leading, spacing: CosmicSpacing.l) {
+            HStack(spacing: CosmicSpacing.m) {
                 Text("🏫")
                     .font(.system(size: 32))
-                VStack(alignment: .leading, spacing: ParentAppSpacing.xs) {
+                VStack(alignment: .leading, spacing: CosmicSpacing.xs) {
                     Text("School")
-                        .font(ParentAppFonts.small)
-                        .foregroundColor(ParentAppColors.darkGray)
+                        .font(CosmicFonts.small)
+                        .foregroundColor(CosmicColors.textSecondary)
                     Text(school)
-                        .font(ParentAppFonts.headline)
-                        .foregroundColor(ParentAppColors.primaryBlue)
+                        .font(CosmicFonts.headline)
+                        .foregroundColor(CosmicColors.nebulaBlue)
                 }
             }
             
-            HStack(spacing: ParentAppSpacing.m) {
+            HStack(spacing: CosmicSpacing.m) {
                 Text("📚")
                     .font(.system(size: 32))
-                VStack(alignment: .leading, spacing: ParentAppSpacing.xs) {
+                VStack(alignment: .leading, spacing: CosmicSpacing.xs) {
                     Text("Grade")
-                        .font(ParentAppFonts.small)
-                        .foregroundColor(ParentAppColors.darkGray)
+                        .font(CosmicFonts.small)
+                        .foregroundColor(CosmicColors.textSecondary)
                     Text(grade)
-                        .font(ParentAppFonts.headline)
-                        .foregroundColor(ParentAppColors.primaryPurple)
+                        .font(CosmicFonts.headline)
+                        .foregroundColor(CosmicColors.nebulaPurple)
                 }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(ParentAppSpacing.xl)
+        .padding(CosmicSpacing.xl)
         .background(
-            RoundedRectangle(cornerRadius: ParentAppCornerRadius.large)
+            RoundedRectangle(cornerRadius: CosmicCornerRadius.large)
                 .fill(Color.white)
                 .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
         )

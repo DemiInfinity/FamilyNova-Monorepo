@@ -555,9 +555,9 @@ router.put('/:postId/approve', requireUserType('parent'), [
 });
 
 // @route   POST /api/posts/:postId/like
-// @desc    Like or unlike a post (kids only)
-// @access  Private (Kid only)
-router.post('/:postId/like', requireUserType('kid'), async (req, res) => {
+// @desc    Like or unlike a post (kids and parents)
+// @access  Private
+router.post('/:postId/like', async (req, res) => {
   try {
     const { postId } = req.params;
     const post = await Post.findById(postId);
@@ -588,9 +588,9 @@ router.post('/:postId/like', requireUserType('kid'), async (req, res) => {
 });
 
 // @route   POST /api/posts/:postId/reaction
-// @desc    Add or remove a reaction to a post (kids only)
-// @access  Private (Kid only)
-router.post('/:postId/reaction', requireUserType('kid'), [
+// @desc    Add or remove a reaction to a post (kids and parents)
+// @access  Private
+router.post('/:postId/reaction', [
   body('reactionType').isIn(['like', 'love', 'laugh', 'wow', 'sad', 'angry']),
   body('emoji').notEmpty()
 ], async (req, res) => {
@@ -640,9 +640,9 @@ router.post('/:postId/reaction', requireUserType('kid'), [
 });
 
 // @route   POST /api/posts/:postId/comment
-// @desc    Add a comment to a post (kids only)
-// @access  Private (Kid only)
-router.post('/:postId/comment', requireUserType('kid'), [
+// @desc    Add a comment to a post (kids and parents)
+// @access  Private
+router.post('/:postId/comment', [
   body('content').trim().isLength({ min: 1, max: 200 })
 ], async (req, res) => {
   try {

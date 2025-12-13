@@ -293,7 +293,6 @@ struct EditProfileView: View {
         isUploadingAvatar = true
         Task {
             do {
-                let apiService = ApiService.shared
                 guard let token = authManager.getValidatedToken() else {
                     throw NSError(domain: "Not authenticated", code: 401)
                 }
@@ -314,7 +313,7 @@ struct EditProfileView: View {
                 
                 request.httpBody = body
                 
-                let (data, response) = try await URLSession.shared.data(for: request)
+                let (_, response) = try await URLSession.shared.data(for: request)
                 
                 guard let httpResponse = response as? HTTPURLResponse else {
                     throw NSError(domain: "Invalid response", code: 0)
@@ -347,7 +346,6 @@ struct EditProfileView: View {
         isUploadingBanner = true
         Task {
             do {
-                let apiService = ApiService.shared
                 guard let token = authManager.getValidatedToken() else {
                     throw NSError(domain: "Not authenticated", code: 401)
                 }
@@ -368,7 +366,7 @@ struct EditProfileView: View {
                 
                 request.httpBody = body
                 
-                let (data, response) = try await URLSession.shared.data(for: request)
+                let (_, response) = try await URLSession.shared.data(for: request)
                 
                 guard let httpResponse = response as? HTTPURLResponse else {
                     throw NSError(domain: "Invalid response", code: 0)

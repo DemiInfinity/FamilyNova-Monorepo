@@ -14,6 +14,7 @@
 		14499997877699B488D44A50 /* FriendsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E31D667D2A6553C711B01325 /* FriendsView.swift */; };
 		1B03CD1ED47129A9D0475C68 /* FeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AB9F496FB8D5779D03C4760 /* FeedView.swift */; };
 		1CAE2E3F4C9E683B3A2A649A /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA3DF5584C3C1C13C32CF070 /* AuthManager.swift */; };
+		291B03416E3C0F764A214D52 /* MyPostsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F3400A9D3C45E557F53ADA0 /* MyPostsView.swift */; };
 		29BC15483869DA9E425439EC /* CreateChildAccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C58E9DA80AFD04BF258FDF03 /* CreateChildAccountView.swift */; };
 		2F1A81B50D75E527AF1D7FD6 /* EnterFriendCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FFFFB5AE6FC797B29FDF532 /* EnterFriendCodeView.swift */; };
 		308553DBF5366FF3F12958F9 /* ProfileChangeApprovalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2A70B764625E43C386D6CC5 /* ProfileChangeApprovalView.swift */; };
@@ -22,7 +23,9 @@
 		4866317D6367DE559351BBDC /* ChildDetailsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5108220BA08333256ED48E22 /* ChildDetailsView.swift */; };
 		4DD00A14495B83280F0B489E /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E139914E755FEAA3736F68E /* DesignSystem.swift */; };
 		52764FAD573623DA967BE7F8 /* ShowMyFriendCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AA4891E0465C5EA4C7A4EB0 /* ShowMyFriendCodeView.swift */; };
+		54EE1B48E41AB30096A6189F /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55134C820EE11D6AADAE0EAE /* NotificationsView.swift */; };
 		5CE0BDF764E5ED76385E0988 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68EC8D887EFC3CBBE5BF0BF9 /* SettingsView.swift */; };
+		677D84F98FE3B6F07AF6D75E /* CreatePostView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4234AFC9DE2A40F144C9372B /* CreatePostView.swift */; };
 		68D20CFCFCCC0E33E864730D /* PostDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10648C2C06564999E6C9174 /* PostDetailView.swift */; };
 		79C6D1CFEE8D4BC12D695317 /* ImagePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE8F3B95FCBA26EC6B26DB39 /* ImagePicker.swift */; };
 		7C1D6E4BD47BCD475C0FC8FD /* PhotoPostView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB44BE4F87B6244D283FC833 /* PhotoPostView.swift */; };
@@ -33,15 +36,20 @@
 		860E0F62AB2B3531664C21E9 /* Encryption.swift in Sources */ = {isa = PBXBuildFile; fileRef = A29D9B6230D3B4E6EE9BF850 /* Encryption.swift */; };
 		865F30A0CE5E1A81D251DD9E /* ConnectionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FDB135486912D9735B22569 /* ConnectionsView.swift */; };
 		8A87C5738C31ABFC2A80B860 /* SubscriptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C26D4F8C94BDA1F5A571ACC4 /* SubscriptionService.swift */; };
+		8F315B22AFF0183ABA577965 /* CosmicDesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8517CF81473CC0482936608B /* CosmicDesignSystem.swift */; };
 		917AAC151B16F643125DA412 /* MessagesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7D3EA1C858334020CAA17EC /* MessagesView.swift */; };
+		935F2E18D9F561DCDAC04518 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A28D16102720CD9B4CEBEFD4 /* AboutView.swift */; };
 		A19F1B575B8A8C3E4DC59118 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6427A39E667C1717629D3BE5 /* ProfileView.swift */; };
+		A3ED1D8AB2189396891393D9 /* UnifiedCreatePostView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F2019F7F23A4A0526209448 /* UnifiedCreatePostView.swift */; };
 		A9FBF997D169FD6A77A5A5E4 /* SubscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2B6BEE8A031D5F3177EA1FA /* SubscriptionView.swift */; };
 		AA669116979697118CEF638D /* ProfileComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14027AF6B2A0C159DC6DC58F /* ProfileComponents.swift */; };
 		ACF6A75E08242AC47736EFFC /* MoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE1D2CA841935915201847F1 /* MoreView.swift */; };
 		AE6CE438AFE580AE0998F713 /* FamilyNovaParentApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 404DE0FB7A2C9F4DEC4A6EF0 /* FamilyNovaParentApp.swift */; };
 		B063305195AF329434678669 /* Subscription.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8DEB7C47C8850693B2BE259 /* Subscription.swift */; };
 		B2592FB22A74B4AB00CF4679 /* AppDetection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73DEA75A086EE59C1B46EB7C /* AppDetection.swift */; };
+		B511D2A7537BEB91BC762E8C /* ExploreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E209A4AF9809DD8D2B31ABFC /* ExploreView.swift */; };
 		B8B3AAAD5EC87D7ED72E7673 /* HomeworkView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2477775C97DAFC2A27119BEE /* HomeworkView.swift */; };
+		C0B2A340774B1D8D767F0D0F /* HomeFeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90D315FD0E49B6DEF1202E77 /* HomeFeedView.swift */; };
 		C8AFA3888CE7D23F8F4A208B /* RegisterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFC2DCE579D198E7C0AAEA02 /* RegisterView.swift */; };
 		CACAA0C61A2F7AF13B5032BB /* QRCodeGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34813A3D32E39C23E8056F98 /* QRCodeGenerator.swift */; };
 		DDCFD8619CD87B6F127C906F /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90B12BDBCE5FB3505F4DFF86 /* DashboardView.swift */; };
@@ -59,17 +67,24 @@
 		3AB9F496FB8D5779D03C4760 /* FeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedView.swift; sourceTree = "<group>"; };
 		404DE0FB7A2C9F4DEC4A6EF0 /* FamilyNovaParentApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FamilyNovaParentApp.swift; sourceTree = "<group>"; };
 		411F0E038FF16D34EC9666E8 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		4234AFC9DE2A40F144C9372B /* CreatePostView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreatePostView.swift; sourceTree = "<group>"; };
 		5108220BA08333256ED48E22 /* ChildDetailsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChildDetailsView.swift; sourceTree = "<group>"; };
+		55134C820EE11D6AADAE0EAE /* NotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
 		5902CC5E30F564990DA9B76C /* PostApprovalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostApprovalView.swift; sourceTree = "<group>"; };
 		6427A39E667C1717629D3BE5 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		68EC8D887EFC3CBBE5BF0BF9 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		6F3400A9D3C45E557F53ADA0 /* MyPostsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyPostsView.swift; sourceTree = "<group>"; };
 		6FFFFB5AE6FC797B29FDF532 /* EnterFriendCodeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnterFriendCodeView.swift; sourceTree = "<group>"; };
 		73DEA75A086EE59C1B46EB7C /* AppDetection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDetection.swift; sourceTree = "<group>"; };
 		75934214D37B149BF6775DA6 /* ApiService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiService.swift; sourceTree = "<group>"; };
 		775BA197129CBBCCF46249D6 /* EditProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileView.swift; sourceTree = "<group>"; };
+		8517CF81473CC0482936608B /* CosmicDesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CosmicDesignSystem.swift; sourceTree = "<group>"; };
 		8B50917360E12C4109BF372A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		90B12BDBCE5FB3505F4DFF86 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		90D315FD0E49B6DEF1202E77 /* HomeFeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeFeedView.swift; sourceTree = "<group>"; };
 		98193E8D50A12BFE76D0E4CF /* FamilyNovaParent.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FamilyNovaParent.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		9F2019F7F23A4A0526209448 /* UnifiedCreatePostView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedCreatePostView.swift; sourceTree = "<group>"; };
+		A28D16102720CD9B4CEBEFD4 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		A29D9B6230D3B4E6EE9BF850 /* Encryption.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Encryption.swift; sourceTree = "<group>"; };
 		A8DEB7C47C8850693B2BE259 /* Subscription.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Subscription.swift; sourceTree = "<group>"; };
 		AE1D2CA841935915201847F1 /* MoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoreView.swift; sourceTree = "<group>"; };
@@ -86,6 +101,7 @@
 		D2A70B764625E43C386D6CC5 /* ProfileChangeApprovalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileChangeApprovalView.swift; sourceTree = "<group>"; };
 		DA8DC02171F948D809EE56AD /* CommentsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentsView.swift; sourceTree = "<group>"; };
 		E184B8417098ACF286B198D0 /* QRCodeScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCodeScannerView.swift; sourceTree = "<group>"; };
+		E209A4AF9809DD8D2B31ABFC /* ExploreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreView.swift; sourceTree = "<group>"; };
 		E2B6BEE8A031D5F3177EA1FA /* SubscriptionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionView.swift; sourceTree = "<group>"; };
 		E31D667D2A6553C711B01325 /* FriendsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsView.swift; sourceTree = "<group>"; };
 		F77E21DBE10F147FE0A26B7B /* ScanFriendQRView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanFriendQRView.swift; sourceTree = "<group>"; };
@@ -120,16 +136,20 @@
 		7F45D8412762B1C7BADF44D7 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				A28D16102720CD9B4CEBEFD4 /* AboutView.swift */,
 				D2130C3E6F987C7647C2F64F /* AddFriendView.swift */,
 				5108220BA08333256ED48E22 /* ChildDetailsView.swift */,
 				DA8DC02171F948D809EE56AD /* CommentsView.swift */,
 				1FDB135486912D9735B22569 /* ConnectionsView.swift */,
 				C58E9DA80AFD04BF258FDF03 /* CreateChildAccountView.swift */,
+				4234AFC9DE2A40F144C9372B /* CreatePostView.swift */,
 				90B12BDBCE5FB3505F4DFF86 /* DashboardView.swift */,
 				775BA197129CBBCCF46249D6 /* EditProfileView.swift */,
 				6FFFFB5AE6FC797B29FDF532 /* EnterFriendCodeView.swift */,
+				E209A4AF9809DD8D2B31ABFC /* ExploreView.swift */,
 				3AB9F496FB8D5779D03C4760 /* FeedView.swift */,
 				E31D667D2A6553C711B01325 /* FriendsView.swift */,
+				90D315FD0E49B6DEF1202E77 /* HomeFeedView.swift */,
 				2477775C97DAFC2A27119BEE /* HomeworkView.swift */,
 				BE8F3B95FCBA26EC6B26DB39 /* ImagePicker.swift */,
 				2B9CEA9A6117E2207D17A720 /* LoginView.swift */,
@@ -137,6 +157,8 @@
 				C7D3EA1C858334020CAA17EC /* MessagesView.swift */,
 				CC148EDCB0C10E310E3F123A /* MonitoringView.swift */,
 				AE1D2CA841935915201847F1 /* MoreView.swift */,
+				6F3400A9D3C45E557F53ADA0 /* MyPostsView.swift */,
+				55134C820EE11D6AADAE0EAE /* NotificationsView.swift */,
 				BB44BE4F87B6244D283FC833 /* PhotoPostView.swift */,
 				5902CC5E30F564990DA9B76C /* PostApprovalView.swift */,
 				D10648C2C06564999E6C9174 /* PostDetailView.swift */,
@@ -149,6 +171,7 @@
 				68EC8D887EFC3CBBE5BF0BF9 /* SettingsView.swift */,
 				1AA4891E0465C5EA4C7A4EB0 /* ShowMyFriendCodeView.swift */,
 				E2B6BEE8A031D5F3177EA1FA /* SubscriptionView.swift */,
+				9F2019F7F23A4A0526209448 /* UnifiedCreatePostView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -187,6 +210,7 @@
 			isa = PBXGroup;
 			children = (
 				73DEA75A086EE59C1B46EB7C /* AppDetection.swift */,
+				8517CF81473CC0482936608B /* CosmicDesignSystem.swift */,
 				2E139914E755FEAA3736F68E /* DesignSystem.swift */,
 				A29D9B6230D3B4E6EE9BF850 /* Encryption.swift */,
 				34813A3D32E39C23E8056F98 /* QRCodeGenerator.swift */,
@@ -258,6 +282,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				935F2E18D9F561DCDAC04518 /* AboutView.swift in Sources */,
 				7F210D21C9DC9650604BBD58 /* AddFriendView.swift in Sources */,
 				13F379C7B1E97DF69BA6799B /* ApiService.swift in Sources */,
 				B2592FB22A74B4AB00CF4679 /* AppDetection.swift in Sources */,
@@ -265,15 +290,19 @@
 				4866317D6367DE559351BBDC /* ChildDetailsView.swift in Sources */,
 				4826E90AF5C9591C6038CA67 /* CommentsView.swift in Sources */,
 				865F30A0CE5E1A81D251DD9E /* ConnectionsView.swift in Sources */,
+				8F315B22AFF0183ABA577965 /* CosmicDesignSystem.swift in Sources */,
 				29BC15483869DA9E425439EC /* CreateChildAccountView.swift in Sources */,
+				677D84F98FE3B6F07AF6D75E /* CreatePostView.swift in Sources */,
 				DDCFD8619CD87B6F127C906F /* DashboardView.swift in Sources */,
 				4DD00A14495B83280F0B489E /* DesignSystem.swift in Sources */,
 				0308B50D9C0592101A795F1F /* EditProfileView.swift in Sources */,
 				860E0F62AB2B3531664C21E9 /* Encryption.swift in Sources */,
 				2F1A81B50D75E527AF1D7FD6 /* EnterFriendCodeView.swift in Sources */,
+				B511D2A7537BEB91BC762E8C /* ExploreView.swift in Sources */,
 				AE6CE438AFE580AE0998F713 /* FamilyNovaParentApp.swift in Sources */,
 				1B03CD1ED47129A9D0475C68 /* FeedView.swift in Sources */,
 				14499997877699B488D44A50 /* FriendsView.swift in Sources */,
+				C0B2A340774B1D8D767F0D0F /* HomeFeedView.swift in Sources */,
 				B8B3AAAD5EC87D7ED72E7673 /* HomeworkView.swift in Sources */,
 				79C6D1CFEE8D4BC12D695317 /* ImagePicker.swift in Sources */,
 				35BBE194A0C0AE78B5802195 /* LoginView.swift in Sources */,
@@ -281,6 +310,8 @@
 				917AAC151B16F643125DA412 /* MessagesView.swift in Sources */,
 				01FE22100CAFE91EF76343CD /* MonitoringView.swift in Sources */,
 				ACF6A75E08242AC47736EFFC /* MoreView.swift in Sources */,
+				291B03416E3C0F764A214D52 /* MyPostsView.swift in Sources */,
+				54EE1B48E41AB30096A6189F /* NotificationsView.swift in Sources */,
 				7C1D6E4BD47BCD475C0FC8FD /* PhotoPostView.swift in Sources */,
 				0D971AA8A79088E0D740A9C5 /* PostApprovalView.swift in Sources */,
 				68D20CFCFCCC0E33E864730D /* PostDetailView.swift in Sources */,
@@ -296,6 +327,7 @@
 				B063305195AF329434678669 /* Subscription.swift in Sources */,
 				8A87C5738C31ABFC2A80B860 /* SubscriptionService.swift in Sources */,
 				A9FBF997D169FD6A77A5A5E4 /* SubscriptionView.swift in Sources */,
+				A3ED1D8AB2189396891393D9 /* UnifiedCreatePostView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
