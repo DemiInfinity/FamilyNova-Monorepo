@@ -270,6 +270,7 @@ struct CreatePostView: View {
                             .foregroundColor(AppColors.darkGray)
                         
                         TextEditor(text: $postContent)
+                            .foregroundColor(AppColors.black)
                             .font(AppFonts.body)
                             .frame(minHeight: 200)
                             .padding(AppSpacing.m)

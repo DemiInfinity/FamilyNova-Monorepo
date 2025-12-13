@@ -23,12 +23,22 @@ router.post('/', requireUserType('kid'), [
     
     const { content, imageUrl } = req.body;
     
+    // Check monitoring level - full monitoring means all posts require approval
+    const author = await User.findById(req.user._id);
+    const status = author.monitoringLevel === 'full' ? 'pending' : 'approved';
+    
     const post = new Post({
       author: req.user._id,
       content,
       imageUrl: imageUrl || null,
-      status: 'pending' // Always starts as pending for parent approval
+      status: status // Full monitoring = pending, partial = auto-approved
     });
+    
+    // If auto-approved, set approved by system
+    if (status === 'approved') {
+      post.approvedBy = req.user._id; // System approval
+      post.approvedAt = new Date();
+    }
     
     await post.save();
     

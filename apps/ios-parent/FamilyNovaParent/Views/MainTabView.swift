@@ -28,17 +28,23 @@ struct MainTabView: View {
                 }
                 .tag(2)
             
+            HomeworkView()
+                .tabItem {
+                    Label("Homework", systemImage: "book.fill")
+                }
+                .tag(3)
+            
             ConnectionsView()
                 .tabItem {
                     Label("Connections", systemImage: "person.2.fill")
                 }
-                .tag(3)
+                .tag(4)
             
             SettingsView()
                 .tabItem {
                     Label("Settings", systemImage: "gearshape.fill")
                 }
-                .tag(4)
+                .tag(5)
         }
         .accentColor(ParentAppColors.primaryTeal)
     }

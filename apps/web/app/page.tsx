@@ -19,7 +19,7 @@ export default function Home() {
             in a protected environment with parent monitoring and moderation.
           </p>
           
-          <div className="grid md:grid-cols-2 gap-6 mt-12">
+          <div className="grid md:grid-cols-3 gap-6 mt-12">
             <Link
               href="/kids"
               className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow"
@@ -39,6 +39,17 @@ export default function Home() {
               <h2 className="text-2xl font-bold text-navy mb-2">For Parents</h2>
               <p className="text-gray-600">
                 Monitor and moderate your children's online experience
+              </p>
+            </Link>
+            
+            <Link
+              href="/schools"
+              className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow"
+            >
+              <div className="text-4xl mb-4">🏫</div>
+              <h2 className="text-2xl font-bold text-teal-600 mb-2">For Schools</h2>
+              <p className="text-gray-600">
+                Create and manage education content, homework, and assignments
               </p>
             </Link>
           </div>

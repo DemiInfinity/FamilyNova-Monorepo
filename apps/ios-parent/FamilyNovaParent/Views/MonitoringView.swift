@@ -77,6 +77,20 @@ struct MonitoringView: View {
             .background(ParentAppColors.lightGray)
             .navigationTitle("Message Monitoring")
             .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Menu {
+                        Button(action: {}) {
+                            Label("Full Monitoring", systemImage: "eye.fill")
+                        }
+                        Button(action: {}) {
+                            Label("Partial Monitoring", systemImage: "eye")
+                        }
+                    } label: {
+                        Image(systemName: "line.3.horizontal.decrease.circle")
+                    }
+                }
+            }
             .onAppear {
                 loadMessages()
             }
@@ -116,6 +130,8 @@ struct MonitoredMessage: Identifiable {
     let receiver: String
     let timestamp: Date
     let isModerated: Bool
+    let monitoringLevel: String // "full" or "partial"
+    let childAge: Int?
 }
 
 struct MessageMonitoringCard: View {
@@ -124,6 +140,25 @@ struct MessageMonitoringCard: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: ParentAppSpacing.m) {
+            // Monitoring Level Badge
+            HStack {
+                Spacer()
+                HStack(spacing: ParentAppSpacing.xs) {
+                    Image(systemName: message.monitoringLevel == "full" ? "eye.fill" : "eye")
+                        .font(.system(size: 12))
+                    Text(message.monitoringLevel == "full" ? "Full Monitoring" : "Partial Monitoring")
+                        .font(ParentAppFonts.small)
+                }
+                .foregroundColor(message.monitoringLevel == "full" ? ParentAppColors.primaryTeal : ParentAppColors.mediumGray)
+                .padding(.horizontal, ParentAppSpacing.s)
+                .padding(.vertical, 4)
+                .background(
+                    (message.monitoringLevel == "full" ? ParentAppColors.primaryTeal : ParentAppColors.mediumGray).opacity(0.1)
+                )
+                .cornerRadius(ParentAppCornerRadius.small)
+            }
+            
+            VStack(alignment: .leading, spacing: ParentAppSpacing.m) {
             HStack {
                 VStack(alignment: .leading, spacing: ParentAppSpacing.xs) {
                     HStack(spacing: ParentAppSpacing.xs) {

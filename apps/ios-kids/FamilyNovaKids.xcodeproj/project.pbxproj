@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		27F22D70D0616E145F98E135 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D903125BCE0D887035F56615 /* MainTabView.swift */; };
 		4463F1A3C84FEA03317D9BD6 /* FamilyNovaKidsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 206973E0C1713B23F609D729 /* FamilyNovaKidsApp.swift */; };
+		4A6BCEA7AF57A5DD85DCA946 /* EditProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7696D9D7026A69E6863A4A37 /* EditProfileView.swift */; };
 		519ED126EA82D46A15D93073 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F0FEEE7038CCEF7EF42DA61 /* DesignSystem.swift */; };
 		54FFEB9881A7C3B3848A3618 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6D39A49A834774DDFD8E2B7 /* LoginView.swift */; };
 		8054A230FA2DF40CE19DF2A7 /* EducationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73DE3C61121D8F6D0DB7FF9C /* EducationView.swift */; };
@@ -19,6 +20,7 @@
 		DE3AB865D3DE533DEF86786C /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 688D19148AD62EDE7929F9D0 /* HomeView.swift */; };
 		E813DFBD8158522FB43F7A76 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C0C9B4F8FC40872F07654D /* ProfileView.swift */; };
 		F873E143C32F4B60C0C9C0C8 /* ApiService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40AEF65FC52B3BD80E8834BB /* ApiService.swift */; };
+		FEA4824C926E586662379738 /* NewsFeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7CB84A200DE992EA3C64195 /* NewsFeedView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -31,7 +33,9 @@
 		65479BA558886B586601276F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		688D19148AD62EDE7929F9D0 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		73DE3C61121D8F6D0DB7FF9C /* EducationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EducationView.swift; sourceTree = "<group>"; };
+		7696D9D7026A69E6863A4A37 /* EditProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileView.swift; sourceTree = "<group>"; };
 		C1C0C9B4F8FC40872F07654D /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		C7CB84A200DE992EA3C64195 /* NewsFeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewsFeedView.swift; sourceTree = "<group>"; };
 		D903125BCE0D887035F56615 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
 		DB2B479B42E54CFD539EF29C /* FamilyNovaKids.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FamilyNovaKids.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F6D39A49A834774DDFD8E2B7 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
@@ -65,12 +69,14 @@
 		66E646E3C01D7856C6976420 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				7696D9D7026A69E6863A4A37 /* EditProfileView.swift */,
 				73DE3C61121D8F6D0DB7FF9C /* EducationView.swift */,
 				112E215FADA87ECCBE53F955 /* FriendsView.swift */,
 				688D19148AD62EDE7929F9D0 /* HomeView.swift */,
 				F6D39A49A834774DDFD8E2B7 /* LoginView.swift */,
 				D903125BCE0D887035F56615 /* MainTabView.swift */,
 				0051B2974DE8FA660890E611 /* MessagesView.swift */,
+				C7CB84A200DE992EA3C64195 /* NewsFeedView.swift */,
 				C1C0C9B4F8FC40872F07654D /* ProfileView.swift */,
 			);
 			path = Views;
@@ -180,6 +186,7 @@
 				F873E143C32F4B60C0C9C0C8 /* ApiService.swift in Sources */,
 				9A8D44996AB6CF80DAFCB44E /* AuthManager.swift in Sources */,
 				519ED126EA82D46A15D93073 /* DesignSystem.swift in Sources */,
+				4A6BCEA7AF57A5DD85DCA946 /* EditProfileView.swift in Sources */,
 				8054A230FA2DF40CE19DF2A7 /* EducationView.swift in Sources */,
 				4463F1A3C84FEA03317D9BD6 /* FamilyNovaKidsApp.swift in Sources */,
 				D05C101A27983DB12DCF7E9C /* FriendsView.swift in Sources */,
@@ -187,6 +194,7 @@
 				54FFEB9881A7C3B3848A3618 /* LoginView.swift in Sources */,
 				27F22D70D0616E145F98E135 /* MainTabView.swift in Sources */,
 				8F636396DBAB52C1F90DF6EE /* MessagesView.swift in Sources */,
+				FEA4824C926E586662379738 /* NewsFeedView.swift in Sources */,
 				E813DFBD8158522FB43F7A76 /* ProfileView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

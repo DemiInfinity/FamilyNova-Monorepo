@@ -79,16 +79,17 @@ struct MessagesView: View {
             .navigationTitle(selectedFriend == nil ? "Messages" : selectedFriend?.displayName ?? "Chat")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
-                if selectedFriend == nil {
-                    ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    if selectedFriend == nil {
                         Button(action: { showFriendPicker = true }) {
                             Image(systemName: "plus.circle.fill")
                                 .font(.system(size: 24))
                                 .foregroundColor(AppColors.primaryBlue)
                         }
                     }
-                } else {
-                    ToolbarItem(placement: .navigationBarLeading) {
+                }
+                ToolbarItem(placement: .navigationBarLeading) {
+                    if selectedFriend != nil {
                         Button(action: { selectedFriend = nil }) {
                             HStack(spacing: AppSpacing.xs) {
                                 Image(systemName: "chevron.left")
@@ -309,6 +310,7 @@ struct ChatView: View {
             HStack(spacing: AppSpacing.m) {
                 TextField("Type a message...", text: $messageText)
                     .textFieldStyle(.plain)
+                    .foregroundColor(AppColors.black)
                     .font(AppFonts.body)
                     .padding(AppSpacing.l)
                     .background(

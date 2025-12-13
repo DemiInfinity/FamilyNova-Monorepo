@@ -7,6 +7,7 @@ import SwiftUI
 
 struct DashboardView: View {
     @State private var children: [Child] = []
+    @State private var showCreateChild = false
     
     var body: some View {
         NavigationView {
@@ -19,13 +20,28 @@ struct DashboardView: View {
                     
                     // My Children Section
                     VStack(alignment: .leading, spacing: ParentAppSpacing.s) {
-                        Text("My Children")
-                            .font(ParentAppFonts.headline)
-                            .foregroundColor(ParentAppColors.black)
-                            .padding(.horizontal, ParentAppSpacing.m)
+                        HStack {
+                            Text("My Children")
+                                .font(ParentAppFonts.headline)
+                                .foregroundColor(ParentAppColors.black)
+                            Spacer()
+                            Button(action: { showCreateChild = true }) {
+                                HStack(spacing: ParentAppSpacing.xs) {
+                                    Image(systemName: "plus.circle.fill")
+                                    Text("Add Child")
+                                }
+                                .font(ParentAppFonts.caption)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, ParentAppSpacing.m)
+                                .padding(.vertical, ParentAppSpacing.s)
+                                .background(ParentAppColors.primaryTeal)
+                                .cornerRadius(ParentAppCornerRadius.small)
+                            }
+                        }
+                        .padding(.horizontal, ParentAppSpacing.m)
                         
                         if children.isEmpty {
-                            EmptyChildrenCard()
+                            EmptyChildrenCard(showCreateChild: $showCreateChild)
                                 .padding(.horizontal, ParentAppSpacing.m)
                         } else {
                             ForEach(children) { child in
@@ -35,6 +51,26 @@ struct DashboardView: View {
                         }
                     }
                     .padding(.top, ParentAppSpacing.m)
+                    
+                    // Pending Profile Changes
+                    VStack(alignment: .leading, spacing: ParentAppSpacing.s) {
+                        HStack {
+                            Text("Profile Changes")
+                                .font(ParentAppFonts.headline)
+                                .foregroundColor(ParentAppColors.black)
+                            Spacer()
+                            NavigationLink(destination: ProfileChangeApprovalView()) {
+                                Text("View All")
+                                    .font(ParentAppFonts.caption)
+                                    .foregroundColor(ParentAppColors.primaryTeal)
+                            }
+                        }
+                        .padding(.horizontal, ParentAppSpacing.m)
+                        
+                        ProfileChangesCard()
+                            .padding(.horizontal, ParentAppSpacing.m)
+                    }
+                    .padding(.top, ParentAppSpacing.l)
                     
                     // Pending Posts
                     VStack(alignment: .leading, spacing: ParentAppSpacing.s) {
@@ -73,6 +109,9 @@ struct DashboardView: View {
             .background(ParentAppColors.lightGray)
             .navigationTitle("Dashboard")
             .navigationBarTitleDisplayMode(.large)
+            .sheet(isPresented: $showCreateChild) {
+                CreateChildAccountView()
+            }
         }
     }
 }
@@ -155,20 +194,84 @@ struct ChildCard: View {
 }
 
 struct EmptyChildrenCard: View {
+    @Binding var showCreateChild: Bool
+    
     var body: some View {
         VStack(spacing: ParentAppSpacing.m) {
-            Image(systemName: "person.2.slash")
+            Image(systemName: "person.badge.plus")
                 .font(.system(size: 48))
-                .foregroundColor(ParentAppColors.mediumGray)
+                .foregroundColor(ParentAppColors.primaryTeal)
             Text("No children added yet")
+                .font(ParentAppFonts.headline)
+                .foregroundColor(ParentAppColors.black)
+            Text("Create an account for your child to get started")
                 .font(ParentAppFonts.body)
                 .foregroundColor(ParentAppColors.darkGray)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, ParentAppSpacing.m)
+            
+            Button(action: { showCreateChild = true }) {
+                HStack(spacing: ParentAppSpacing.s) {
+                    Image(systemName: "plus.circle.fill")
+                    Text("Create Child Account")
+                        .font(ParentAppFonts.button)
+                        .foregroundColor(.white)
+                }
+                .padding(.horizontal, ParentAppSpacing.l)
+                .padding(.vertical, ParentAppSpacing.m)
+                .background(ParentAppColors.primaryTeal)
+                .cornerRadius(ParentAppCornerRadius.medium)
+            }
+            .padding(.top, ParentAppSpacing.s)
         }
         .frame(maxWidth: .infinity)
         .padding(ParentAppSpacing.l)
         .background(Color.white)
         .cornerRadius(ParentAppCornerRadius.medium)
         .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
+    }
+}
+
+struct ProfileChangesCard: View {
+    @State private var pendingCount = 0
+    
+    var body: some View {
+        NavigationLink(destination: ProfileChangeApprovalView()) {
+            HStack(spacing: ParentAppSpacing.m) {
+                ZStack {
+                    Circle()
+                        .fill(ParentAppColors.warning.opacity(0.2))
+                        .frame(width: 50, height: 50)
+                    
+                    Image(systemName: "person.crop.circle.badge.questionmark")
+                        .font(.system(size: 24))
+                        .foregroundColor(ParentAppColors.warning)
+                }
+                
+                VStack(alignment: .leading, spacing: ParentAppSpacing.xs) {
+                    Text("\(pendingCount) profile changes pending")
+                        .font(ParentAppFonts.headline)
+                        .foregroundColor(ParentAppColors.black)
+                    Text("Review profile change requests from your children")
+                        .font(ParentAppFonts.caption)
+                        .foregroundColor(ParentAppColors.darkGray)
+                }
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .foregroundColor(ParentAppColors.mediumGray)
+            }
+            .padding(ParentAppSpacing.m)
+            .background(Color.white)
+            .cornerRadius(ParentAppCornerRadius.medium)
+            .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
+        }
+        .buttonStyle(PlainButtonStyle())
+        .onAppear {
+            // TODO: Load pending count
+            pendingCount = 0
+        }
     }
 }
 

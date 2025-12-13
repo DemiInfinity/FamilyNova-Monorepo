@@ -28,6 +28,16 @@ const userSchema = new mongoose.Schema({
     school: String,
     grade: String
   },
+  schoolAccount: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'School',
+    default: null
+  },
+  monitoringLevel: {
+    type: String,
+    enum: ['full', 'partial'],
+    default: 'full'
+  },
   verification: {
     parentVerified: {
       type: Boolean,

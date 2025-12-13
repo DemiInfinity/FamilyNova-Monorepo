@@ -34,11 +34,16 @@ router.post('/', requireUserType('kid'), [
       return res.status(403).json({ error: 'Can only message friends' });
     }
     
+    // Check monitoring level - full monitoring means all messages are flagged for review
+    const sender = await User.findById(req.user._id);
+    const isModerated = sender.monitoringLevel === 'full';
+    
     const message = new Message({
       sender: req.user._id,
       receiver: receiverId,
       content,
-      messageType: messageType || 'text'
+      messageType: messageType || 'text',
+      isModerated: isModerated // Full monitoring = requires approval, partial = auto-approved
     });
     
     await message.save();

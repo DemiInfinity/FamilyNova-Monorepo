@@ -54,6 +54,7 @@ struct LoginView: View {
                     
                     TextField("Email", text: $email)
                         .textFieldStyle(.plain)
+                        .foregroundColor(AppColors.black)
                         .padding(AppSpacing.m)
                         .background(Color.white)
                         .cornerRadius(AppCornerRadius.medium)
@@ -76,6 +77,7 @@ struct LoginView: View {
                     
                     SecureField("Password", text: $password)
                         .textFieldStyle(.plain)
+                        .foregroundColor(AppColors.black)
                         .padding(AppSpacing.m)
                         .background(Color.white)
                         .cornerRadius(AppCornerRadius.medium)

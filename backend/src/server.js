@@ -28,6 +28,10 @@ app.use('/api/parents', require('./routes/parents'));
 app.use('/api/friends', require('./routes/friends'));
 app.use('/api/messages', require('./routes/messages'));
 app.use('/api/posts', require('./routes/posts'));
+app.use('/api/profile-changes', require('./routes/profileChanges'));
+app.use('/api/schools', require('./routes/schools'));
+app.use('/api/school-codes', require('./routes/schoolCodes'));
+app.use('/api/education', require('./routes/education'));
 app.use('/api/verification', require('./routes/verification'));
 
 // Health check

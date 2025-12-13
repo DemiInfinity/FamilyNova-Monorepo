@@ -32,6 +32,7 @@ struct FriendsView: View {
                         
                         TextField("Search for friends...", text: $searchText)
                             .textFieldStyle(.plain)
+                            .foregroundColor(AppColors.black)
                             .font(AppFonts.body)
                             .onChange(of: searchText) { newValue in
                                 if !newValue.isEmpty {
@@ -275,6 +276,7 @@ struct AddFriendView: View {
                             .foregroundColor(AppColors.primaryBlue)
                         TextField("Enter friend's name...", text: $searchQuery)
                             .textFieldStyle(.plain)
+                            .foregroundColor(AppColors.black)
                             .font(AppFonts.body)
                     }
                     .padding(AppSpacing.l)
