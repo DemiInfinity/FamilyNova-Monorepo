@@ -181,6 +181,11 @@ router.get('/', async (req, res) => {
           }
           const author = commentAuthorsMap.get(comment.author_id);
           const authorProfile = author?.profile || {};
+          // Format createdAt as ISO8601 string
+          const commentCreatedAt = comment.created_at instanceof Date
+            ? comment.created_at.toISOString()
+            : (comment.created_at || new Date().toISOString());
+          
           commentsByPost.get(comment.post_id).push({
             id: comment.id,
             content: comment.content,
@@ -190,7 +195,7 @@ router.get('/', async (req, res) => {
                 displayName: authorProfile.displayName || 'Unknown'
               }
             },
-            createdAt: comment.created_at
+            createdAt: commentCreatedAt
           });
         }
       }
@@ -538,6 +543,11 @@ router.post('/:postId/comment', requireUserType('kid'), [
       content: content.trim()
     });
     
+    // Format createdAt as ISO8601 string
+    const createdAt = comment.createdAt instanceof Date 
+      ? comment.createdAt.toISOString() 
+      : (comment.createdAt || new Date().toISOString());
+    
     res.status(201).json({
       comment: {
         id: comment.id,
@@ -548,7 +558,7 @@ router.post('/:postId/comment', requireUserType('kid'), [
             displayName: authorProfile.displayName || req.user.email
           }
         },
-        createdAt: comment.createdAt
+        createdAt: createdAt
       }
     });
   } catch (error) {
