@@ -50,7 +50,7 @@ struct QRCodeView: View {
                     .frame(width: 250, height: 250)
             }
             
-            Text("Scan this QR code with the FamilyNova Kids app to log in")
+            Text("Scan this QR code with the Nova app to log in")
                 .font(ParentAppFonts.caption)
                 .foregroundColor(ParentAppColors.darkGray)
                 .multilineTextAlignment(.center)

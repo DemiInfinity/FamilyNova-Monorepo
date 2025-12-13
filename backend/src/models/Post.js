@@ -12,6 +12,9 @@ class Post {
     this.moderatedBy = data.moderated_by;
     this.moderatedAt = data.moderated_at;
     this.rejectionReason = data.rejection_reason;
+    this.visibleToChildren = data.visible_to_children !== undefined ? data.visible_to_children : true;
+    this.visibleToAdults = data.visible_to_adults !== undefined ? data.visible_to_adults : false;
+    this.approvedAdults = data.approved_adults || [];
     this.createdAt = data.created_at;
     this.updatedAt = data.updated_at;
   }
@@ -58,6 +61,9 @@ class Post {
       status: postData.status || 'pending',
       likes: postData.likes || [],
       comments: postData.comments || [],
+      visible_to_children: postData.visibleToChildren !== undefined ? postData.visibleToChildren : true,
+      visible_to_adults: postData.visibleToAdults !== undefined ? postData.visibleToAdults : false,
+      approved_adults: postData.approvedAdults || [],
       created_at: now,
       updated_at: now
     };
@@ -87,6 +93,9 @@ class Post {
       moderated_by: this.moderatedBy || null,
       moderated_at: this.moderatedAt ? this.moderatedAt.toISOString() : null,
       rejection_reason: this.rejectionReason || null,
+      visible_to_children: this.visibleToChildren !== undefined ? this.visibleToChildren : true,
+      visible_to_adults: this.visibleToAdults !== undefined ? this.visibleToAdults : false,
+      approved_adults: this.approvedAdults || [],
       updated_at: new Date().toISOString()
     };
 

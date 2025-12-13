@@ -36,7 +36,7 @@ struct LoginView: View {
                             .frame(width: 200, height: 200)
                             .shadow(color: AppColors.primaryBlue.opacity(0.3), radius: 10, x: 0, y: 5)
                         
-                        Text("Welcome to FamilyNova!")
+                        Text("Welcome to Nova!")
                             .font(AppFonts.title)
                             .foregroundColor(AppColors.primaryPurple)
                             .multilineTextAlignment(.center)

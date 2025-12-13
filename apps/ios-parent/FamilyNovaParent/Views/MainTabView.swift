@@ -7,44 +7,44 @@ import SwiftUI
 
 struct MainTabView: View {
     @State private var selectedTab = 0
+    @EnvironmentObject var authManager: AuthManager
     
     var body: some View {
         TabView(selection: $selectedTab) {
-            DashboardView()
+            FeedView()
+                .environmentObject(authManager)
                 .tabItem {
-                    Label("Dashboard", systemImage: "house.fill")
+                    Label("Home", systemImage: "house.fill")
                 }
                 .tag(0)
             
-            MonitoringView()
+            FriendsView()
+                .environmentObject(authManager)
                 .tabItem {
-                    Label("Monitoring", systemImage: "eye.fill")
+                    Label("Friends", systemImage: "person.2.fill")
                 }
                 .tag(1)
             
-            PostApprovalView()
+            MessagesView()
+                .environmentObject(authManager)
                 .tabItem {
-                    Label("Posts", systemImage: "doc.text.fill")
+                    Label("Messages", systemImage: "message.fill")
                 }
                 .tag(2)
             
-            HomeworkView()
+            ProfileView()
+                .environmentObject(authManager)
                 .tabItem {
-                    Label("Homework", systemImage: "book.fill")
+                    Label("Profile", systemImage: "person.fill")
                 }
                 .tag(3)
             
-            ConnectionsView()
+            MoreView()
+                .environmentObject(authManager)
                 .tabItem {
-                    Label("Connections", systemImage: "person.2.fill")
+                    Label("More", systemImage: "ellipsis.circle.fill")
                 }
                 .tag(4)
-            
-            SettingsView()
-                .tabItem {
-                    Label("Settings", systemImage: "gearshape.fill")
-                }
-                .tag(5)
         }
         .accentColor(ParentAppColors.primaryTeal)
     }

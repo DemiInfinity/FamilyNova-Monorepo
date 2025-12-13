@@ -500,7 +500,7 @@ struct QRCodeLoginView: View {
                         .font(ParentAppFonts.title)
                         .foregroundColor(ParentAppColors.primaryNavy)
                     
-                    Text("Have \(childName) scan this QR code with the FamilyNova Kids app")
+                    Text("Have \(childName) scan this QR code with the Nova app")
                         .font(ParentAppFonts.body)
                         .foregroundColor(ParentAppColors.darkGray)
                         .multilineTextAlignment(.center)

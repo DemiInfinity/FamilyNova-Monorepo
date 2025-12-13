@@ -1,6 +1,6 @@
 //
 //  ShowMyFriendCodeView.swift
-//  FamilyNovaKids
+//  FamilyNovaParent
 //
 
 import SwiftUI
@@ -19,42 +19,42 @@ struct ShowMyFriendCodeView: View {
         NavigationView {
             ZStack {
                 LinearGradient(
-                    colors: [AppColors.gradientBlue.opacity(0.1), AppColors.gradientPurple.opacity(0.1)],
+                    colors: [ParentAppColors.gradientBlue.opacity(0.1), ParentAppColors.gradientPurple.opacity(0.1)],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
                 .ignoresSafeArea()
                 
                 ScrollView {
-                    VStack(spacing: AppSpacing.xl) {
+                    VStack(spacing: ParentAppSpacing.xl) {
                         Text("📱")
                             .font(.system(size: 80))
                         
                         Text("My Friend Code")
-                            .font(AppFonts.title)
-                            .foregroundColor(AppColors.primaryPurple)
+                            .font(ParentAppFonts.title)
+                            .foregroundColor(ParentAppColors.primaryPurple)
                         
                         Text("Share this code with friends so they can add you!")
-                            .font(AppFonts.body)
-                            .foregroundColor(AppColors.darkGray)
+                            .font(ParentAppFonts.body)
+                            .foregroundColor(ParentAppColors.darkGray)
                             .multilineTextAlignment(.center)
-                            .padding(.horizontal, AppSpacing.xl)
+                            .padding(.horizontal, ParentAppSpacing.xl)
                         
                         if isLoadingCode {
                             ProgressView()
                                 .scaleEffect(1.5)
                         } else if !myFriendCode.isEmpty {
                             // Friend Code Display
-                            VStack(spacing: AppSpacing.l) {
+                            VStack(spacing: ParentAppSpacing.l) {
                                 // Code
                                 Text(myFriendCode)
                                     .font(.system(size: 48, weight: .bold, design: .monospaced))
-                                    .foregroundColor(AppColors.primaryBlue)
-                                    .padding(AppSpacing.xl)
+                                    .foregroundColor(ParentAppColors.primaryBlue)
+                                    .padding(ParentAppSpacing.xl)
                                     .background(
-                                        RoundedRectangle(cornerRadius: AppCornerRadius.large)
+                                        RoundedRectangle(cornerRadius: ParentAppCornerRadius.large)
                                             .fill(Color.white)
-                                            .shadow(color: AppColors.primaryBlue.opacity(0.3), radius: 10, x: 0, y: 5)
+                                            .shadow(color: ParentAppColors.primaryBlue.opacity(0.3), radius: 10, x: 0, y: 5)
                                     )
                                 
                                 // QR Code
@@ -64,38 +64,38 @@ struct ShowMyFriendCodeView: View {
                                         .resizable()
                                         .scaledToFit()
                                         .frame(width: 250, height: 250)
-                                        .padding(AppSpacing.l)
+                                        .padding(ParentAppSpacing.l)
                                         .background(Color.white)
-                                        .cornerRadius(AppCornerRadius.large)
-                                        .shadow(color: AppColors.primaryBlue.opacity(0.2), radius: 10, x: 0, y: 5)
+                                        .cornerRadius(ParentAppCornerRadius.large)
+                                        .shadow(color: ParentAppColors.primaryBlue.opacity(0.2), radius: 10, x: 0, y: 5)
                                 }
                                 
                                 // Share Button
                                 Button(action: shareFriendCode) {
-                                    HStack(spacing: AppSpacing.s) {
+                                    HStack(spacing: ParentAppSpacing.s) {
                                         Image(systemName: "square.and.arrow.up")
                                         Text("Share Code")
-                                            .font(AppFonts.button)
+                                            .font(ParentAppFonts.button)
                                             .foregroundColor(.white)
                                     }
                                     .frame(maxWidth: .infinity)
                                     .frame(height: 50)
                                     .background(
                                         LinearGradient(
-                                            colors: [AppColors.primaryBlue, AppColors.primaryPurple],
+                                            colors: [ParentAppColors.primaryBlue, ParentAppColors.primaryPurple],
                                             startPoint: .leading,
                                             endPoint: .trailing
                                         )
                                     )
-                                    .cornerRadius(AppCornerRadius.large)
+                                    .cornerRadius(ParentAppCornerRadius.large)
                                 }
-                                .padding(.horizontal, AppSpacing.m)
+                                .padding(.horizontal, ParentAppSpacing.m)
                             }
-                            .padding(.horizontal, AppSpacing.m)
+                            .padding(.horizontal, ParentAppSpacing.m)
                         }
                     }
-                    .padding(.top, AppSpacing.xxl)
-                    .padding(.bottom, AppSpacing.xl)
+                    .padding(.top, ParentAppSpacing.xxl)
+                    .padding(.bottom, ParentAppSpacing.xl)
                 }
             }
             .navigationTitle("My Friend Code")
@@ -105,8 +105,8 @@ struct ShowMyFriendCodeView: View {
                     Button("Done") {
                         dismiss()
                     }
-                    .font(AppFonts.button)
-                    .foregroundColor(AppColors.primaryBlue)
+                    .font(ParentAppFonts.button)
+                    .foregroundColor(ParentAppColors.primaryBlue)
                 }
             }
             .onAppear {

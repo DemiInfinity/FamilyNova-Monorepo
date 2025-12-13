@@ -1,11 +1,11 @@
 <resources>
-    <string name="app_name">FamilyNova</string>
+    <string name="app_name">Nova</string>
     
     <!-- API Configuration -->
     <string name="api_base_url">https://family-nova-monorepo.vercel.app/api</string>
     
     <!-- Login Screen -->
-    <string name="login_title">Welcome to FamilyNova!</string>
+    <string name="login_title">Welcome to Nova!</string>
     <string name="login_subtitle">A safe place to connect with friends</string>
     <string name="email_hint">Email</string>
     <string name="password_hint">Password</string>

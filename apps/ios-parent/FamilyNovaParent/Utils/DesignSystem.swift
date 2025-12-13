@@ -12,6 +12,17 @@ struct ParentAppColors {
     static let primaryIndigo = Color(hex: "5B6C7D")
     static let accentGold = Color(hex: "F39C12")
     
+    // Social Media Colors (for parent social features)
+    static let primaryBlue = Color(hex: "3498DB")
+    static let primaryPurple = Color(hex: "9B59B6")
+    static let primaryGreen = Color(hex: "27AE60")
+    static let primaryPink = Color(hex: "E91E63")
+    static let primaryOrange = Color(hex: "F39C12")
+    
+    // Gradient Colors for backgrounds
+    static let gradientBlue = Color(hex: "3498DB")
+    static let gradientPurple = Color(hex: "9B59B6")
+    
     // Neutral Colors
     static let white = Color.white
     static let lightGray = Color(hex: "F5F5F5")
@@ -74,6 +85,7 @@ struct ParentAppCornerRadius {
     static let small: CGFloat = 8
     static let medium: CGFloat = 12
     static let large: CGFloat = 16
+    static let extraLarge: CGFloat = 24
     static let round: CGFloat = 50
 }
 

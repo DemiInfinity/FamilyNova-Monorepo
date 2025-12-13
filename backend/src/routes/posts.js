@@ -12,9 +12,9 @@ const { getSupabase } = require('../config/database');
 router.use(auth);
 
 // @route   POST /api/posts
-// @desc    Create a new post (kids only, requires parent approval)
-// @access  Private (Kid only)
-router.post('/', requireUserType('kid'), [
+// @desc    Create a new post (kids or parents)
+// @access  Private
+router.post('/', [
   body('content').trim().isLength({ min: 1, max: 500 })
 ], async (req, res) => {
   try {
@@ -23,22 +23,41 @@ router.post('/', requireUserType('kid'), [
       return res.status(400).json({ errors: errors.array() });
     }
     
-    const { content, imageUrl } = req.body;
+    const { content, imageUrl, visibleToChildren } = req.body;
     
-    // Check monitoring level - full monitoring means all posts require approval
     const author = await User.findById(req.user.id);
     if (!author) {
       return res.status(404).json({ error: 'User not found' });
     }
     
-    const status = author.monitoringLevel === 'full' ? 'pending' : 'approved';
+    // Determine status and visibility based on user type
+    let status, visibleToChildrenValue, visibleToAdultsValue, approvedAdultsValue;
     
-    // Create post using Post model (likes and comments are now in separate tables)
+    if (author.userType === 'kid') {
+      // Child posts: require parent approval, only parent can see by default
+      status = author.monitoringLevel === 'full' ? 'pending' : 'approved';
+      visibleToChildrenValue = true; // Not applicable for kids, but set for consistency
+      visibleToAdultsValue = false; // Only parent can see child posts by default
+      approvedAdultsValue = []; // No approved adults initially
+    } else if (author.userType === 'parent') {
+      // Parent posts: auto-approved, visible to children by default unless toggled
+      status = 'approved';
+      visibleToChildrenValue = visibleToChildren !== undefined ? visibleToChildren : true;
+      visibleToAdultsValue = true; // Adults can see other adult posts
+      approvedAdultsValue = [];
+    } else {
+      return res.status(403).json({ error: 'Invalid user type for posting' });
+    }
+    
+    // Create post using Post model
     const post = await Post.create({
       authorId: req.user.id,
       content: content.trim(),
       imageUrl: imageUrl || null,
       status: status,
+      visibleToChildren: visibleToChildrenValue,
+      visibleToAdults: visibleToAdultsValue,
+      approvedAdults: approvedAdultsValue,
       likes: [], // Keep for backward compatibility, but reactions table is primary
       comments: [] // Keep for backward compatibility, but comments table is primary
     });
@@ -76,17 +95,39 @@ router.post('/', requireUserType('kid'), [
 });
 
 // @route   GET /api/posts
-// @desc    Get approved posts for news feed
+// @desc    Get approved posts for news feed with visibility filtering
 // @access  Private
 router.get('/', async (req, res) => {
   try {
     const supabase = await getSupabase();
     
-    // Get user's friends and children based on user type
-    let authorIds = [req.user.id]; // Always include self
+    // Get current user's type and relationships
+    const currentUser = await User.findById(req.user.id);
+    if (!currentUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
     
-    if (req.user.userType === 'kid') {
-      // Kids see posts from themselves and their friends
+    // Get all approved posts first (we'll filter by visibility rules)
+    const { data: allPostsData, error: postsError } = await supabase
+      .from('posts')
+      .select('*')
+      .eq('status', 'approved')
+      .order('created_at', { ascending: false })
+      .limit(100); // Get more posts to filter from
+    
+    if (postsError) {
+      console.error('Error fetching posts:', postsError);
+      return res.status(500).json({ error: 'Failed to fetch posts' });
+    }
+    
+    // Get relationships for filtering
+    let childIds = [];
+    let friendIds = [];
+    let parentId = null;
+    let approvedAdultsForChildPosts = [];
+    
+    if (currentUser.userType === 'kid') {
+      // Get friends (other kids)
       const { data: friendships, error: friendsError } = await supabase
         .from('friendships')
         .select('friend_id')
@@ -94,51 +135,128 @@ router.get('/', async (req, res) => {
         .eq('status', 'accepted');
       
       if (!friendsError && friendships) {
-        const friendIds = friendships.map(f => f.friend_id);
-        authorIds = [...authorIds, ...friendIds];
+        friendIds = friendships.map(f => f.friend_id);
       }
-    } else {
-      // Parents see posts from their children
+      
+      // Get parent ID
+      const { data: parentChild, error: parentError } = await supabase
+        .from('parent_children')
+        .select('parent_id')
+        .eq('child_id', req.user.id)
+        .single();
+      
+      if (!parentError && parentChild) {
+        parentId = parentChild.parent_id;
+      }
+    } else if (currentUser.userType === 'parent') {
+      // Get children
       const { data: children, error: childrenError } = await supabase
         .from('parent_children')
         .select('child_id')
         .eq('parent_id', req.user.id);
       
       if (!childrenError && children) {
-        const childIds = children.map(c => c.child_id);
-        authorIds = [...authorIds, ...childIds];
+        childIds = children.map(c => c.child_id);
       }
     }
     
-    // Get approved posts from these authors
-    const { data: postsData, error: postsError } = await supabase
-      .from('posts')
-      .select('*')
-      .eq('status', 'approved')
-      .in('author_id', authorIds)
-      .order('created_at', { ascending: false })
-      .limit(50);
+    // Get all unique author IDs to batch fetch their user types
+    const authorIdsSet = new Set(allPostsData ? allPostsData.map(p => p.author_id) : []);
+    const authorIdsArray = Array.from(authorIdsSet);
     
-    if (postsError) {
-      console.error('Error fetching posts:', postsError);
-      return res.status(500).json({ error: 'Failed to fetch posts' });
+    // Batch fetch all authors
+    const { data: authorsData, error: authorsError } = authorIdsArray.length > 0
+      ? await supabase
+          .from('users')
+          .select('id, user_type')
+          .in('id', authorIdsArray)
+      : { data: [], error: null };
+    
+    if (authorsError) {
+      console.error('Error fetching authors:', authorsError);
+      return res.status(500).json({ error: 'Failed to fetch authors' });
     }
     
-    // Get author information for each post
+    // Create map of author ID to user type
+    const authorTypeMap = new Map();
+    if (authorsData) {
+      authorsData.forEach(author => {
+        authorTypeMap.set(author.id, author.user_type);
+      });
+    }
+    
+    // Filter posts based on visibility rules
+    const filteredPosts = [];
+    
+    if (allPostsData) {
+      for (const postData of allPostsData) {
+        const postAuthorId = postData.author_id;
+        const visibleToChildren = postData.visible_to_children !== undefined ? postData.visible_to_children : true;
+        const visibleToAdults = postData.visible_to_adults !== undefined ? postData.visible_to_adults : false;
+        const approvedAdults = postData.approved_adults || [];
+        
+        // Get author user type from map
+        const authorType = authorTypeMap.get(postAuthorId);
+        if (!authorType) continue;
+        
+        let canSeePost = false;
+        
+        if (currentUser.userType === 'kid') {
+          // Kids can see:
+          // 1. Their own posts
+          // 2. Their friends' posts (other kids)
+          // 3. Parent posts where visible_to_children = true (only their own parent)
+          if (postAuthorId === req.user.id) {
+            canSeePost = true;
+          } else if (authorType === 'kid' && friendIds.includes(postAuthorId)) {
+            canSeePost = true;
+          } else if (authorType === 'parent' && visibleToChildren && postAuthorId === parentId) {
+            canSeePost = true;
+          }
+        } else if (currentUser.userType === 'parent') {
+          // Parents can see:
+          // 1. Their own posts
+          // 2. Their children's posts (always visible to parent)
+          // 3. Other adult/parent posts (where visible_to_adults = true)
+          // 4. Other children's posts (where visible_to_adults = true AND they're in approved_adults)
+          if (postAuthorId === req.user.id) {
+            canSeePost = true;
+          } else if (authorType === 'kid' && childIds.includes(postAuthorId)) {
+            // Parent can always see their own children's posts
+            canSeePost = true;
+          } else if (authorType === 'parent' && visibleToAdults) {
+            // Other parent posts visible to adults
+            canSeePost = true;
+          } else if (authorType === 'kid' && visibleToAdults && approvedAdults.includes(req.user.id)) {
+            // Other children's posts if approved
+            canSeePost = true;
+          }
+        }
+        
+        if (canSeePost) {
+          filteredPosts.push(postData);
+        }
+      }
+    }
+    
+    // Limit to 50 posts after filtering
+    const postsData = filteredPosts.slice(0, 50);
+    
+    // Get author information for each post (profile and verification)
     const postsWithAuthors = [];
     if (postsData) {
-      const authorIdsSet = new Set(postsData.map(p => p.author_id));
-      const authorIdsArray = Array.from(authorIdsSet);
+      const postAuthorIdsSet = new Set(postsData.map(p => p.author_id));
+      const postAuthorIdsArray = Array.from(postAuthorIdsSet);
       
-      // Fetch all authors in one query
-      const { data: authorsData, error: authorsError } = await supabase
+      // Fetch all authors with profile and verification info
+      const { data: authorsWithProfile, error: authorsProfileError } = await supabase
         .from('users')
         .select('id, profile, verification')
-        .in('id', authorIdsArray);
+        .in('id', postAuthorIdsArray);
       
       const authorsMap = new Map();
-      if (!authorsError && authorsData) {
-        authorsData.forEach(author => {
+      if (!authorsProfileError && authorsWithProfile) {
+        authorsWithProfile.forEach(author => {
           authorsMap.set(author.id, author);
         });
       }
@@ -581,10 +699,79 @@ router.post('/:postId/comment', requireUserType('kid'), [
   }
 });
 
+// @route   PUT /api/posts/:postId/approve-adult
+// @desc    Approve an adult to see a child's post (parent only)
+// @access  Private (Parent only)
+router.put('/:postId/approve-adult', requireUserType('parent'), [
+  body('adultId').notEmpty().withMessage('Adult ID is required')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    
+    const { postId } = req.params;
+    const { adultId } = req.body;
+    
+    const supabase = await getSupabase();
+    
+    // Get the post
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+    
+    // Get post author
+    const author = await User.findById(post.authorId);
+    if (!author || author.userType !== 'kid') {
+      return res.status(400).json({ error: 'Post must be from a child' });
+    }
+    
+    // Verify parent has access to this post (child is author)
+    const { data: parentChild, error: relationError } = await supabase
+      .from('parent_children')
+      .select('child_id')
+      .eq('parent_id', req.user.id)
+      .eq('child_id', post.authorId)
+      .single();
+    
+    if (relationError || !parentChild) {
+      return res.status(403).json({ error: 'No access to this post' });
+    }
+    
+    // Verify adultId is actually an adult
+    const adult = await User.findById(adultId);
+    if (!adult || adult.userType !== 'parent') {
+      return res.status(400).json({ error: 'Invalid adult ID' });
+    }
+    
+    // Update post's approved_adults array
+    const approvedAdults = post.approvedAdults || [];
+    if (!approvedAdults.includes(adultId)) {
+      approvedAdults.push(adultId);
+      post.approvedAdults = approvedAdults;
+      post.visibleToAdults = true; // Enable visibility to adults
+      await post.save();
+    }
+    
+    res.json({
+      message: 'Adult approved to see child post',
+      post: {
+        id: post.id,
+        approvedAdults: post.approvedAdults
+      }
+    });
+  } catch (error) {
+    console.error('Error approving adult:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // @route   DELETE /api/posts/:postId
 // @desc    Delete a post (only by the author)
-// @access  Private (Kid only)
-router.delete('/:postId', requireUserType('kid'), async (req, res) => {
+// @access  Private
+router.delete('/:postId', async (req, res) => {
   try {
     const { postId } = req.params;
     
@@ -595,8 +782,25 @@ router.delete('/:postId', requireUserType('kid'), async (req, res) => {
       return res.status(404).json({ error: 'Post not found' });
     }
     
-    // Verify the user is the author of the post
-    if (post.authorId !== req.user.id) {
+    // Verify the user is the author of the post (or parent deleting child's post)
+    const isAuthor = post.authorId === req.user.id;
+    let isParentOfAuthor = false;
+    
+    if (!isAuthor) {
+      // Check if user is parent of the author
+      const author = await User.findById(post.authorId);
+      if (author && author.userType === 'kid' && req.user.userType === 'parent') {
+        const { data: parentChild } = await supabase
+          .from('parent_children')
+          .select('child_id')
+          .eq('parent_id', req.user.id)
+          .eq('child_id', post.authorId)
+          .single();
+        isParentOfAuthor = parentChild !== null;
+      }
+    }
+    
+    if (!isAuthor && !isParentOfAuthor) {
       return res.status(403).json({ error: 'You can only delete your own posts' });
     }
     

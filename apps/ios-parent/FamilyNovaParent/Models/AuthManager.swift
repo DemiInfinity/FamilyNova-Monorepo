@@ -153,6 +153,19 @@ class AuthManager: ObservableObject {
         self.currentUser = nil
         UserDefaults.standard.removeObject(forKey: "authToken")
     }
+    
+    /// Gets a validated token, or returns nil if invalid
+    func getValidatedToken() -> String? {
+        guard isAuthenticated else { return nil }
+        guard var token = self.token else { return nil }
+        
+        // Clean up the token (remove whitespace and quotes)
+        token = token.trimmingCharacters(in: .whitespacesAndNewlines)
+        token = token.trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
+        
+        guard !token.isEmpty else { return nil }
+        return token
+    }
 }
 
 // Response structures for Supabase Auth
