@@ -2,7 +2,6 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { auth, requireUserType } = require('../middleware/auth');
 const User = require('../models/User');
-const Message = require('../models/Message');
 
 const router = express.Router();
 
@@ -84,35 +83,72 @@ router.get('/dashboard', async (req, res) => {
 router.get('/children/:childId', async (req, res) => {
   try {
     const { childId } = req.params;
+    const { getSupabase } = require('../config/database');
+    const supabase = await getSupabase();
     
     // Verify child belongs to parent
-    const parent = await User.findById(req.user._id);
-    if (!parent.children.includes(childId)) {
-      return res.status(403).json({ error: 'Child not found' });
+    const { data: parentChild, error: relationError } = await supabase
+      .from('parent_children')
+      .select('child_id')
+      .eq('parent_id', req.user.id)
+      .eq('child_id', childId)
+      .single();
+
+    if (relationError || !parentChild) {
+      return res.status(403).json({ error: 'Child not found or not linked to this parent' });
     }
     
-    const child = await User.findById(childId)
-      .populate('friends', 'profile displayName verification');
+    // Get child user
+    const child = await User.findById(childId);
+    if (!child) {
+      return res.status(404).json({ error: 'Child not found' });
+    }
     
-    const messages = await Message.find({
-      $or: [
-        { sender: childId },
-        { receiver: childId }
-      ]
-    })
-    .sort({ createdAt: -1 })
-    .limit(50)
-    .populate('sender receiver', 'profile displayName');
+    // Get child's friends
+    const { data: friendships, error: friendsError } = await supabase
+      .from('friendships')
+      .select('friend_id')
+      .eq('user_id', childId)
+      .eq('status', 'accepted');
+
+    const friendIds = friendships ? friendships.map(f => f.friend_id) : [];
+    const friends = [];
+    if (friendIds.length > 0) {
+      const { data: friendsData } = await supabase
+        .from('users')
+        .select('id, profile, verification')
+        .in('id', friendIds);
+      
+      if (friendsData) {
+        for (const friendData of friendsData) {
+          friends.push({
+            id: friendData.id,
+            profile: friendData.profile,
+            verification: friendData.verification
+          });
+        }
+      }
+    }
+    
+    // Get messages (simplified for now - TODO: implement Message model)
+    const { data: messagesData, error: messagesError } = await supabase
+      .from('messages')
+      .select('*')
+      .or(`sender_id.eq.${childId},receiver_id.eq.${childId}`)
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    const messages = messagesData || [];
     
     res.json({
       child: {
-        id: child._id,
+        id: child.id,
         profile: child.profile,
         verification: child.verification,
-        friends: child.friends,
-        lastLogin: child.lastLogin
+        friends: friends,
+        lastLogin: child.lastLogin ? new Date(child.lastLogin).toISOString() : null
       },
-      messages
+      messages: messages
     });
   } catch (error) {
     console.error(error);
@@ -234,18 +270,41 @@ router.post('/children/create', [
 // @access  Private (Parent only)
 router.get('/connections', async (req, res) => {
   try {
-    const parent = await User.findById(req.user._id)
-      .populate('parentConnections.parent', 'profile email children');
+    const { getSupabase } = require('../config/database');
+    const supabase = await getSupabase();
+    
+    // Get parent connections
+    const { data: connections, error: connectionsError } = await supabase
+      .from('parent_connections')
+      .select('parent1_id, parent2_id, connected_at')
+      .or(`parent1_id.eq.${req.user.id},parent2_id.eq.${req.user.id}`);
+
+    if (connectionsError) {
+      console.error('Error fetching parent connections:', connectionsError);
+      return res.status(500).json({ error: 'Failed to fetch connections' });
+    }
+
+    const connectionsList = [];
+    for (const conn of connections || []) {
+      // Get the other parent's ID (not the current user)
+      const otherParentId = conn.parent1_id === req.user.id ? conn.parent2_id : conn.parent1_id;
+      
+      // Fetch the other parent's profile
+      const otherParent = await User.findById(otherParentId);
+      if (otherParent) {
+        connectionsList.push({
+          parent: {
+            id: otherParent.id,
+            profile: otherParent.profile,
+            email: otherParent.email
+          },
+          connectedAt: conn.connected_at
+        });
+      }
+    }
     
     res.json({
-      connections: parent.parentConnections.map(conn => ({
-        parent: {
-          id: conn.parent._id,
-          profile: conn.parent.profile,
-          email: conn.parent.email
-        },
-        connectedAt: conn.connectedAt
-      }))
+      connections: connectionsList
     });
   } catch (error) {
     console.error(error);
