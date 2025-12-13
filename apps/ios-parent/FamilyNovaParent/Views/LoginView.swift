@@ -12,6 +12,7 @@ struct LoginView: View {
     @State private var isLoading = false
     @State private var showError = false
     @State private var errorMessage = ""
+    @State private var showRegister = false
     
     var body: some View {
         ScrollView {
@@ -97,7 +98,7 @@ struct LoginView: View {
                 .disabled(isLoading)
                 
                 // Register Button
-                Button(action: handleRegister) {
+                Button(action: { showRegister = true }) {
                     Text("Create Account")
                         .font(ParentAppFonts.headline)
                         .foregroundColor(ParentAppColors.primaryTeal)
@@ -119,6 +120,9 @@ struct LoginView: View {
             Button("OK", role: .cancel) { }
         } message: {
             Text(errorMessage)
+        }
+        .sheet(isPresented: $showRegister) {
+            RegisterView()
         }
     }
     
@@ -145,10 +149,6 @@ struct LoginView: View {
             }
             isLoading = false
         }
-    }
-    
-    private func handleRegister() {
-        // TODO: Navigate to registration
     }
 }
 

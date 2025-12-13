@@ -113,7 +113,7 @@ struct HomeworkItem: Identifiable {
     let id = UUID()
     let contentId: String
     let title: String
-    let description: String
+    let description: String?
     let subject: String
     let dueDate: Date?
     let school: String
@@ -221,7 +221,7 @@ struct HomeworkDetailView: View {
                         if let dueDate = item.dueDate {
                             InfoRow(
                                 label: "Due Date",
-                                value: dueDate, style: .date
+                                value: dueDate
                             )
                         }
                         
@@ -234,7 +234,7 @@ struct HomeworkDetailView: View {
                         if let completedAt = item.completedAt {
                             InfoRow(
                                 label: "Completed",
-                                value: completedAt, style: .date
+                                value: completedAt
                             )
                         }
                     }
@@ -268,9 +268,12 @@ struct InfoRow: View {
         self.valueColor = valueColor
     }
     
-    init(label: String, value: Date, style: Date.FormatStyle, valueColor: Color = ParentAppColors.black) {
+    init(label: String, value: Date, valueColor: Color = ParentAppColors.black) {
         self.label = label
-        self.value = value.formatted(style)
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        self.value = formatter.string(from: value)
         self.valueColor = valueColor
     }
     

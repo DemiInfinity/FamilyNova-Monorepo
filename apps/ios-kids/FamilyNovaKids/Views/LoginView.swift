@@ -114,35 +114,6 @@ struct LoginView: View {
                     .padding(.top, AppSpacing.xl)
                     .padding(.horizontal, AppSpacing.l)
                     .disabled(isLoading)
-                    
-                    // Register Button
-                    Button(action: handleRegister) {
-                        HStack(spacing: AppSpacing.s) {
-                            Text("✨")
-                                .font(.system(size: 24))
-                            Text("Create Account")
-                                .font(AppFonts.button)
-                                .foregroundColor(AppColors.primaryBlue)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 60)
-                        .background(Color.white)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: AppCornerRadius.large)
-                                .stroke(
-                                    LinearGradient(
-                                        colors: [AppColors.primaryBlue, AppColors.primaryPurple],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    ),
-                                    lineWidth: 3
-                                )
-                        )
-                        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
-                    }
-                    .padding(.top, AppSpacing.m)
-                    .padding(.horizontal, AppSpacing.l)
-                    .disabled(isLoading)
                 }
                 .padding(.bottom, AppSpacing.xxl)
             }
@@ -177,10 +148,6 @@ struct LoginView: View {
             }
             isLoading = false
         }
-    }
-    
-    private func handleRegister() {
-        // TODO: Navigate to registration
     }
 }
 

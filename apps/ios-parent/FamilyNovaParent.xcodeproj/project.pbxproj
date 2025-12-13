@@ -8,30 +8,52 @@
 
 /* Begin PBXBuildFile section */
 		01FE22100CAFE91EF76343CD /* MonitoringView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC148EDCB0C10E310E3F123A /* MonitoringView.swift */; };
+		0D971AA8A79088E0D740A9C5 /* PostApprovalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5902CC5E30F564990DA9B76C /* PostApprovalView.swift */; };
+		13F379C7B1E97DF69BA6799B /* ApiService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75934214D37B149BF6775DA6 /* ApiService.swift */; };
 		1CAE2E3F4C9E683B3A2A649A /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA3DF5584C3C1C13C32CF070 /* AuthManager.swift */; };
+		29BC15483869DA9E425439EC /* CreateChildAccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C58E9DA80AFD04BF258FDF03 /* CreateChildAccountView.swift */; };
+		308553DBF5366FF3F12958F9 /* ProfileChangeApprovalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2A70B764625E43C386D6CC5 /* ProfileChangeApprovalView.swift */; };
 		35BBE194A0C0AE78B5802195 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B9CEA9A6117E2207D17A720 /* LoginView.swift */; };
 		4DD00A14495B83280F0B489E /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E139914E755FEAA3736F68E /* DesignSystem.swift */; };
 		5CE0BDF764E5ED76385E0988 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68EC8D887EFC3CBBE5BF0BF9 /* SettingsView.swift */; };
+		80F9AA722184A7C50E7EACFF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8B50917360E12C4109BF372A /* Assets.xcassets */; };
 		82831F01E42B2283A77E789D /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 411F0E038FF16D34EC9666E8 /* MainTabView.swift */; };
 		865F30A0CE5E1A81D251DD9E /* ConnectionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FDB135486912D9735B22569 /* ConnectionsView.swift */; };
 		AE6CE438AFE580AE0998F713 /* FamilyNovaParentApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 404DE0FB7A2C9F4DEC4A6EF0 /* FamilyNovaParentApp.swift */; };
+		B8B3AAAD5EC87D7ED72E7673 /* HomeworkView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2477775C97DAFC2A27119BEE /* HomeworkView.swift */; };
+		C8AFA3888CE7D23F8F4A208B /* RegisterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFC2DCE579D198E7C0AAEA02 /* RegisterView.swift */; };
 		DDCFD8619CD87B6F127C906F /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90B12BDBCE5FB3505F4DFF86 /* DashboardView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		1FDB135486912D9735B22569 /* ConnectionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionsView.swift; sourceTree = "<group>"; };
+		2477775C97DAFC2A27119BEE /* HomeworkView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeworkView.swift; sourceTree = "<group>"; };
 		2B9CEA9A6117E2207D17A720 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		2E139914E755FEAA3736F68E /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
 		404DE0FB7A2C9F4DEC4A6EF0 /* FamilyNovaParentApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FamilyNovaParentApp.swift; sourceTree = "<group>"; };
 		411F0E038FF16D34EC9666E8 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		5902CC5E30F564990DA9B76C /* PostApprovalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostApprovalView.swift; sourceTree = "<group>"; };
 		68EC8D887EFC3CBBE5BF0BF9 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		75934214D37B149BF6775DA6 /* ApiService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiService.swift; sourceTree = "<group>"; };
+		8B50917360E12C4109BF372A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		90B12BDBCE5FB3505F4DFF86 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		98193E8D50A12BFE76D0E4CF /* FamilyNovaParent.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FamilyNovaParent.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AFC2DCE579D198E7C0AAEA02 /* RegisterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegisterView.swift; sourceTree = "<group>"; };
 		BA3DF5584C3C1C13C32CF070 /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
+		C58E9DA80AFD04BF258FDF03 /* CreateChildAccountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateChildAccountView.swift; sourceTree = "<group>"; };
 		CC148EDCB0C10E310E3F123A /* MonitoringView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonitoringView.swift; sourceTree = "<group>"; };
+		D2A70B764625E43C386D6CC5 /* ProfileChangeApprovalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileChangeApprovalView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
+		267947A92FA9437A89831BC8 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				8B50917360E12C4109BF372A /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
 		4599D385EFF4939D5C4B18E7 /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -52,10 +74,15 @@
 			isa = PBXGroup;
 			children = (
 				1FDB135486912D9735B22569 /* ConnectionsView.swift */,
+				C58E9DA80AFD04BF258FDF03 /* CreateChildAccountView.swift */,
 				90B12BDBCE5FB3505F4DFF86 /* DashboardView.swift */,
+				2477775C97DAFC2A27119BEE /* HomeworkView.swift */,
 				2B9CEA9A6117E2207D17A720 /* LoginView.swift */,
 				411F0E038FF16D34EC9666E8 /* MainTabView.swift */,
 				CC148EDCB0C10E310E3F123A /* MonitoringView.swift */,
+				5902CC5E30F564990DA9B76C /* PostApprovalView.swift */,
+				D2A70B764625E43C386D6CC5 /* ProfileChangeApprovalView.swift */,
+				AFC2DCE579D198E7C0AAEA02 /* RegisterView.swift */,
 				68EC8D887EFC3CBBE5BF0BF9 /* SettingsView.swift */,
 			);
 			path = Views;
@@ -69,11 +96,21 @@
 			);
 			sourceTree = "<group>";
 		};
+		902634B67759449BB6010985 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				75934214D37B149BF6775DA6 /* ApiService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
 		92DFDE0B3AB44D19F13F71FC /* FamilyNovaParent */ = {
 			isa = PBXGroup;
 			children = (
 				404DE0FB7A2C9F4DEC4A6EF0 /* FamilyNovaParentApp.swift */,
 				72773AACB23723FCCDDE7E7B /* Models */,
+				267947A92FA9437A89831BC8 /* Resources */,
+				902634B67759449BB6010985 /* Services */,
 				F90C9E164413A027B64D8956 /* Utils */,
 				7F45D8412762B1C7BADF44D7 /* Views */,
 			);
@@ -96,6 +133,7 @@
 			buildConfigurationList = 35C46D12EF8E6FF5A9C17D62 /* Build configuration list for PBXNativeTarget "FamilyNovaParent" */;
 			buildPhases = (
 				62EBE8E60312CDABF5F44D1F /* Sources */,
+				92B6B917EE1B2D8E79FE77E5 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -135,19 +173,36 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		92B6B917EE1B2D8E79FE77E5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				80F9AA722184A7C50E7EACFF /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		62EBE8E60312CDABF5F44D1F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				13F379C7B1E97DF69BA6799B /* ApiService.swift in Sources */,
 				1CAE2E3F4C9E683B3A2A649A /* AuthManager.swift in Sources */,
 				865F30A0CE5E1A81D251DD9E /* ConnectionsView.swift in Sources */,
+				29BC15483869DA9E425439EC /* CreateChildAccountView.swift in Sources */,
 				DDCFD8619CD87B6F127C906F /* DashboardView.swift in Sources */,
 				4DD00A14495B83280F0B489E /* DesignSystem.swift in Sources */,
 				AE6CE438AFE580AE0998F713 /* FamilyNovaParentApp.swift in Sources */,
+				B8B3AAAD5EC87D7ED72E7673 /* HomeworkView.swift in Sources */,
 				35BBE194A0C0AE78B5802195 /* LoginView.swift in Sources */,
 				82831F01E42B2283A77E789D /* MainTabView.swift in Sources */,
 				01FE22100CAFE91EF76343CD /* MonitoringView.swift in Sources */,
+				0D971AA8A79088E0D740A9C5 /* PostApprovalView.swift in Sources */,
+				308553DBF5366FF3F12958F9 /* ProfileChangeApprovalView.swift in Sources */,
+				C8AFA3888CE7D23F8F4A208B /* RegisterView.swift in Sources */,
 				5CE0BDF764E5ED76385E0988 /* SettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
