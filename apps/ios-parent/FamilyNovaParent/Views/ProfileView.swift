@@ -43,9 +43,8 @@ struct ProfileView: View {
                 } else {
                     ScrollView {
                         VStack(spacing: 0) {
-                            // Cover Image/Banner (like Facebook/Twitter)
+                            // Cover Banner
                             ZStack(alignment: .bottomLeading) {
-                                // Cover Banner
                                 Group {
                                     if let bannerUrl = bannerUrl, !bannerUrl.isEmpty {
                                         AsyncImage(url: URL(string: bannerUrl)) { image in
@@ -61,13 +60,6 @@ struct ProfileView: View {
                                 }
                                 .frame(height: 200)
                                 .clipped()
-                                .overlay(
-                                    // Pattern overlay for visual interest
-                                    Image(systemName: "sparkles")
-                                        .font(.system(size: 100))
-                                        .foregroundColor(.white.opacity(0.1))
-                                        .offset(x: 50, y: 50)
-                                )
                                 
                                 // Profile Picture overlaying the cover
                                 ZStack {
@@ -89,82 +81,84 @@ struct ProfileView: View {
                                         } else {
                                             Circle()
                                                 .fill(CosmicColors.primaryGradient)
+                                                .overlay(
+                                                    Text((displayName.isEmpty ? email : displayName).prefix(1).uppercased())
+                                                        .font(.system(size: 48, weight: .bold))
+                                                        .foregroundColor(.white)
+                                                )
                                         }
                                     }
                                     .frame(width: 110, height: 110)
                                     .clipShape(Circle())
-                                    
-                                    if avatarUrl == nil || avatarUrl!.isEmpty {
-                                        Text("👤")
-                                            .font(.system(size: 55))
-                                    }
                                 }
-                                .offset(x: 20, y: 60)
+                                .offset(x: CosmicSpacing.m, y: 60)
                             }
                             
-                            // User Info Section
+                            // Profile Info
                             VStack(alignment: .leading, spacing: CosmicSpacing.m) {
-                                // Name and Handle
-                                VStack(alignment: .leading, spacing: CosmicSpacing.xs) {
-                                    Text(displayName.isEmpty ? email : displayName)
-                                        .font(.system(size: 24, weight: .bold))
-                                        .foregroundColor(CosmicColors.textPrimary)
-                                    
-                                    Text("@\(email.components(separatedBy: "@").first ?? "user")")
-                                        .font(CosmicFonts.body)
-                                        .foregroundColor(CosmicColors.textSecondary)
-                                    
-                                    // Bio/Info
-                                    if let school = school, !school.isEmpty {
-                                        HStack(spacing: CosmicSpacing.xs) {
-                                            Image(systemName: "building.2")
-                                                .foregroundColor(CosmicColors.textMuted)
-                                                .font(.system(size: 14))
-                                            Text(school)
-                                                .font(CosmicFonts.caption)
-                                                .foregroundColor(CosmicColors.textSecondary)
-                                        }
-                                        .padding(.top, CosmicSpacing.xs)
+                                HStack {
+                                    VStack(alignment: .leading, spacing: CosmicSpacing.xs) {
+                                        Text(displayName.isEmpty ? email : displayName)
+                                            .font(CosmicFonts.title)
+                                            .foregroundColor(CosmicColors.textPrimary)
                                     }
                                     
-                                    if let grade = grade, !grade.isEmpty {
+                                    Spacer()
+                                    
+                                    // Edit Profile Button
+                                    Button(action: {
+                                        showEditProfile = true
+                                    }) {
                                         HStack(spacing: CosmicSpacing.xs) {
-                                            Image(systemName: "book")
-                                                .foregroundColor(CosmicColors.textMuted)
-                                                .font(.system(size: 14))
-                                            Text(grade)
-                                                .font(CosmicFonts.caption)
-                                                .foregroundColor(CosmicColors.textSecondary)
+                                            Image(systemName: "pencil")
+                                            Text("Edit Profile")
+                                                .font(CosmicFonts.button)
                                         }
+                                        .foregroundColor(.white)
+                                        .padding(.horizontal, CosmicSpacing.l)
+                                        .padding(.vertical, CosmicSpacing.s)
+                                        .background(CosmicColors.nebulaPurple)
+                                        .cornerRadius(CosmicCornerRadius.medium)
                                     }
                                 }
-                                .padding(.leading, 20)
-                                .padding(.top, 70)
+                                .padding(.horizontal, CosmicSpacing.m)
+                                .padding(.top, 80)
                                 
-                                // Stats Bar (like Twitter/Bluesky)
-                                HStack(spacing: CosmicSpacing.xl) {
-                                    StatItem(count: postsCount, label: "Posts")
-                                    StatItem(count: friendsCount, label: "Friends")
-                                    StatItem(count: 0, label: "Following") // Future feature
+                                // Stats
+                                HStack(spacing: CosmicSpacing.l) {
+                                    VStack {
+                                        Text("\(postsCount)")
+                                            .font(CosmicFonts.headline)
+                                            .foregroundColor(CosmicColors.textPrimary)
+                                        Text("Posts")
+                                            .font(CosmicFonts.caption)
+                                            .foregroundColor(CosmicColors.textMuted)
+                                    }
+                                    
+                                    VStack {
+                                        Text("\(friendsCount)")
+                                            .font(CosmicFonts.headline)
+                                            .foregroundColor(CosmicColors.textPrimary)
+                                        Text("Friends")
+                                            .font(CosmicFonts.caption)
+                                            .foregroundColor(CosmicColors.textMuted)
+                                    }
                                 }
-                                .padding(.horizontal, 20)
+                                .frame(maxWidth: .infinity)
                                 .padding(.top, CosmicSpacing.m)
-                                .padding(.bottom, CosmicSpacing.s)
                                 
-                                Divider()
-                                    .padding(.horizontal, 20)
-                                
-                                // Tabs (Posts, Photos, etc.)
+                                // Tabs
                                 HStack(spacing: 0) {
                                     TabButton(title: "Posts", isSelected: selectedTab == 0) {
                                         selectedTab = 0
                                     }
+                                    
                                     TabButton(title: "Photos", isSelected: selectedTab == 1) {
                                         selectedTab = 1
                                     }
                                 }
-                                .padding(.horizontal, 20)
-                                .padding(.top, CosmicSpacing.s)
+                                .padding(.horizontal, CosmicSpacing.m)
+                                .padding(.top, CosmicSpacing.l)
                                 
                                 // Content based on selected tab
                                 if selectedTab == 0 {
@@ -193,107 +187,54 @@ struct ProfileView: View {
                                     } else {
                                         LazyVStack(spacing: CosmicSpacing.m) {
                                             ForEach(posts) { post in
-                                                PostCard(post: post, onDelete: {
-                                                    deletePost(postId: post.id)
-                                                })
+                                                CosmicPostCard(post: post)
                                                     .environmentObject(authManager)
-                                                    .padding(.horizontal, CosmicSpacing.m)
                                             }
                                         }
+                                        .padding(.horizontal, CosmicSpacing.m)
                                         .padding(.top, CosmicSpacing.m)
                                     }
                                 } else {
-                                    // Photos tab - show posts with images
-                                    if isLoadingPosts && posts.isEmpty {
-                                        VStack(spacing: CosmicSpacing.l) {
-                                            ProgressView()
-                                            Text("Loading photos...")
-                                                .font(CosmicFonts.body)
-                                                .foregroundColor(CosmicColors.textSecondary)
+                                    let photos = posts.filter { $0.imageUrl != nil && !$0.imageUrl!.isEmpty }
+                                    if photos.isEmpty {
+                                        VStack(spacing: CosmicSpacing.m) {
+                                            Text("📷")
+                                                .font(.system(size: 60))
+                                            Text("No photos yet")
+                                                .font(CosmicFonts.headline)
+                                                .foregroundColor(CosmicColors.textPrimary)
                                         }
+                                        .frame(maxWidth: .infinity)
                                         .padding(CosmicSpacing.xxl)
                                     } else {
-                                        let postsWithImages = posts.filter { $0.imageUrl != nil && !$0.imageUrl!.isEmpty }
-                                        
-                                        if postsWithImages.isEmpty {
-                                            VStack(spacing: CosmicSpacing.l) {
-                                                Text("📷")
-                                                    .font(.system(size: 60))
-                                                Text("No photos yet")
-                                                    .font(CosmicFonts.headline)
-                                                    .foregroundColor(CosmicColors.nebulaPurple)
-                                                Text("Photos from your posts will appear here")
-                                                    .font(CosmicFonts.body)
-                                                    .foregroundColor(CosmicColors.textSecondary)
-                                            }
-                                            .frame(maxWidth: .infinity)
-                                            .padding(CosmicSpacing.xxl)
-                                        } else {
-                                            // Grid layout for photos
-                                            LazyVGrid(columns: [
-                                                GridItem(.flexible(), spacing: CosmicSpacing.s),
-                                                GridItem(.flexible(), spacing: CosmicSpacing.s),
-                                                GridItem(.flexible(), spacing: CosmicSpacing.s)
-                                            ], spacing: CosmicSpacing.s) {
-                                                ForEach(postsWithImages) { post in
-                                                    if let imageUrl = post.imageUrl, !imageUrl.isEmpty {
-                                                        NavigationLink(destination: PostDetailView(post: post)) {
-                                                            AsyncImage(url: URL(string: imageUrl)) { image in
-                                                                image
-                                                                    .resizable()
-                                                                    .aspectRatio(contentMode: .fill)
-                                                            } placeholder: {
-                                                                RoundedRectangle(cornerRadius: CosmicCornerRadius.medium)
-                                                                    .fill(CosmicColors.textMuted.opacity(0.3))
-                                                                    .overlay(
-                                                                        ProgressView()
-                                                                    )
-                                                            }
-                                                            .frame(width: 110, height: 110)
-                                                            .clipShape(RoundedRectangle(cornerRadius: CosmicCornerRadius.medium))
-                                                        }
+                                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: CosmicSpacing.s) {
+                                            ForEach(photos) { post in
+                                                if let imageUrl = post.imageUrl {
+                                                    AsyncImage(url: URL(string: imageUrl)) { image in
+                                                        image
+                                                            .resizable()
+                                                            .aspectRatio(contentMode: .fill)
+                                                    } placeholder: {
+                                                        Rectangle()
+                                                            .fill(CosmicColors.glassBackground)
                                                     }
+                                                    .frame(width: 100, height: 100)
+                                                    .clipShape(RoundedRectangle(cornerRadius: CosmicCornerRadius.small))
                                                 }
                                             }
-                                            .padding(.horizontal, CosmicSpacing.m)
-                                            .padding(.top, CosmicSpacing.m)
                                         }
+                                        .padding(.horizontal, CosmicSpacing.m)
+                                        .padding(.top, CosmicSpacing.m)
                                     }
                                 }
                             }
-                            .background(Color.white)
+                            .padding(.bottom, CosmicSpacing.xl)
                         }
                     }
                 }
             }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: { dismiss() }) {
-                        Image(systemName: "xmark")
-                            .foregroundColor(CosmicColors.textPrimary)
-                            .font(.system(size: 18, weight: .semibold))
-                    }
-                }
-                
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Menu {
-                        Button(action: { showEditProfile = true }) {
-                            Label("Edit Profile", systemImage: "pencil")
-                        }
-                        
-                        Divider()
-                        
-                        Button(role: .destructive, action: handleLogout) {
-                            Label("Logout", systemImage: "arrow.right.square")
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
-                            .foregroundColor(CosmicColors.nebulaBlue)
-                            .font(.system(size: 20))
-                    }
-                }
-            }
+            .navigationTitle(displayName.isEmpty ? email : displayName)
+            .navigationBarTitleDisplayMode(.large)
             .sheet(isPresented: $showEditProfile) {
                 EditProfileView(
                     currentDisplayName: displayName,

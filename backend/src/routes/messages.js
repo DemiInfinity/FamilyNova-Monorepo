@@ -101,20 +101,7 @@ router.post('/', requireUserType('kid', 'parent'), [
       message: {
         id: message.id,
         content: message.content,
-        status: message.status,
-        sender: {
-          id: sender.id,
-          profile: {
-            displayName: senderProfile.displayName || sender.email
-          }
-        },
-        receiver: {
-          id: receiver.id,
-          profile: {
-            displayName: receiverProfile.displayName || receiver.email
-          }
-        },
-        createdAt: message.createdAt
+        createdAt: message.createdAt ? new Date(message.createdAt).toISOString() : new Date().toISOString()
       }
     });
   } catch (error) {

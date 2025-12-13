@@ -14,7 +14,7 @@ class Message {
   }
 
   static async findById(id) {
-    const supabase = getSupabase();
+    const supabase = await getSupabase();
     const { data, error } = await supabase
       .from('messages')
       .select('*')
@@ -26,7 +26,7 @@ class Message {
   }
 
   static async find(filter = {}) {
-    const supabase = getSupabase();
+    const supabase = await getSupabase();
     let query = supabase.from('messages').select('*');
 
     if (filter.senderId) query = query.eq('sender_id', filter.senderId);
@@ -39,7 +39,7 @@ class Message {
   }
 
   static async create(messageData) {
-    const supabase = getSupabase();
+    const supabase = await getSupabase();
     const dbData = {
       sender_id: messageData.senderId,
       receiver_id: messageData.receiverId,
@@ -58,7 +58,7 @@ class Message {
   }
 
   async save() {
-    const supabase = getSupabase();
+    const supabase = await getSupabase();
     const dbData = {
       content: this.content,
       status: this.status,
