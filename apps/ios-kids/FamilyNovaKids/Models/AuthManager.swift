@@ -14,8 +14,10 @@ class AuthManager: ObservableObject {
     init() {
         // Check for saved token
         if let savedToken = UserDefaults.standard.string(forKey: "authToken") {
-            self.token = savedToken
-            self.isAuthenticated = true
+            // Trim any whitespace/newlines from saved token
+            let cleanToken = savedToken.trimmingCharacters(in: .whitespacesAndNewlines)
+            self.token = cleanToken
+            self.isAuthenticated = !cleanToken.isEmpty
             // TODO: Validate token and load user
         }
     }
@@ -80,10 +82,13 @@ class AuthManager: ObservableObject {
             await MainActor.run {
                 // Store access token (Supabase session token)
                 if let session = result.session {
-                    self.token = session.access_token
+                    // Trim token to remove any whitespace/newlines
+                    let accessToken = session.access_token.trimmingCharacters(in: .whitespacesAndNewlines)
+                    self.token = accessToken
                     // Store refresh token separately if available
                     if let refreshToken = session.refresh_token, !refreshToken.isEmpty {
-                        UserDefaults.standard.set(refreshToken, forKey: "refreshToken")
+                        let cleanRefreshToken = refreshToken.trimmingCharacters(in: .whitespacesAndNewlines)
+                        UserDefaults.standard.set(cleanRefreshToken, forKey: "refreshToken")
                     } else {
                         UserDefaults.standard.removeObject(forKey: "refreshToken")
                     }
@@ -92,7 +97,10 @@ class AuthManager: ObservableObject {
                 }
                 self.isAuthenticated = self.token != nil
                 if let token = self.token {
-                    UserDefaults.standard.set(token, forKey: "authToken")
+                    // Ensure token is clean before storing
+                    let cleanToken = token.trimmingCharacters(in: .whitespacesAndNewlines)
+                    UserDefaults.standard.set(cleanToken, forKey: "authToken")
+                    self.token = cleanToken // Update stored token to cleaned version
                 }
                 
                 // Store user ID for later use
@@ -124,9 +132,11 @@ class AuthManager: ObservableObject {
     func loginWithToken(childId: String, email: String, token: String) async {
         // Store the token and mark as authenticated
         await MainActor.run {
-            self.token = token
-            self.isAuthenticated = true
-            UserDefaults.standard.set(token, forKey: "authToken")
+            // Trim any whitespace/newlines from token
+            let cleanToken = token.trimmingCharacters(in: .whitespacesAndNewlines)
+            self.token = cleanToken
+            self.isAuthenticated = !cleanToken.isEmpty
+            UserDefaults.standard.set(cleanToken, forKey: "authToken")
             // TODO: Fetch user profile from API
         }
     }
@@ -173,9 +183,12 @@ class AuthManager: ObservableObject {
             
             await MainActor.run {
                 if let session = result.session {
-                    self.token = session.access_token
+                    // Trim token to remove any whitespace/newlines
+                    let accessToken = session.access_token.trimmingCharacters(in: .whitespacesAndNewlines)
+                    self.token = accessToken
                     if let refreshToken = session.refresh_token, !refreshToken.isEmpty {
-                        UserDefaults.standard.set(refreshToken, forKey: "refreshToken")
+                        let cleanRefreshToken = refreshToken.trimmingCharacters(in: .whitespacesAndNewlines)
+                        UserDefaults.standard.set(cleanRefreshToken, forKey: "refreshToken")
                     } else {
                         UserDefaults.standard.removeObject(forKey: "refreshToken")
                     }
@@ -184,7 +197,10 @@ class AuthManager: ObservableObject {
                 }
                 self.isAuthenticated = self.token != nil
                 if let token = self.token {
-                    UserDefaults.standard.set(token, forKey: "authToken")
+                    // Ensure token is clean before storing
+                    let cleanToken = token.trimmingCharacters(in: .whitespacesAndNewlines)
+                    UserDefaults.standard.set(cleanToken, forKey: "authToken")
+                    self.token = cleanToken // Update stored token to cleaned version
                 }
                 
                 // Store user ID for later use

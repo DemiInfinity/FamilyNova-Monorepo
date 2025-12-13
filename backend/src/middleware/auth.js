@@ -4,10 +4,24 @@ const { createClient } = require('@supabase/supabase-js');
 
 const auth = async (req, res, next) => {
   try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
+    let token = req.header('Authorization');
     
-    if (!token) {
+    // Handle different Authorization header formats
+    if (token) {
+      // Remove 'Bearer ' prefix if present
+      token = token.replace(/^Bearer\s+/i, '').trim();
+    }
+    
+    if (!token || token.length === 0) {
       return res.status(401).json({ error: 'No token, authorization denied' });
+    }
+    
+    // Basic JWT format validation (should have 3 parts separated by dots)
+    const tokenParts = token.split('.');
+    if (tokenParts.length !== 3) {
+      console.error('Invalid JWT format - token has', tokenParts.length, 'parts (expected 3)');
+      console.error('Token preview:', token.substring(0, 50) + '...');
+      return res.status(401).json({ error: 'Invalid token format' });
     }
 
     // Use anon key for token verification (getUser is a client-side operation)
@@ -33,6 +47,8 @@ const auth = async (req, res, next) => {
     
     if (error || !authUser) {
       console.error('Token verification error:', error?.message || 'No user found');
+      console.error('Token length:', token.length);
+      console.error('Token preview:', token.substring(0, 50) + '...');
       return res.status(401).json({ error: 'Token is not valid' });
     }
 

@@ -35,7 +35,18 @@ class ApiService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
         if let token = token {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            // Trim any whitespace/newlines from token
+            let cleanToken = token.trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            // Validate JWT format (should have 3 parts separated by dots)
+            let parts = cleanToken.split(separator: ".")
+            if parts.count != 3 {
+                print("⚠️ Invalid JWT format - token has \(parts.count) parts (expected 3)")
+                print("Token preview: \(cleanToken.prefix(50))...")
+                throw ApiError.invalidResponse
+            }
+            
+            request.setValue("Bearer \(cleanToken)", forHTTPHeaderField: "Authorization")
         }
         
         if let body = body {
