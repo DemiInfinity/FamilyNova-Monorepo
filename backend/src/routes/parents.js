@@ -126,6 +126,8 @@ router.get('/dashboard', async (req, res) => {
       return res.status(404).json({ error: 'Parent not found' });
     }
     
+    console.log(`[Dashboard] Fetching children for parent: ${req.user.id}`);
+    
     // Get children from parent_children table
     const { data: parentChildren, error: childrenError } = await supabase
       .from('parent_children')
@@ -133,11 +135,56 @@ router.get('/dashboard', async (req, res) => {
       .eq('parent_id', req.user.id);
 
     if (childrenError) {
-      console.error('Error fetching children:', childrenError);
+      console.error('[Dashboard] Error fetching children:', childrenError);
       return res.status(500).json({ error: 'Failed to fetch children' });
     }
 
-    const childIds = parentChildren.map(pc => pc.child_id);
+    console.log(`[Dashboard] Found ${parentChildren?.length || 0} parent_children relationships`);
+    
+    const childIds = parentChildren ? parentChildren.map(pc => pc.child_id) : [];
+    
+    // Also check if there are children linked via parent_account_id (backup method)
+    if (childIds.length === 0) {
+      console.log('[Dashboard] No children in parent_children table, checking parent_account_id...');
+      const { data: childrenByParentAccount, error: accountError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('parent_account_id', req.user.id)
+        .eq('user_type', 'kid');
+      
+      if (!accountError && childrenByParentAccount && childrenByParentAccount.length > 0) {
+        console.log(`[Dashboard] Found ${childrenByParentAccount.length} children via parent_account_id`);
+        const accountChildIds = childrenByParentAccount.map(c => c.id);
+        
+        // Create parent_children relationships for these children
+        for (const childId of accountChildIds) {
+          const { error: insertError } = await supabase
+            .from('parent_children')
+            .upsert({
+              parent_id: req.user.id,
+              child_id: childId
+            }, {
+              onConflict: 'parent_id,child_id'
+            });
+          
+          if (insertError) {
+            console.error(`[Dashboard] Error creating parent_children relationship for ${childId}:`, insertError);
+          } else {
+            console.log(`[Dashboard] Created parent_children relationship for ${childId}`);
+          }
+        }
+        
+        // Re-fetch after creating relationships
+        const { data: updatedParentChildren } = await supabase
+          .from('parent_children')
+          .select('child_id')
+          .eq('parent_id', req.user.id);
+        
+        if (updatedParentChildren) {
+          childIds.push(...updatedParentChildren.map(pc => pc.child_id));
+        }
+      }
+    }
     
     // Fetch children user profiles
     const children = [];
@@ -467,6 +514,86 @@ router.post('/children/:childId/login-code', async (req, res) => {
     });
   } catch (error) {
     console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// @route   POST /api/parents/children/link-by-email
+// @desc    Link an existing child account to parent by email
+// @access  Private (Parent only)
+router.post('/children/link-by-email', [
+  body('email').isEmail().normalizeEmail()
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    
+    const { email } = req.body;
+    const { getSupabase } = require('../config/database');
+    const supabase = await getSupabase();
+    
+    // Find child by email
+    const child = await User.findByEmail(email);
+    if (!child) {
+      return res.status(404).json({ error: 'Child account not found with this email' });
+    }
+    
+    if (child.userType !== 'kid') {
+      return res.status(400).json({ error: 'This email belongs to a parent account, not a child account' });
+    }
+    
+    // Check if already linked
+    const { data: existingRelation, error: checkError } = await supabase
+      .from('parent_children')
+      .select('*')
+      .eq('parent_id', req.user.id)
+      .eq('child_id', child.id)
+      .single();
+    
+    if (existingRelation && !checkError) {
+      return res.status(400).json({ error: 'Child is already linked to your account' });
+    }
+    
+    // Create parent-child relationship
+    const { error: relationError } = await supabase
+      .from('parent_children')
+      .upsert({
+        parent_id: req.user.id,
+        child_id: child.id
+      }, {
+        onConflict: 'parent_id,child_id'
+      });
+    
+    if (relationError) {
+      console.error('Error linking child:', relationError);
+      return res.status(500).json({ error: 'Failed to link child to parent' });
+    }
+    
+    // Update child's parent account and verification
+    const verification = { ...child.verification };
+    verification.parentVerified = true;
+    
+    await User.findByIdAndUpdate(child.id, {
+      parentAccount: req.user.id,
+      verification: verification
+    });
+    
+    // Get updated child
+    const updatedChild = await User.findById(child.id);
+    
+    res.json({
+      message: 'Child linked successfully',
+      child: {
+        id: updatedChild.id,
+        email: updatedChild.email,
+        profile: updatedChild.profile,
+        verification: updatedChild.verification
+      }
+    });
+  } catch (error) {
+    console.error('Error linking child by email:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });

@@ -219,6 +219,7 @@ struct HomeView: View {
             
             struct ProfileResponse: Codable {
                 let displayName: String?
+                let avatar: String?
             }
             
             struct CommentResponse: Codable {
@@ -250,6 +251,7 @@ struct HomeView: View {
                     return Post(
                         id: UUID(uuidString: postResponse.id) ?? UUID(),
                         author: postResponse.author.profile.displayName ?? "Unknown",
+                        authorAvatar: postResponse.author.profile.avatar,
                         content: postResponse.content,
                         imageUrl: postResponse.imageUrl,
                         likes: postResponse.likes?.count ?? 0,

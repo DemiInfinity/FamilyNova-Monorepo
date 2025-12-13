@@ -49,11 +49,13 @@
 		B2592FB22A74B4AB00CF4679 /* AppDetection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73DEA75A086EE59C1B46EB7C /* AppDetection.swift */; };
 		B511D2A7537BEB91BC762E8C /* ExploreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E209A4AF9809DD8D2B31ABFC /* ExploreView.swift */; };
 		B8B3AAAD5EC87D7ED72E7673 /* HomeworkView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2477775C97DAFC2A27119BEE /* HomeworkView.swift */; };
+		BB441D50DE5080D990326E0F /* ActivityReportsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27DA4A81B3C59C9665CFF8D1 /* ActivityReportsView.swift */; };
 		C0B2A340774B1D8D767F0D0F /* HomeFeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90D315FD0E49B6DEF1202E77 /* HomeFeedView.swift */; };
 		C8AFA3888CE7D23F8F4A208B /* RegisterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFC2DCE579D198E7C0AAEA02 /* RegisterView.swift */; };
 		CACAA0C61A2F7AF13B5032BB /* QRCodeGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34813A3D32E39C23E8056F98 /* QRCodeGenerator.swift */; };
 		DDCFD8619CD87B6F127C906F /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90B12BDBCE5FB3505F4DFF86 /* DashboardView.swift */; };
 		E46CD59DBB350B3BA1B1C8A5 /* QRCodeScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E184B8417098ACF286B198D0 /* QRCodeScannerView.swift */; };
+		F34A3FF72C9E7411B78A9F58 /* SafetyDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF3BCF1C0553723E837B9E01 /* SafetyDashboardView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -61,6 +63,7 @@
 		1AA4891E0465C5EA4C7A4EB0 /* ShowMyFriendCodeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowMyFriendCodeView.swift; sourceTree = "<group>"; };
 		1FDB135486912D9735B22569 /* ConnectionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionsView.swift; sourceTree = "<group>"; };
 		2477775C97DAFC2A27119BEE /* HomeworkView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeworkView.swift; sourceTree = "<group>"; };
+		27DA4A81B3C59C9665CFF8D1 /* ActivityReportsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityReportsView.swift; sourceTree = "<group>"; };
 		2B9CEA9A6117E2207D17A720 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		2E139914E755FEAA3736F68E /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
 		34813A3D32E39C23E8056F98 /* QRCodeGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCodeGenerator.swift; sourceTree = "<group>"; };
@@ -105,6 +108,7 @@
 		E2B6BEE8A031D5F3177EA1FA /* SubscriptionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionView.swift; sourceTree = "<group>"; };
 		E31D667D2A6553C711B01325 /* FriendsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsView.swift; sourceTree = "<group>"; };
 		F77E21DBE10F147FE0A26B7B /* ScanFriendQRView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanFriendQRView.swift; sourceTree = "<group>"; };
+		FF3BCF1C0553723E837B9E01 /* SafetyDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafetyDashboardView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -137,6 +141,7 @@
 			isa = PBXGroup;
 			children = (
 				A28D16102720CD9B4CEBEFD4 /* AboutView.swift */,
+				27DA4A81B3C59C9665CFF8D1 /* ActivityReportsView.swift */,
 				D2130C3E6F987C7647C2F64F /* AddFriendView.swift */,
 				5108220BA08333256ED48E22 /* ChildDetailsView.swift */,
 				DA8DC02171F948D809EE56AD /* CommentsView.swift */,
@@ -167,6 +172,7 @@
 				6427A39E667C1717629D3BE5 /* ProfileView.swift */,
 				E184B8417098ACF286B198D0 /* QRCodeScannerView.swift */,
 				AFC2DCE579D198E7C0AAEA02 /* RegisterView.swift */,
+				FF3BCF1C0553723E837B9E01 /* SafetyDashboardView.swift */,
 				F77E21DBE10F147FE0A26B7B /* ScanFriendQRView.swift */,
 				68EC8D887EFC3CBBE5BF0BF9 /* SettingsView.swift */,
 				1AA4891E0465C5EA4C7A4EB0 /* ShowMyFriendCodeView.swift */,
@@ -283,6 +289,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				935F2E18D9F561DCDAC04518 /* AboutView.swift in Sources */,
+				BB441D50DE5080D990326E0F /* ActivityReportsView.swift in Sources */,
 				7F210D21C9DC9650604BBD58 /* AddFriendView.swift in Sources */,
 				13F379C7B1E97DF69BA6799B /* ApiService.swift in Sources */,
 				B2592FB22A74B4AB00CF4679 /* AppDetection.swift in Sources */,
@@ -321,6 +328,7 @@
 				CACAA0C61A2F7AF13B5032BB /* QRCodeGenerator.swift in Sources */,
 				E46CD59DBB350B3BA1B1C8A5 /* QRCodeScannerView.swift in Sources */,
 				C8AFA3888CE7D23F8F4A208B /* RegisterView.swift in Sources */,
+				F34A3FF72C9E7411B78A9F58 /* SafetyDashboardView.swift in Sources */,
 				7CDCDC3D6847DC66491871D9 /* ScanFriendQRView.swift in Sources */,
 				5CE0BDF764E5ED76385E0988 /* SettingsView.swift in Sources */,
 				52764FAD573623DA967BE7F8 /* ShowMyFriendCodeView.swift in Sources */,
