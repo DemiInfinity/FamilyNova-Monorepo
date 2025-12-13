@@ -383,6 +383,69 @@ router.get('/search', requireUserType('kid', 'parent'), async (req, res) => {
   }
 });
 
+// @route   GET /api/friends/requests
+// @desc    Get pending friend requests (kids and parents)
+// @access  Private
+router.get('/requests', requireUserType('kid', 'parent'), async (req, res) => {
+  try {
+    const supabase = await getSupabase();
+    
+    // Get pending friend requests where current user is the receiver
+    const { data: friendships, error: friendsError } = await supabase
+      .from('friendships')
+      .select('user_id, friend_id, created_at')
+      .eq('friend_id', req.user.id)
+      .eq('status', 'pending');
+    
+    if (friendsError) {
+      console.error('Error fetching friend requests:', friendsError);
+      return res.status(500).json({ error: 'Failed to fetch friend requests' });
+    }
+    
+    if (!friendships || friendships.length === 0) {
+      return res.json({ requests: [] });
+    }
+    
+    // Get user IDs who sent requests
+    const requesterIds = friendships.map(f => f.user_id);
+    
+    // Fetch requester profiles
+    const { data: requestersData, error: requestersError } = await supabase
+      .from('users')
+      .select('id, profile, email')
+      .in('id', requesterIds);
+    
+    if (requestersError) {
+      console.error('Error fetching requester profiles:', requestersError);
+      return res.status(500).json({ error: 'Failed to fetch requester profiles' });
+    }
+    
+    // Format requests
+    const requests = (friendships || []).map(friendship => {
+      const requester = requestersData?.find(u => u.id === friendship.user_id);
+      const profile = requester?.profile || {};
+      
+      return {
+        id: `${friendship.user_id}_${friendship.friend_id}`,
+        from: {
+          id: requester?.id || friendship.user_id,
+          profile: {
+            displayName: profile.displayName || requester?.email || 'Unknown',
+            avatar: profile.avatar
+          }
+        },
+        status: 'pending',
+        createdAt: friendship.created_at || new Date().toISOString()
+      };
+    });
+    
+    res.json({ requests });
+  } catch (error) {
+    console.error('Error fetching friend requests:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // @route   GET /api/friends
 // @desc    Get friends list (kids and parents)
 // @access  Private

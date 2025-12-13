@@ -77,10 +77,32 @@ struct HomeFeedView: View {
     }
     
     private func loadPosts() {
+        // First, try to load from cache for instant display
+        loadPostsFromCache()
+        
         isLoading = true
         Task {
             await loadPostsAsync()
         }
+    }
+    
+    private func loadPostsFromCache() {
+        guard let cachedPosts = DataManager.shared.getCachedPosts() else { return }
+        
+        posts = cachedPosts.map { cachedPost in
+            Post(
+                id: UUID(uuidString: cachedPost.id) ?? UUID(),
+                author: cachedPost.authorName,
+                authorAvatar: cachedPost.authorAvatar,
+                content: cachedPost.content,
+                imageUrl: cachedPost.imageUrl,
+                likes: cachedPost.likes,
+                comments: cachedPost.comments,
+                createdAt: cachedPost.createdAt,
+                isLiked: false // Will be updated when we load from API
+            )
+        }
+        .sorted { $0.createdAt > $1.createdAt }
     }
     
     private func loadPostsAsync() async {
@@ -134,12 +156,12 @@ struct HomeFeedView: View {
                 let dateFormatter = ISO8601DateFormatter()
                 dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
                 
-                self.posts = response.posts.compactMap { postResponse in
-                    let createdAt = dateFormatter.date(from: postResponse.createdAt) ?? Date()
+                let loadedPosts = response.posts.compactMap { postResponse -> Post? in
+                    guard let createdAt = dateFormatter.date(from: postResponse.createdAt) else { return nil }
                     
                     var isLiked = false
                     if let currentUserId = authManager.currentUser?.id {
-                        isLiked = postResponse.likes?.contains(currentUserId) ?? false
+                        isLiked = postResponse.likes?.contains(currentUserId.lowercased()) ?? false
                     }
                     
                     return Post(
@@ -154,6 +176,29 @@ struct HomeFeedView: View {
                         isLiked: isLiked
                     )
                 }
+                
+                // Sort posts by creation date (newest first)
+                self.posts = loadedPosts.sorted { $0.createdAt > $1.createdAt }
+                
+                // Cache posts
+                let cachedPosts = response.posts.compactMap { postResponse -> CachedPost? in
+                    guard let createdAt = dateFormatter.date(from: postResponse.createdAt) else { return nil }
+                    
+                    return CachedPost(
+                        id: postResponse.id,
+                        content: postResponse.content,
+                        imageUrl: postResponse.imageUrl,
+                        authorId: postResponse.author.id,
+                        authorName: postResponse.author.profile.displayName ?? "Unknown",
+                        authorAvatar: postResponse.author.profile.avatar,
+                        likes: postResponse.likes?.count ?? 0,
+                        comments: postResponse.comments?.count ?? 0,
+                        createdAt: createdAt,
+                        status: postResponse.status
+                    )
+                }
+                DataManager.shared.cachePosts(cachedPosts)
+                
                 self.isLoading = false
             }
         } catch {

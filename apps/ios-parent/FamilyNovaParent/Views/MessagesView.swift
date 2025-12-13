@@ -8,6 +8,7 @@ import SwiftUI
 struct MessagesView: View {
     var initialFriend: Friend? = nil
     @EnvironmentObject var authManager: AuthManager
+    @StateObject private var dataManager = DataManager.shared
     @State private var conversations: [Conversation] = []
     @State private var selectedFriend: Friend?
     @State private var showFriendPicker = false
@@ -128,6 +129,9 @@ struct MessagesView: View {
     }
     
     private func loadConversationsAsync() async {
+        // First, try to load from cache
+        loadConversationsFromCache()
+        
         guard let token = authManager.getValidatedToken() else {
             await MainActor.run {
                 isLoading = false
@@ -159,6 +163,17 @@ struct MessagesView: View {
                 method: "GET",
                 token: token
             )
+            
+            // Cache friends
+            let cachedFriends = friendsResponse.friends.map { friend in
+                CachedFriend(
+                    id: friend.id,
+                    displayName: friend.profile.displayName ?? "Unknown",
+                    avatar: friend.profile.avatar,
+                    isVerified: friend.isVerified
+                )
+            }
+            DataManager.shared.cacheFriends(cachedFriends)
             
             // Get messages to find last message for each friend
             struct MessagesResponse: Codable {
@@ -225,14 +240,70 @@ struct MessagesView: View {
                 }
                 .sorted { $0.timestamp > $1.timestamp }
                 
+                // Cache all messages
+                let cachedMessages = messagesResponse.messages
+                    .filter { $0.status == "approved" }
+                    .map { messageResponse in
+                        let createdAt = dateFormatter.date(from: messageResponse.createdAt) ?? Date()
+                        return CachedMessage(
+                            id: messageResponse.id,
+                            senderId: messageResponse.sender.id,
+                            receiverId: messageResponse.receiver.id,
+                            content: messageResponse.content,
+                            createdAt: createdAt,
+                            status: messageResponse.status
+                        )
+                    }
+                dataManager.cacheMessages(cachedMessages)
+                
                 self.isLoading = false
             }
         } catch {
             await MainActor.run {
                 isLoading = false
                 print("[MessagesView] Error loading conversations: \(error)")
+                // If API fails, keep cached conversations
+                if conversations.isEmpty {
+                    loadConversationsFromCache()
+                }
             }
         }
+    }
+    
+    private func loadConversationsFromCache() {
+        guard let cachedFriends = dataManager.getCachedFriends(),
+              let cachedMessages = dataManager.getCachedMessages() else { return }
+        
+        let currentUserId = authManager.currentUser?.id ?? ""
+        
+        conversations = cachedFriends.map { cachedFriend in
+            let friend = Friend(
+                id: UUID(uuidString: cachedFriend.id) ?? UUID(),
+                displayName: cachedFriend.displayName,
+                avatar: cachedFriend.avatar,
+                isVerified: cachedFriend.isVerified
+            )
+            
+            // Find last message with this friend
+            let friendMessages = cachedMessages.filter { message in
+                (message.senderId.lowercased() == cachedFriend.id.lowercased() && message.receiverId.lowercased() == currentUserId.lowercased()) ||
+                (message.receiverId.lowercased() == cachedFriend.id.lowercased() && message.senderId.lowercased() == currentUserId.lowercased())
+            }
+            .filter { $0.status == "approved" }
+            .sorted { $0.createdAt > $1.createdAt }
+            
+            let lastMessage = friendMessages.first
+            let lastMessageText = lastMessage?.content ?? "No messages yet"
+            let lastMessageDate = lastMessage?.createdAt ?? Date()
+            
+            return Conversation(
+                friend: friend,
+                lastMessage: lastMessageText,
+                timestamp: lastMessageDate,
+                unreadCount: 0
+            )
+        }
+        .sorted { $0.timestamp > $1.timestamp }
     }
 }
 
@@ -442,6 +513,8 @@ struct FriendPickerView: View {
 struct ChatView: View {
     let friend: Friend
     @EnvironmentObject var authManager: AuthManager
+    @StateObject private var dataManager = DataManager.shared
+    @StateObject private var realTimeService = RealTimeService.shared
     @State private var messages: [Message] = []
     @State private var messageText = ""
     @State private var isLoading = false
@@ -509,6 +582,52 @@ struct ChatView: View {
         }
         .onAppear {
             loadMessages()
+            
+            // Start real-time polling
+            if let userId = authManager.currentUser?.id,
+               let token = authManager.getValidatedToken() {
+                let conversationId = "\(userId)_\(friend.id.uuidString)"
+                realTimeService.startPollingMessages(
+                    for: conversationId,
+                    userId: userId,
+                    friendId: friend.id.uuidString,
+                    token: token
+                )
+            }
+        }
+        .onDisappear {
+            // Stop real-time polling
+            if let userId = authManager.currentUser?.id {
+                let conversationId = "\(userId)_\(friend.id.uuidString)"
+                realTimeService.stopPollingMessages(for: conversationId)
+            }
+        }
+        .onChange(of: realTimeService.newMessages) { newMessagesDict in
+            // Update messages when new ones arrive
+            if let userId = authManager.currentUser?.id {
+                let conversationId = "\(userId)_\(friend.id.uuidString)"
+                if let newMessages = newMessagesDict[conversationId] {
+                    let dateFormatter = ISO8601DateFormatter()
+                    dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                    
+                    let currentUserId = authManager.currentUser?.id ?? ""
+                    let newMessageObjects = newMessages.map { cachedMessage in
+                        let isFromMe = cachedMessage.senderId.lowercased() == currentUserId.lowercased()
+                        return Message(
+                            id: UUID(uuidString: cachedMessage.id) ?? UUID(),
+                            content: cachedMessage.content,
+                            sender: isFromMe ? "You" : friend.displayName,
+                            timestamp: cachedMessage.createdAt
+                        )
+                    }
+                    
+                    // Add new messages to existing ones (avoid duplicates)
+                    let existingMessageIds = Set(messages.map { $0.id.uuidString })
+                    let uniqueNewMessages = newMessageObjects.filter { !existingMessageIds.contains($0.id.uuidString) }
+                    messages.append(contentsOf: uniqueNewMessages)
+                    messages.sort { $0.timestamp < $1.timestamp }
+                }
+            }
         }
     }
     
@@ -520,6 +639,9 @@ struct ChatView: View {
     }
     
     private func loadMessagesAsync() async {
+        // First, try to load from cache for instant display
+        loadMessagesFromCache()
+        
         guard let token = authManager.getValidatedToken() else {
             await MainActor.run {
                 isLoading = false
@@ -563,23 +685,37 @@ struct ChatView: View {
             let currentUserId = authManager.currentUser?.id ?? ""
             let friendId = friend.id.uuidString.lowercased()
             
+            // Cache messages
+            let cachedMessages = response.messages
+                .filter { message in
+                    (message.sender.id.lowercased() == friendId && message.receiver.id.lowercased() == currentUserId.lowercased()) ||
+                    (message.receiver.id.lowercased() == friendId && message.sender.id.lowercased() == currentUserId.lowercased())
+                }
+                .filter { $0.status == "approved" }
+                .map { messageResponse in
+                    let createdAt = dateFormatter.date(from: messageResponse.createdAt) ?? Date()
+                    return CachedMessage(
+                        id: messageResponse.id,
+                        senderId: messageResponse.sender.id,
+                        receiverId: messageResponse.receiver.id,
+                        content: messageResponse.content,
+                        createdAt: createdAt,
+                        status: messageResponse.status
+                    )
+                }
+            
+            dataManager.cacheMessages(cachedMessages)
+            
             await MainActor.run {
-                self.messages = response.messages
-                    .filter { message in
-                        (message.sender.id.lowercased() == friendId && message.receiver.id.lowercased() == currentUserId.lowercased()) ||
-                        (message.receiver.id.lowercased() == friendId && message.sender.id.lowercased() == currentUserId.lowercased())
-                    }
-                    .filter { $0.status == "approved" }
-                    .sorted { msg1, msg2 in
-                        (dateFormatter.date(from: msg1.createdAt) ?? Date.distantPast) <
-                        (dateFormatter.date(from: msg2.createdAt) ?? Date.distantPast)
-                    }
-                    .map { messageResponse in
-                        let isFromMe = messageResponse.sender.id.lowercased() == currentUserId.lowercased()
+                self.messages = cachedMessages
+                    .sorted { $0.createdAt < $1.createdAt }
+                    .map { cachedMessage in
+                        let isFromMe = cachedMessage.senderId.lowercased() == currentUserId.lowercased()
                         return Message(
-                            content: messageResponse.content,
+                            id: UUID(uuidString: cachedMessage.id) ?? UUID(),
+                            content: cachedMessage.content,
                             sender: isFromMe ? "You" : friend.displayName,
-                            timestamp: dateFormatter.date(from: messageResponse.createdAt) ?? Date()
+                            timestamp: cachedMessage.createdAt
                         )
                     }
                 
@@ -589,8 +725,29 @@ struct ChatView: View {
             await MainActor.run {
                 isLoading = false
                 print("[ChatView] Error loading messages: \(error)")
+                // If API fails, keep cached messages
+                if messages.isEmpty {
+                    loadMessagesFromCache()
+                }
             }
         }
+    }
+    
+    private func loadMessagesFromCache() {
+        guard let cachedMessages = dataManager.getCachedMessagesForConversation(with: friend.id.uuidString) else { return }
+        
+        let currentUserId = authManager.currentUser?.id ?? ""
+        
+        messages = cachedMessages
+            .sorted { $0.createdAt < $1.createdAt }
+            .map { cachedMessage in
+                let isFromMe = cachedMessage.senderId.lowercased() == currentUserId.lowercased()
+                return Message(
+                    content: cachedMessage.content,
+                    sender: isFromMe ? "You" : friend.displayName,
+                    timestamp: cachedMessage.createdAt
+                )
+            }
     }
     
     private func sendMessage() {
@@ -625,11 +782,26 @@ struct ChatView: View {
                 let dateFormatter = ISO8601DateFormatter()
                 dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
                 
+                let newMessageDate = dateFormatter.date(from: response.message.createdAt) ?? Date()
+                let currentUserId = authManager.currentUser?.id ?? ""
+                
+                // Cache the new message
+                let cachedMessage = CachedMessage(
+                    id: response.message.id,
+                    senderId: currentUserId,
+                    receiverId: friend.id.uuidString,
+                    content: messageText,
+                    createdAt: newMessageDate,
+                    status: "approved"
+                )
+                dataManager.addCachedMessage(cachedMessage)
+                
                 await MainActor.run {
                     let newMessage = Message(
+                        id: UUID(uuidString: response.message.id) ?? UUID(),
                         content: messageText,
                         sender: "You",
-                        timestamp: dateFormatter.date(from: response.message.createdAt) ?? Date()
+                        timestamp: newMessageDate
                     )
                     messages.append(newMessage)
                     messageText = ""
@@ -639,13 +811,28 @@ struct ChatView: View {
             }
         }
     }
+    
 }
 
 struct Message: Identifiable {
-    let id = UUID()
+    let id: UUID
     let content: String
     let sender: String
     let timestamp: Date
+    
+    init(content: String, sender: String, timestamp: Date) {
+        self.id = UUID()
+        self.content = content
+        self.sender = sender
+        self.timestamp = timestamp
+    }
+    
+    init(id: UUID = UUID(), content: String, sender: String, timestamp: Date) {
+        self.id = id
+        self.content = content
+        self.sender = sender
+        self.timestamp = timestamp
+    }
 }
 
 struct MessageBubble: View {
