@@ -3,9 +3,8 @@ const crypto = require('crypto');
 // Encryption key - should be stored in environment variables
 // In production, use a strong random key: crypto.randomBytes(32).toString('hex')
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || crypto.randomBytes(32);
-const ALGORITHM = 'aes-256-gcm';
+const ALGORITHM = 'aes-256-cbc'; // Using CBC for compatibility with mobile apps
 const IV_LENGTH = 16; // 16 bytes for AES
-const AUTH_TAG_LENGTH = 16; // 16 bytes for GCM
 
 /**
  * Encrypts data using AES-256-CBC
@@ -64,11 +63,10 @@ function decrypt(encryptedData) {
     }
     
     const iv = Buffer.from(parts[0], 'base64');
-    const encrypted = parts[1]; // Encrypted data is already base64, decode it
-    const encryptedBuffer = Buffer.from(encrypted, 'base64');
+    const combined = Buffer.from(parts[1], 'base64');
     
-    // The encrypted buffer contains IV + encrypted data, extract just encrypted part
-    const actualEncrypted = encryptedBuffer.slice(IV_LENGTH);
+    // Extract encrypted data (remove IV from combined)
+    const encrypted = combined.slice(IV_LENGTH);
     
     const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
     
