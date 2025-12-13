@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const path = require('path');
 const { connectDB } = require('./config/database');
+const { decryptMiddleware } = require('./utils/encryption');
 require('dotenv').config();
 
 const app = express();
@@ -26,6 +27,9 @@ app.use(cors({
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Decrypt middleware - must be after body parsing
+app.use(decryptMiddleware);
 
 // Root route - serve the landing page
 app.get('/', (req, res) => {

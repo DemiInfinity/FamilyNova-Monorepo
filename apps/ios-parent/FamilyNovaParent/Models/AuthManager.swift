@@ -21,12 +21,73 @@ class AuthManager: ObservableObject {
     }
     
     func login(email: String, password: String) async throws {
-        // TODO: Implement API call
-        // For now, simulate login
-        DispatchQueue.main.async {
-            self.token = "mock_token"
-            self.isAuthenticated = true
-            UserDefaults.standard.set("mock_token", forKey: "authToken")
+        let apiUrl = "https://family-nova-monorepo.vercel.app/api"
+        guard let url = URL(string: "\(apiUrl)/auth/login") else {
+            throw NSError(domain: "Invalid URL", code: 0)
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        // Encrypt the request body
+        let body: [String: Any] = [
+            "email": email,
+            "password": password
+        ]
+        
+        let jsonData = try JSONSerialization.data(withJSONObject: body)
+        guard let jsonString = String(data: jsonData, encoding: .utf8) else {
+            throw NSError(domain: "Failed to serialize request", code: 0)
+        }
+        
+        // Encrypt the JSON string
+        let encryptedData = try Encryption.encrypt(jsonString)
+        let encryptedBody: [String: Any] = [
+            "encrypted": encryptedData
+        ]
+        
+        request.httpBody = try JSONSerialization.data(withJSONObject: encryptedBody)
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NSError(domain: "Invalid response", code: 0)
+        }
+        
+        if (200...299).contains(httpResponse.statusCode) {
+            // Handle Supabase session response
+            struct LoginResponse: Codable {
+                let session: Session?
+                let user: UserResponse
+            }
+            
+            struct Session: Codable {
+                let access_token: String
+                let refresh_token: String
+                let expires_in: Int
+                let expires_at: Int?
+            }
+            
+            let result = try JSONDecoder().decode(LoginResponse.self, from: data)
+            
+            DispatchQueue.main.async {
+                // Store access token (Supabase session token)
+                if let session = result.session {
+                    self.token = session.access_token
+                    // Store refresh token separately
+                    UserDefaults.standard.set(session.refresh_token, forKey: "refreshToken")
+                } else {
+                    self.token = nil
+                }
+                self.isAuthenticated = self.token != nil
+                if let token = self.token {
+                    UserDefaults.standard.set(token, forKey: "authToken")
+                }
+            }
+        } else {
+            let errorData = try? JSONDecoder().decode(ErrorResponse.self, from: data)
+            throw NSError(domain: errorData?.error ?? "Login failed", code: httpResponse.statusCode)
         }
     }
     
@@ -40,6 +101,7 @@ class AuthManager: ObservableObject {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
+        // Encrypt the request body
         let body: [String: Any] = [
             "email": email,
             "password": password,
@@ -48,7 +110,18 @@ class AuthManager: ObservableObject {
             "lastName": lastName
         ]
         
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let jsonData = try JSONSerialization.data(withJSONObject: body)
+        guard let jsonString = String(data: jsonData, encoding: .utf8) else {
+            throw NSError(domain: "Failed to serialize request", code: 0)
+        }
+        
+        // Encrypt the JSON string
+        let encryptedData = try Encryption.encrypt(jsonString)
+        let encryptedBody: [String: Any] = [
+            "encrypted": encryptedData
+        ]
+        
+        request.httpBody = try JSONSerialization.data(withJSONObject: encryptedBody)
         
         let (data, response) = try await URLSession.shared.data(for: request)
         

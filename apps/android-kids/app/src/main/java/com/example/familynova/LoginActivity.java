@@ -8,6 +8,15 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import com.example.familynova.api.ApiClient;
+import com.example.familynova.api.AuthApi;
+import com.example.familynova.utils.Encryption;
+import com.google.gson.Gson;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import java.util.HashMap;
+import java.util.Map;
 
 public class LoginActivity extends AppCompatActivity {
     
@@ -48,13 +57,76 @@ public class LoginActivity extends AppCompatActivity {
             String password = passwordInput.getText() != null ? passwordInput.getText().toString() : "";
             
             if (validateInput(email, password)) {
-                // TODO: Implement API call for login
-                // For now, just navigate to main activity
-                Toast.makeText(this, "Login functionality coming soon!", Toast.LENGTH_SHORT).show();
-                startActivity(new Intent(this, MainActivity.class));
-                finish();
+                performLogin(email, password);
             }
         });
+    }
+    
+    private void performLogin(String email, String password) {
+        try {
+            // Create request body
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("email", email);
+            requestBody.put("password", password);
+            
+            // Convert to JSON string
+            String jsonBody = new Gson().toJson(requestBody);
+            
+            // Encrypt the JSON string
+            String encryptedData = Encryption.encrypt(jsonBody);
+            
+            // Create encrypted request
+            Map<String, Object> encryptedRequest = new HashMap<>();
+            encryptedRequest.put("encrypted", encryptedData);
+            
+            // Make API call
+            AuthApi authApi = ApiClient.getClient(this).create(AuthApi.class);
+            Call<Map<String, Object>> call = authApi.login(encryptedRequest);
+            
+            call.enqueue(new Callback<Map<String, Object>>() {
+                @Override
+                public void onResponse(Call<Map<String, Object>> call, Response<Map<String, Object>> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        Map<String, Object> body = response.body();
+                        
+                        // Extract session token
+                        if (body.containsKey("session")) {
+                            Map<String, Object> session = (Map<String, Object>) body.get("session");
+                            if (session != null && session.containsKey("access_token")) {
+                                String token = (String) session.get("access_token");
+                                
+                                // Save token
+                                SharedPreferences prefs = getSharedPreferences("FamilyNova", MODE_PRIVATE);
+                                prefs.edit().putString("token", token).apply();
+                                
+                                if (session.containsKey("refresh_token")) {
+                                    prefs.edit().putString("refreshToken", (String) session.get("refresh_token")).apply();
+                                }
+                                
+                                // Navigate to main activity
+                                startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                                finish();
+                                return;
+                            }
+                        }
+                    }
+                    
+                    // Handle error
+                    String errorMsg = "Login failed";
+                    if (response.body() != null && response.body().containsKey("error")) {
+                        errorMsg = (String) response.body().get("error");
+                    }
+                    Toast.makeText(LoginActivity.this, errorMsg, Toast.LENGTH_SHORT).show();
+                }
+                
+                @Override
+                public void onFailure(Call<Map<String, Object>> call, Throwable t) {
+                    Toast.makeText(LoginActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
+        } catch (Exception e) {
+            Toast.makeText(this, "Encryption error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
     }
     
     private boolean validateInput(String email, String password) {

@@ -1,4 +1,4 @@
-const jwt = require('jsonwebtoken');
+const { getSupabase } = require('../config/database');
 const User = require('../models/User');
 
 const auth = async (req, res, next) => {
@@ -9,21 +9,41 @@ const auth = async (req, res, next) => {
       return res.status(401).json({ error: 'No token, authorization denied' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || process.env.SUPABASE_JWT_SECRET);
-    const user = await User.findById(decoded.userId);
+    // Use service role key for token verification (admin operation)
+    const supabase = getSupabase();
+    
+    // Verify the token with Supabase Auth
+    const { data: { user: authUser }, error } = await supabase.auth.getUser(token);
+    
+    if (error || !authUser) {
+      return res.status(401).json({ error: 'Token is not valid' });
+    }
+
+    // Get user profile from our users table
+    const user = await User.findById(authUser.id);
     
     if (!user || !user.isActive) {
       return res.status(401).json({ error: 'User not found or inactive' });
     }
 
-    // Remove password from user object
-    const userWithoutPassword = { ...user };
-    delete userWithoutPassword.password;
-
-    req.user = userWithoutPassword;
-    req.user._id = user.id; // For backward compatibility with existing routes
+    // Attach user to request
+    req.user = {
+      id: user.id,
+      _id: user.id, // For backward compatibility
+      email: user.email,
+      userType: user.userType,
+      profile: user.profile,
+      verification: user.verification,
+      monitoringLevel: user.monitoringLevel,
+      isActive: user.isActive
+    };
+    
+    // Also attach the Supabase auth user for reference
+    req.authUser = authUser;
+    
     next();
   } catch (error) {
+    console.error('Auth middleware error:', error);
     res.status(401).json({ error: 'Token is not valid' });
   }
 };
@@ -43,4 +63,3 @@ const requireUserType = (...userTypes) => {
 };
 
 module.exports = { auth, requireUserType };
-

@@ -8,6 +8,15 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import com.example.familynovaparent.api.ApiClient;
+import com.example.familynovaparent.api.AuthApi;
+import com.example.familynovaparent.utils.Encryption;
+import com.google.gson.Gson;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import java.util.HashMap;
+import java.util.Map;
 
 public class RegisterActivity extends AppCompatActivity {
     
@@ -55,15 +64,7 @@ public class RegisterActivity extends AppCompatActivity {
             String confirmPassword = confirmPasswordInput.getText() != null ? confirmPasswordInput.getText().toString() : "";
             
             if (validateInput(firstName, lastName, email, password, confirmPassword)) {
-                // TODO: Implement API call for registration
-                // POST /api/auth/register with userType: "parent"
-                Toast.makeText(this, "Registration functionality coming soon!", Toast.LENGTH_SHORT).show();
-                
-                // For now, simulate successful registration
-                SharedPreferences prefs = getSharedPreferences("FamilyNova", MODE_PRIVATE);
-                prefs.edit().putString("token", "mock_token").apply();
-                startActivity(new Intent(this, MainActivity.class));
-                finish();
+                performRegistration(firstName, lastName, email, password);
             }
         });
     }
@@ -113,6 +114,76 @@ public class RegisterActivity extends AppCompatActivity {
         }
         
         return isValid;
+    }
+    
+    private void performRegistration(String firstName, String lastName, String email, String password) {
+        try {
+            // Create request body
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("email", email);
+            requestBody.put("password", password);
+            requestBody.put("userType", "parent");
+            requestBody.put("firstName", firstName);
+            requestBody.put("lastName", lastName);
+            
+            // Convert to JSON string
+            String jsonBody = new Gson().toJson(requestBody);
+            
+            // Encrypt the JSON string
+            String encryptedData = Encryption.encrypt(jsonBody);
+            
+            // Create encrypted request
+            Map<String, Object> encryptedRequest = new HashMap<>();
+            encryptedRequest.put("encrypted", encryptedData);
+            
+            // Make API call
+            AuthApi authApi = ApiClient.getClient(this).create(AuthApi.class);
+            Call<Map<String, Object>> call = authApi.register(encryptedRequest);
+            
+            call.enqueue(new Callback<Map<String, Object>>() {
+                @Override
+                public void onResponse(Call<Map<String, Object>> call, Response<Map<String, Object>> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        Map<String, Object> body = response.body();
+                        
+                        // Extract session token
+                        if (body.containsKey("session")) {
+                            Map<String, Object> session = (Map<String, Object>) body.get("session");
+                            if (session != null && session.containsKey("access_token")) {
+                                String token = (String) session.get("access_token");
+                                
+                                // Save token
+                                SharedPreferences prefs = getSharedPreferences("FamilyNovaParent", MODE_PRIVATE);
+                                prefs.edit().putString("token", token).apply();
+                                
+                                if (session.containsKey("refresh_token")) {
+                                    prefs.edit().putString("refreshToken", (String) session.get("refresh_token")).apply();
+                                }
+                                
+                                // Navigate to main activity
+                                startActivity(new Intent(RegisterActivity.this, MainActivity.class));
+                                finish();
+                                return;
+                            }
+                        }
+                    }
+                    
+                    // Handle error
+                    String errorMsg = "Registration failed";
+                    if (response.body() != null && response.body().containsKey("error")) {
+                        errorMsg = (String) response.body().get("error");
+                    }
+                    Toast.makeText(RegisterActivity.this, errorMsg, Toast.LENGTH_SHORT).show();
+                }
+                
+                @Override
+                public void onFailure(Call<Map<String, Object>> call, Throwable t) {
+                    Toast.makeText(RegisterActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
+        } catch (Exception e) {
+            Toast.makeText(this, "Encryption error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
     }
 }
 

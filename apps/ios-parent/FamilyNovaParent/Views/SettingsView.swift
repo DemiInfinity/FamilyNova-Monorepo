@@ -7,6 +7,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject var authManager: AuthManager
+    @State private var showSubscription = false
     
     var body: some View {
         NavigationView {
@@ -21,8 +22,25 @@ struct SettingsView: View {
                     
                     // Subscription Section
                     SettingsSection(title: "Subscription") {
-                        NavigationLink(destination: SubscriptionView().environmentObject(authManager)) {
-                            SettingsRow(icon: "star.fill", title: "Manage Subscription", action: {})
+                        Button(action: {
+                            showSubscription = true
+                        }) {
+                            HStack(spacing: ParentAppSpacing.m) {
+                                Image(systemName: "star.fill")
+                                    .foregroundColor(ParentAppColors.primaryTeal)
+                                    .frame(width: 24)
+                                
+                                Text("Manage Subscription")
+                                    .font(ParentAppFonts.body)
+                                    .foregroundColor(ParentAppColors.black)
+                                
+                                Spacer()
+                                
+                                Image(systemName: "chevron.right")
+                                    .foregroundColor(ParentAppColors.mediumGray)
+                                    .font(.system(size: 14))
+                            }
+                            .padding(ParentAppSpacing.m)
                         }
                     }
                     
@@ -55,6 +73,20 @@ struct SettingsView: View {
             .background(ParentAppColors.lightGray)
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.large)
+            .sheet(isPresented: $showSubscription) {
+                NavigationView {
+                    SubscriptionView()
+                        .environmentObject(authManager)
+                        .navigationBarTitleDisplayMode(.inline)
+                        .toolbar {
+                            ToolbarItem(placement: .navigationBarTrailing) {
+                                Button("Done") {
+                                    showSubscription = false
+                                }
+                            }
+                        }
+                }
+            }
         }
     }
     

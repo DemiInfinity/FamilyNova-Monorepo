@@ -11,10 +11,13 @@ const connectDB = async () => {
       throw new Error('Missing Supabase credentials. Please set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env');
     }
     
+    // Use service role key for admin operations (creating users, etc.)
+    // For regular auth operations, we'll use the anon key
     supabase = createClient(supabaseUrl, supabaseKey, {
       auth: {
         autoRefreshToken: false,
-        persistSession: false
+        persistSession: false,
+        detectSessionInUrl: false
       }
     });
     

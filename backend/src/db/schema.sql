@@ -1,4 +1,5 @@
 -- FamilyNova Database Schema for Supabase/PostgreSQL
+-- Note: This schema assumes Supabase Auth is enabled and auth.users table exists
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -20,11 +21,11 @@ CREATE TABLE IF NOT EXISTS schools (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Users table
+-- Users table (linked to Supabase Auth users)
 CREATE TABLE IF NOT EXISTS users (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE, -- Link to Supabase Auth
     email VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
+    password VARCHAR(255), -- Optional, kept for backward compatibility but Supabase Auth handles passwords
     user_type VARCHAR(20) NOT NULL CHECK (user_type IN ('kid', 'parent', 'school')),
     profile JSONB DEFAULT '{}',
     school_account_id UUID REFERENCES schools(id),

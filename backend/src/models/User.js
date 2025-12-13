@@ -62,12 +62,12 @@ class User {
   static async create(userData) {
     const supabase = getSupabase();
     
-    // Hash password
-    const hashedPassword = await bcrypt.hash(userData.password, 10);
-    
+    // Note: Password is now handled by Supabase Auth, so we don't store it here
+    // The userData.id should be the Supabase Auth user ID
     const dbData = {
+      id: userData.id, // Use Supabase Auth user ID
       email: userData.email.toLowerCase().trim(),
-      password: hashedPassword,
+      password: null, // No longer storing password (handled by Supabase Auth)
       user_type: userData.userType,
       profile: userData.profile || {},
       monitoring_level: userData.monitoringLevel || 'full',
@@ -103,8 +103,11 @@ class User {
     return this;
   }
 
+  // Password comparison is now handled by Supabase Auth
+  // This method is kept for backward compatibility but should not be used
   async comparePassword(candidatePassword) {
-    return await bcrypt.compare(candidatePassword, this.password);
+    // This should not be called anymore as Supabase Auth handles password verification
+    throw new Error('Password comparison is handled by Supabase Auth. Use auth.signInWithPassword() instead.');
   }
 
   isFullyVerified() {
