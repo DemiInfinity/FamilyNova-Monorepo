@@ -15,9 +15,24 @@ class AuthManager: ObservableObject {
         // Check for saved token
         if let savedToken = UserDefaults.standard.string(forKey: "authToken") {
             // Trim any whitespace/newlines from saved token
-            let cleanToken = savedToken.trimmingCharacters(in: .whitespacesAndNewlines)
-            self.token = cleanToken
-            self.isAuthenticated = !cleanToken.isEmpty
+            var cleanToken = savedToken.trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            // Remove any quotes that might have been added
+            cleanToken = cleanToken.trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
+            
+            // Validate JWT format (should have 3 parts separated by dots)
+            let parts = cleanToken.split(separator: ".")
+            if parts.count == 3 {
+                self.token = cleanToken
+                self.isAuthenticated = !cleanToken.isEmpty
+            } else {
+                // Token is corrupted, clear it
+                print("⚠️ Corrupted token found in storage - clearing it")
+                UserDefaults.standard.removeObject(forKey: "authToken")
+                UserDefaults.standard.removeObject(forKey: "refreshToken")
+                self.token = nil
+                self.isAuthenticated = false
+            }
             // TODO: Validate token and load user
         }
     }
@@ -83,25 +98,31 @@ class AuthManager: ObservableObject {
                 // Store access token (Supabase session token)
                 if let session = result.session {
                     // Trim token to remove any whitespace/newlines
-                    let accessToken = session.access_token.trimmingCharacters(in: .whitespacesAndNewlines)
-                    self.token = accessToken
-                    // Store refresh token separately if available
-                    if let refreshToken = session.refresh_token, !refreshToken.isEmpty {
-                        let cleanRefreshToken = refreshToken.trimmingCharacters(in: .whitespacesAndNewlines)
-                        UserDefaults.standard.set(cleanRefreshToken, forKey: "refreshToken")
+                    var accessToken = session.access_token.trimmingCharacters(in: .whitespacesAndNewlines)
+                    accessToken = accessToken.trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
+                    
+                    // Validate token format before storing
+                    let parts = accessToken.split(separator: ".")
+                    if parts.count == 3 {
+                        self.token = accessToken
+                        UserDefaults.standard.set(accessToken, forKey: "authToken")
+                        
+                        // Store refresh token separately if available
+                        if let refreshToken = session.refresh_token, !refreshToken.isEmpty {
+                            var cleanRefreshToken = refreshToken.trimmingCharacters(in: .whitespacesAndNewlines)
+                            cleanRefreshToken = cleanRefreshToken.trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
+                            UserDefaults.standard.set(cleanRefreshToken, forKey: "refreshToken")
+                        } else {
+                            UserDefaults.standard.removeObject(forKey: "refreshToken")
+                        }
                     } else {
-                        UserDefaults.standard.removeObject(forKey: "refreshToken")
+                        print("⚠️ Invalid token format received from login - not storing")
+                        self.token = nil
                     }
                 } else {
                     self.token = nil
                 }
                 self.isAuthenticated = self.token != nil
-                if let token = self.token {
-                    // Ensure token is clean before storing
-                    let cleanToken = token.trimmingCharacters(in: .whitespacesAndNewlines)
-                    UserDefaults.standard.set(cleanToken, forKey: "authToken")
-                    self.token = cleanToken // Update stored token to cleaned version
-                }
                 
                 // Store user ID for later use
                 // Create a minimal User object with the ID from login response
@@ -184,24 +205,30 @@ class AuthManager: ObservableObject {
             await MainActor.run {
                 if let session = result.session {
                     // Trim token to remove any whitespace/newlines
-                    let accessToken = session.access_token.trimmingCharacters(in: .whitespacesAndNewlines)
-                    self.token = accessToken
-                    if let refreshToken = session.refresh_token, !refreshToken.isEmpty {
-                        let cleanRefreshToken = refreshToken.trimmingCharacters(in: .whitespacesAndNewlines)
-                        UserDefaults.standard.set(cleanRefreshToken, forKey: "refreshToken")
+                    var accessToken = session.access_token.trimmingCharacters(in: .whitespacesAndNewlines)
+                    accessToken = accessToken.trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
+                    
+                    // Validate token format before storing
+                    let parts = accessToken.split(separator: ".")
+                    if parts.count == 3 {
+                        self.token = accessToken
+                        UserDefaults.standard.set(accessToken, forKey: "authToken")
+                        
+                        if let refreshToken = session.refresh_token, !refreshToken.isEmpty {
+                            var cleanRefreshToken = refreshToken.trimmingCharacters(in: .whitespacesAndNewlines)
+                            cleanRefreshToken = cleanRefreshToken.trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
+                            UserDefaults.standard.set(cleanRefreshToken, forKey: "refreshToken")
+                        } else {
+                            UserDefaults.standard.removeObject(forKey: "refreshToken")
+                        }
                     } else {
-                        UserDefaults.standard.removeObject(forKey: "refreshToken")
+                        print("⚠️ Invalid token format received from login-code - not storing")
+                        self.token = nil
                     }
                 } else {
                     self.token = nil
                 }
                 self.isAuthenticated = self.token != nil
-                if let token = self.token {
-                    // Ensure token is clean before storing
-                    let cleanToken = token.trimmingCharacters(in: .whitespacesAndNewlines)
-                    UserDefaults.standard.set(cleanToken, forKey: "authToken")
-                    self.token = cleanToken // Update stored token to cleaned version
-                }
                 
                 // Store user ID for later use
                 // Create a minimal User object with the ID from login response
@@ -235,6 +262,34 @@ class AuthManager: ObservableObject {
         self.currentUser = nil
         UserDefaults.standard.removeObject(forKey: "authToken")
         UserDefaults.standard.removeObject(forKey: "refreshToken")
+    }
+    
+    /// Validates that the current token is a valid JWT format
+    func validateToken() -> Bool {
+        guard let token = self.token else { return false }
+        
+        var cleanToken = token.trimmingCharacters(in: .whitespacesAndNewlines)
+        cleanToken = cleanToken.trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
+        
+        let parts = cleanToken.split(separator: ".")
+        if parts.count != 3 {
+            // Token is invalid, clear it
+            print("⚠️ Token validation failed - clearing corrupted token")
+            logout()
+            return false
+        }
+        
+        return true
+    }
+    
+    /// Gets a validated token, or returns nil if invalid
+    func getValidatedToken() -> String? {
+        guard validateToken() else { return nil }
+        guard var token = self.token else { return nil }
+        
+        token = token.trimmingCharacters(in: .whitespacesAndNewlines)
+        token = token.trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
+        return token
     }
 }
 

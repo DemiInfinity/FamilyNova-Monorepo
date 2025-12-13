@@ -36,13 +36,24 @@ class ApiService {
         
         if let token = token {
             // Trim any whitespace/newlines from token
-            let cleanToken = token.trimmingCharacters(in: .whitespacesAndNewlines)
+            var cleanToken = token.trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            // Remove any quotes that might have been added
+            cleanToken = cleanToken.trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
             
             // Validate JWT format (should have 3 parts separated by dots)
             let parts = cleanToken.split(separator: ".")
             if parts.count != 3 {
                 print("⚠️ Invalid JWT format - token has \(parts.count) parts (expected 3)")
-                print("Token preview: \(cleanToken.prefix(50))...")
+                print("Token length: \(cleanToken.count)")
+                print("Token preview (first 50): \(cleanToken.prefix(50))")
+                print("Token preview (last 50): \(cleanToken.suffix(50))")
+                print("Token contains newlines: \(cleanToken.contains("\n"))")
+                print("Token contains spaces: \(cleanToken.contains(" "))")
+                
+                // Clear corrupted token
+                UserDefaults.standard.removeObject(forKey: "authToken")
+                
                 throw ApiError.invalidResponse
             }
             

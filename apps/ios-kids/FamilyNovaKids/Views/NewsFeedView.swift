@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct NewsFeedView: View {
     @State private var posts: [Post] = []
@@ -110,7 +111,7 @@ struct NewsFeedView: View {
     }
     
     private func loadPostsAsync() async {
-        guard let token = authManager.token else {
+        guard let token = authManager.getValidatedToken() else {
             await MainActor.run {
                 isLoading = false
             }
@@ -189,6 +190,22 @@ struct NewsFeedView: View {
             print("Error loading posts: \(error)")
             await MainActor.run {
                 self.isLoading = false
+                
+                // If it's an auth error, clear token and logout
+                if let apiError = error as? ApiError {
+                    switch apiError {
+                    case .invalidResponse:
+                        // Token is invalid, force logout
+                        authManager.logout()
+                    case .httpError(let statusCode):
+                        if statusCode == 401 {
+                            // Unauthorized, force logout
+                            authManager.logout()
+                        }
+                    default:
+                        break
+                    }
+                }
             }
         }
     }
@@ -349,49 +366,42 @@ struct CreatePostView: View {
                             .font(AppFonts.caption)
                             .foregroundColor(AppColors.darkGray)
                         
-                        TextEditor(text: $postContent)
-                            .foregroundColor(AppColors.black)
-                            .font(AppFonts.body)
-                            .frame(minHeight: 200)
-                            .padding(AppSpacing.m)
-                            .background(Color.white)
-                            .cornerRadius(AppCornerRadius.large)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: AppCornerRadius.large)
-                                    .stroke(AppColors.mediumGray, lineWidth: 1)
-                            )
-                    }
-                    .padding(.horizontal, AppSpacing.m)
-                    
-                    // Post button
-                    Button(action: createPost) {
-                        HStack(spacing: AppSpacing.s) {
-                            if isPosting {
-                                ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                            } else {
-                                Text("🚀")
-                                    .font(.system(size: 24))
-                                Text("Post")
-                                    .font(AppFonts.button)
-                                    .foregroundColor(.white)
+                        ZStack(alignment: .topLeading) {
+                            // Background
+                            RoundedRectangle(cornerRadius: AppCornerRadius.large)
+                                .fill(Color.white)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: AppCornerRadius.large)
+                                        .stroke(AppColors.mediumGray, lineWidth: 1)
+                                )
+                            
+                            // Placeholder text
+                            if postContent.isEmpty {
+                                Text("Share what you're up to...")
+                                    .font(AppFonts.body)
+                                    .foregroundColor(AppColors.mediumGray)
+                                    .padding(.horizontal, AppSpacing.m + 4)
+                                    .padding(.vertical, AppSpacing.m + 8)
+                                    .allowsHitTesting(false)
                             }
+                            
+                            // TextEditor with proper text color
+                            TextEditor(text: $postContent)
+                                .font(AppFonts.body)
+                                .foregroundColor(AppColors.black)
+                                .frame(minHeight: 200)
+                                .padding(AppSpacing.m)
+                                .background(Color.white)
+                                .tint(AppColors.primaryBlue) // Sets cursor color
                         }
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 60)
-                        .background(
-                            LinearGradient(
-                                colors: [AppColors.primaryBlue, AppColors.primaryPurple],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .cornerRadius(AppCornerRadius.large)
-                        .shadow(color: AppColors.primaryBlue.opacity(0.3), radius: 8, x: 0, y: 4)
+                        .frame(minHeight: 200)
+                        .onAppear {
+                            // Fix TextEditor text color globally for this view
+                            UITextView.appearance().backgroundColor = .clear
+                            UITextView.appearance().textColor = UIColor(AppColors.black)
+                        }
                     }
                     .padding(.horizontal, AppSpacing.m)
-                    .disabled(postContent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isPosting)
-                    .opacity(postContent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.5 : 1.0)
                     
                     Spacer()
                 }
@@ -406,6 +416,24 @@ struct CreatePostView: View {
                     .font(AppFonts.button)
                     .foregroundColor(AppColors.primaryBlue)
                 }
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: createPost) {
+                        if isPosting {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: AppColors.primaryBlue))
+                        } else {
+                            Text("Post")
+                                .font(AppFonts.button)
+                                .foregroundColor(
+                                    postContent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                                        ? AppColors.mediumGray
+                                        : AppColors.primaryBlue
+                                )
+                        }
+                    }
+                    .disabled(postContent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isPosting)
+                }
             }
             .alert("Error", isPresented: $showError) {
                 Button("OK", role: .cancel) { }
@@ -417,8 +445,10 @@ struct CreatePostView: View {
     
     private func createPost() {
         guard !postContent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-        guard let token = authManager.token else {
-            errorMessage = "Not authenticated. Please log in again."
+        
+        // Validate token before using it
+        guard let token = authManager.getValidatedToken() else {
+            errorMessage = "Invalid authentication token. Please log out and log in again."
             showError = true
             return
         }
@@ -458,7 +488,28 @@ struct CreatePostView: View {
             } catch {
                 await MainActor.run {
                     isPosting = false
-                    errorMessage = "Failed to create post: \(error.localizedDescription)"
+                    
+                    // Check if it's an authentication error
+                    if let apiError = error as? ApiError {
+                        switch apiError {
+                        case .invalidResponse:
+                            errorMessage = "Invalid authentication token. Please log out and log in again."
+                            // Clear token and force logout
+                            authManager.logout()
+                        case .httpError(let statusCode):
+                            if statusCode == 401 {
+                                errorMessage = "Session expired. Please log in again."
+                                authManager.logout()
+                            } else {
+                                errorMessage = "Failed to create post (Error \(statusCode))"
+                            }
+                        default:
+                            errorMessage = "Failed to create post: \(error.localizedDescription)"
+                        }
+                    } else {
+                        errorMessage = "Failed to create post: \(error.localizedDescription)"
+                    }
+                    
                     showError = true
                 }
             }

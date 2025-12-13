@@ -19,9 +19,17 @@ const auth = async (req, res, next) => {
     // Basic JWT format validation (should have 3 parts separated by dots)
     const tokenParts = token.split('.');
     if (tokenParts.length !== 3) {
-      console.error('Invalid JWT format - token has', tokenParts.length, 'parts (expected 3)');
-      console.error('Token preview:', token.substring(0, 50) + '...');
-      return res.status(401).json({ error: 'Invalid token format' });
+      console.error('❌ Invalid JWT format - token has', tokenParts.length, 'parts (expected 3)');
+      console.error('Token length:', token.length);
+      console.error('Token preview (first 100 chars):', token.substring(0, 100));
+      console.error('Token preview (last 50 chars):', token.substring(Math.max(0, token.length - 50)));
+      console.error('Token contains newlines:', token.includes('\n'));
+      console.error('Token contains spaces:', token.includes(' '));
+      console.error('Full token (for debugging):', JSON.stringify(token));
+      return res.status(401).json({ 
+        error: 'Invalid token format',
+        details: `Token has ${tokenParts.length} segments instead of 3. Please log in again.`
+      });
     }
 
     // Use anon key for token verification (getUser is a client-side operation)
