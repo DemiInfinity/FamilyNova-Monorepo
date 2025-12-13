@@ -199,10 +199,16 @@ router.get('/dashboard', async (req, res) => {
       } else {
         for (const childData of childrenData || []) {
           const child = new User(childData);
+          const profile = child.profile || {};
           children.push({
             id: child.id,
-            profile: child.profile,
-            verification: child.verification,
+            profile: {
+              displayName: profile.displayName || 'Unknown',
+              avatar: profile.avatar,
+              school: profile.school,
+              grade: profile.grade
+            },
+            verification: child.verification || { parentVerified: false, schoolVerified: false },
             lastLogin: child.lastLogin ? new Date(child.lastLogin).toISOString() : null
           });
         }
@@ -211,6 +217,12 @@ router.get('/dashboard', async (req, res) => {
     
     // Get recent activity from children (simplified for now)
     // TODO: Implement message fetching with proper monitoring levels
+    
+    console.log(`[Dashboard] Returning ${children.length} children for parent ${req.user.id}`);
+    if (children.length > 0) {
+      console.log(`[Dashboard] Children IDs: ${children.map(c => c.id).join(', ')}`);
+      console.log(`[Dashboard] First child profile:`, JSON.stringify(children[0].profile));
+    }
     
     res.json({
       parent: {

@@ -267,14 +267,12 @@ struct MoreView: View {
                 )
                 
                 await MainActor.run {
+                    print("[MoreView] Dashboard returned \(response.parent.children.count) children")
+                    for (index, child) in response.parent.children.enumerated() {
+                        print("[MoreView] Child \(index): \(child.id) - \(child.profile.displayName)")
+                    }
                     self.children = response.parent.children
                     self.isLoadingChildren = false
-                    
-                    // Also update authManager's currentUser with latest children
-                    if var currentUser = authManager.currentUser {
-                        // Note: ParentUser is a struct, so we'd need to create a new instance
-                        // For now, just update the local state
-                    }
                 }
             } catch {
                 await MainActor.run {
