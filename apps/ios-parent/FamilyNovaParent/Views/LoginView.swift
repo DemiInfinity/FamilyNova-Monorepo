@@ -113,7 +113,6 @@ struct LoginView: View {
             .padding(.bottom, ParentAppSpacing.xxl)
         }
         .background(ParentAppColors.lightGray)
-        .scrollDismissesKeyboard(.interactively)
         .alert("Error", isPresented: $showError) {
             Button("OK", role: .cancel) { }
         } message: {

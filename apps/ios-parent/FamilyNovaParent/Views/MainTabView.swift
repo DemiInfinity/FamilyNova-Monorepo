@@ -22,17 +22,23 @@ struct MainTabView: View {
                 }
                 .tag(1)
             
+            PostApprovalView()
+                .tabItem {
+                    Label("Posts", systemImage: "doc.text.fill")
+                }
+                .tag(2)
+            
             ConnectionsView()
                 .tabItem {
                     Label("Connections", systemImage: "person.2.fill")
                 }
-                .tag(2)
+                .tag(3)
             
             SettingsView()
                 .tabItem {
                     Label("Settings", systemImage: "gearshape.fill")
                 }
-                .tag(3)
+                .tag(4)
         }
         .accentColor(ParentAppColors.primaryTeal)
     }

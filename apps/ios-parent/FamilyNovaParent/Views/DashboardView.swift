@@ -36,6 +36,26 @@ struct DashboardView: View {
                     }
                     .padding(.top, ParentAppSpacing.m)
                     
+                    // Pending Posts
+                    VStack(alignment: .leading, spacing: ParentAppSpacing.s) {
+                        HStack {
+                            Text("Pending Posts")
+                                .font(ParentAppFonts.headline)
+                                .foregroundColor(ParentAppColors.black)
+                            Spacer()
+                            NavigationLink(destination: PostApprovalView()) {
+                                Text("View All")
+                                    .font(ParentAppFonts.caption)
+                                    .foregroundColor(ParentAppColors.primaryTeal)
+                            }
+                        }
+                        .padding(.horizontal, ParentAppSpacing.m)
+                        
+                        PendingPostsCard()
+                            .padding(.horizontal, ParentAppSpacing.m)
+                    }
+                    .padding(.top, ParentAppSpacing.l)
+                    
                     // Recent Activity
                     VStack(alignment: .leading, spacing: ParentAppSpacing.s) {
                         Text("Recent Activity")
@@ -149,6 +169,49 @@ struct EmptyChildrenCard: View {
         .background(Color.white)
         .cornerRadius(ParentAppCornerRadius.medium)
         .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
+    }
+}
+
+struct PendingPostsCard: View {
+    @State private var pendingCount = 0
+    
+    var body: some View {
+        NavigationLink(destination: PostApprovalView()) {
+            HStack(spacing: ParentAppSpacing.m) {
+                ZStack {
+                    Circle()
+                        .fill(ParentAppColors.warning.opacity(0.2))
+                        .frame(width: 50, height: 50)
+                    
+                    Image(systemName: "doc.text.fill")
+                        .font(.system(size: 24))
+                        .foregroundColor(ParentAppColors.warning)
+                }
+                
+                VStack(alignment: .leading, spacing: ParentAppSpacing.xs) {
+                    Text("\(pendingCount) posts pending approval")
+                        .font(ParentAppFonts.headline)
+                        .foregroundColor(ParentAppColors.black)
+                    Text("Review posts from your children")
+                        .font(ParentAppFonts.caption)
+                        .foregroundColor(ParentAppColors.darkGray)
+                }
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .foregroundColor(ParentAppColors.mediumGray)
+            }
+            .padding(ParentAppSpacing.m)
+            .background(Color.white)
+            .cornerRadius(ParentAppCornerRadius.medium)
+            .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
+        }
+        .buttonStyle(PlainButtonStyle())
+        .onAppear {
+            // TODO: Load pending count
+            pendingCount = 0
+        }
     }
 }
 

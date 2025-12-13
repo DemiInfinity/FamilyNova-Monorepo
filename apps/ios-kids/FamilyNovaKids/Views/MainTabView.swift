@@ -22,23 +22,29 @@ struct MainTabView: View {
                 }
                 .tag(1)
             
+            NewsFeedView()
+                .tabItem {
+                    Label("Feed", systemImage: "house.2.fill")
+                }
+                .tag(2)
+            
             EducationView()
                 .tabItem {
                     Label("Learn", systemImage: "book.fill")
                 }
-                .tag(2)
+                .tag(3)
             
             MessagesView()
                 .tabItem {
                     Label("Messages", systemImage: "message.fill")
                 }
-                .tag(3)
+                .tag(4)
             
             ProfileView()
                 .tabItem {
                     Label("Profile", systemImage: "person.fill")
                 }
-                .tag(4)
+                .tag(5)
         }
         .accentColor(AppColors.primaryBlue)
     }

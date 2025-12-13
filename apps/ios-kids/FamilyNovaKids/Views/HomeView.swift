@@ -35,53 +35,52 @@ struct HomeView: View {
                             .padding(.horizontal, AppSpacing.m)
                             
                             HStack(spacing: AppSpacing.m) {
-                                QuickActionCard(
-                                    icon: "person.2.fill",
-                                    title: "Add Friend",
-                                    emoji: "👥",
-                                    color: AppColors.primaryGreen,
-                                    gradient: [AppColors.primaryGreen, AppColors.primaryBlue]
-                                )
+                                NavigationLink(destination: FriendsView()) {
+                                    QuickActionCard(
+                                        icon: "person.2.fill",
+                                        title: "Add Friend",
+                                        emoji: "👥",
+                                        color: AppColors.primaryGreen,
+                                        gradient: [AppColors.primaryGreen, AppColors.primaryBlue]
+                                    )
+                                }
+                                .buttonStyle(PlainButtonStyle())
                                 
-                                QuickActionCard(
-                                    icon: "message.fill",
-                                    title: "Messages",
-                                    emoji: "💬",
-                                    color: AppColors.primaryPink,
-                                    gradient: [AppColors.primaryPink, AppColors.primaryPurple]
-                                )
+                                NavigationLink(destination: MessagesView()) {
+                                    QuickActionCard(
+                                        icon: "message.fill",
+                                        title: "Messages",
+                                        emoji: "💬",
+                                        color: AppColors.primaryPink,
+                                        gradient: [AppColors.primaryPink, AppColors.primaryPurple]
+                                    )
+                                }
+                                .buttonStyle(PlainButtonStyle())
                                 
-                                QuickActionCard(
-                                    icon: "book.fill",
-                                    title: "Learn",
-                                    emoji: "📚",
-                                    color: AppColors.primaryYellow,
-                                    gradient: [AppColors.primaryYellow, AppColors.primaryOrange]
-                                )
+                                NavigationLink(destination: EducationView()) {
+                                    QuickActionCard(
+                                        icon: "book.fill",
+                                        title: "Learn",
+                                        emoji: "📚",
+                                        color: AppColors.primaryYellow,
+                                        gradient: [AppColors.primaryYellow, AppColors.primaryOrange]
+                                    )
+                                }
+                                .buttonStyle(PlainButtonStyle())
                             }
                             .padding(.horizontal, AppSpacing.m)
                         }
                         .padding(.top, AppSpacing.m)
                         
+                        // News Feed Section
+                        NewsFeedSection()
+                            .padding(.horizontal, AppSpacing.m)
+                            .padding(.top, AppSpacing.m)
+                        
                         // Education Section
                         EducationSection()
                             .padding(.horizontal, AppSpacing.m)
                             .padding(.top, AppSpacing.m)
-                        
-                        // Recent Activity
-                        VStack(alignment: .leading, spacing: AppSpacing.m) {
-                            HStack {
-                                Text("⭐ Recent Activity")
-                                    .font(AppFonts.headline)
-                                    .foregroundColor(AppColors.primaryOrange)
-                                Spacer()
-                            }
-                            .padding(.horizontal, AppSpacing.m)
-                            
-                            ActivityCard()
-                                .padding(.horizontal, AppSpacing.m)
-                        }
-                        .padding(.top, AppSpacing.l)
                     }
                     .padding(.bottom, AppSpacing.xxl)
                 }
@@ -241,24 +240,64 @@ struct EducationCard: View {
     }
 }
 
-struct ActivityCard: View {
+struct NewsFeedSection: View {
+    @State private var showCreatePost = false
+    
     var body: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.s) {
+        VStack(alignment: .leading, spacing: AppSpacing.m) {
             HStack {
-                Text("✨")
-                    .font(.system(size: 24))
-                Text("No recent activity yet")
-                    .font(AppFonts.body)
-                    .foregroundColor(AppColors.darkGray)
+                Text("🌟 News Feed")
+                    .font(AppFonts.headline)
+                    .foregroundColor(AppColors.primaryOrange)
+                Spacer()
+                Button(action: { showCreatePost = true }) {
+                    HStack(spacing: AppSpacing.xs) {
+                        Image(systemName: "plus.circle.fill")
+                        Text("Post")
+                    }
+                    .font(AppFonts.caption)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, AppSpacing.m)
+                    .padding(.vertical, AppSpacing.s)
+                    .background(
+                        LinearGradient(
+                            colors: [AppColors.primaryOrange, AppColors.primaryPink],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .cornerRadius(AppCornerRadius.medium)
+                }
             }
+            .padding(.horizontal, AppSpacing.m)
+            
+            NavigationLink(destination: NewsFeedView()) {
+                VStack(alignment: .leading, spacing: AppSpacing.s) {
+                    HStack {
+                        Text("📱")
+                            .font(.system(size: 24))
+                        Text("See what your friends are up to!")
+                            .font(AppFonts.body)
+                            .foregroundColor(AppColors.darkGray)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .foregroundColor(AppColors.primaryOrange)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(AppSpacing.l)
+                .background(
+                    RoundedRectangle(cornerRadius: AppCornerRadius.large)
+                        .fill(Color.white)
+                        .shadow(color: AppColors.primaryOrange.opacity(0.2), radius: 8, x: 0, y: 4)
+                )
+            }
+            .buttonStyle(PlainButtonStyle())
+            .padding(.horizontal, AppSpacing.m)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(AppSpacing.l)
-        .background(
-            RoundedRectangle(cornerRadius: AppCornerRadius.large)
-                .fill(Color.white)
-                .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-        )
+        .sheet(isPresented: $showCreatePost) {
+            CreatePostView()
+        }
     }
 }
 

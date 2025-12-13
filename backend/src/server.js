@@ -27,6 +27,7 @@ app.use('/api/kids', require('./routes/kids'));
 app.use('/api/parents', require('./routes/parents'));
 app.use('/api/friends', require('./routes/friends'));
 app.use('/api/messages', require('./routes/messages'));
+app.use('/api/posts', require('./routes/posts'));
 app.use('/api/verification', require('./routes/verification'));
 
 // Health check
