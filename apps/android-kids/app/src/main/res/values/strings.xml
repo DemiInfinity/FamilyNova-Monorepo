@@ -1,0 +1,51 @@
+<resources>
+    <string name="app_name">FamilyNova</string>
+    
+    <!-- API Configuration -->
+    <string name="api_base_url">http://192.168.50.50:3000/api</string>
+    
+    <!-- Login Screen -->
+    <string name="login_title">Welcome to FamilyNova!</string>
+    <string name="login_subtitle">A safe place to connect with friends</string>
+    <string name="email_hint">Email</string>
+    <string name="password_hint">Password</string>
+    <string name="login_button">Login</string>
+    <string name="register_button">Create Account</string>
+    <string name="forgot_password">Forgot Password?</string>
+    
+    <!-- Home Screen -->
+    <string name="home_title">Home</string>
+    <string name="friends_title">Friends</string>
+    <string name="messages_title">Messages</string>
+    <string name="profile_title">Profile</string>
+    
+    <!-- Friends -->
+    <string name="friends_list">My Friends</string>
+    <string name="add_friend">Add Friend</string>
+    <string name="search_friends">Search Friends</string>
+    <string name="no_friends">No friends yet. Start adding friends!</string>
+    <string name="verified_badge">Verified</string>
+    
+    <!-- Messages -->
+    <string name="no_messages">No messages yet</string>
+    <string name="type_message">Type a message...</string>
+    <string name="send">Send</string>
+    
+    <!-- Profile -->
+    <string name="my_profile">My Profile</string>
+    <string name="display_name">Display Name</string>
+    <string name="school">School</string>
+    <string name="grade">Grade</string>
+    <string name="verification_status">Verification Status</string>
+    <string name="parent_verified">Parent Verified ✓</string>
+    <string name="school_verified">School Verified ✓</string>
+    <string name="not_verified">Not Verified</string>
+    <string name="logout">Logout</string>
+    
+    <!-- Common -->
+    <string name="loading">Loading...</string>
+    <string name="error">Error</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+</resources>

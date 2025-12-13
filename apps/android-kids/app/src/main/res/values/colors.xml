@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary Colors (Kids App - Fun & Friendly) -->
+    <color name="primary_blue">#4A90E2</color>
+    <color name="primary_green">#50C878</color>
+    <color name="primary_orange">#FF6B35</color>
+    <color name="primary_purple">#9B59B6</color>
+    
+    <!-- Material Design Colors -->
+    <color name="colorPrimary">#4A90E2</color>
+    <color name="colorPrimaryDark">#357ABD</color>
+    <color name="colorAccent">#50C878</color>
+    
+    <!-- Neutral Colors -->
+    <color name="white">#FFFFFF</color>
+    <color name="light_gray">#F5F5F5</color>
+    <color name="medium_gray">#CCCCCC</color>
+    <color name="dark_gray">#666666</color>
+    <color name="black">#000000</color>
+    
+    <!-- Status Colors -->
+    <color name="success">#27AE60</color>
+    <color name="warning">#F39C12</color>
+    <color name="error">#E74C3C</color>
+    <color name="info">#3498DB</color>
+    
+    <!-- Backgrounds -->
+    <color name="background_light">#F5F5F5</color>
+    <color name="background_white">#FFFFFF</color>
+</resources>
