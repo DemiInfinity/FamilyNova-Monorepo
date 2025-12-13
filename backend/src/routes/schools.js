@@ -8,7 +8,7 @@ const router = express.Router();
 
 // Generate JWT token for schools
 const generateToken = (schoolId) => {
-  return jwt.sign({ schoolId }, process.env.JWT_SECRET, {
+  return jwt.sign({ schoolId }, process.env.JWT_SECRET || process.env.SUPABASE_JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d'
   });
 };
@@ -20,8 +20,7 @@ router.post('/register', [
   body('name').trim().notEmpty(),
   body('email').isEmail().normalizeEmail(),
   body('password').isLength({ min: 6 }),
-  body('address.city').optional().trim(),
-  body('address.state').optional().trim(),
+  body('address').optional(),
   body('phone').optional().trim()
 ], async (req, res) => {
   try {
@@ -30,42 +29,51 @@ router.post('/register', [
       return res.status(400).json({ errors: errors.array() });
     }
     
-    const { name, email, password, address, phone, website, grades } = req.body;
+    const { name, email, password, address, phone, website } = req.body;
     
     // Check if school exists
-    const existingSchool = await School.findOne({ 
-      $or: [{ email }, { name }] 
-    });
+    const existingSchool = await School.findByEmail(email);
     if (existingSchool) {
-      return res.status(400).json({ error: 'School already exists' });
+      return res.status(400).json({ error: 'School with this email already exists' });
+    }
+    
+    // Check by name
+    const { getSupabase } = require('../config/database');
+    const supabase = await getSupabase();
+    const { data: existingByName } = await supabase
+      .from('schools')
+      .select('id')
+      .eq('name', name)
+      .single();
+    
+    if (existingByName) {
+      return res.status(400).json({ error: 'School with this name already exists' });
     }
     
     // Create school
-    const school = new School({
-      name,
-      email,
-      password,
-      address: address || {},
-      phone,
-      website,
-      grades: grades || []
+    const school = await School.create({
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      password: password,
+      address: address || null,
+      contactPerson: null,
+      phone: phone || null,
+      website: website || null
     });
     
-    await school.save();
-    
-    const token = generateToken(school._id);
+    const token = generateToken(school.id);
     
     res.status(201).json({
       token,
       school: {
-        id: school._id,
+        id: school.id,
         name: school.name,
         email: school.email,
         isVerified: school.isVerified
       }
     });
   } catch (error) {
-    console.error(error);
+    console.error('Error registering school:', error);
     res.status(500).json({ error: 'Server error during registration' });
   }
 });
@@ -86,7 +94,7 @@ router.post('/login', [
     const { email, password } = req.body;
     
     // Find school
-    const school = await School.findOne({ email });
+    const school = await School.findByEmail(email);
     if (!school) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -97,22 +105,21 @@ router.post('/login', [
       return res.status(401).json({ error: 'Invalid credentials' });
     }
     
-    const token = generateToken(school._id);
+    const token = generateToken(school.id);
     
     res.json({
       token,
       school: {
-        id: school._id,
+        id: school.id,
         name: school.name,
         email: school.email,
         isVerified: school.isVerified
       }
     });
   } catch (error) {
-    console.error(error);
+    console.error('Error logging in school:', error);
     res.status(500).json({ error: 'Server error during login' });
   }
 });
 
 module.exports = router;
-

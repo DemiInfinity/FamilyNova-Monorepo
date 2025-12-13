@@ -2,6 +2,7 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { auth, requireUserType } = require('../middleware/auth');
 const User = require('../models/User');
+const { getSupabase } = require('../config/database');
 
 const router = express.Router();
 
@@ -21,35 +22,50 @@ router.post('/parent', requireUserType('parent'), [
     }
     
     const { childId } = req.body;
+    const supabase = await getSupabase();
     
     const child = await User.findById(childId);
     if (!child || child.userType !== 'kid') {
       return res.status(404).json({ error: 'Child not found' });
     }
     
-    // Link parent to child
-    child.parentAccount = req.user._id;
-    child.verification.parentVerified = true;
-    child.verification.verifiedAt = new Date();
+    // Link parent to child in parent_children table
+    const { error: relationError } = await supabase
+      .from('parent_children')
+      .upsert({
+        parent_id: req.user.id,
+        child_id: childId
+      }, {
+        onConflict: 'parent_id,child_id'
+      });
     
-    // Add child to parent's children list
-    if (!req.user.children.includes(childId)) {
-      req.user.children.push(childId);
-      await req.user.save();
+    if (relationError) {
+      console.error('Error creating parent-child relation:', relationError);
+      return res.status(500).json({ error: 'Failed to link parent and child' });
     }
     
-    await child.save();
+    // Update child's verification and parent account
+    const verification = { ...child.verification };
+    verification.parentVerified = true;
+    
+    await User.findByIdAndUpdate(childId, {
+      parentAccount: req.user.id,
+      verification: verification
+    });
+    
+    // Get updated child
+    const updatedChild = await User.findById(childId);
     
     res.json({
       message: 'Child verified successfully',
       child: {
-        id: child._id,
-        profile: child.profile,
-        verification: child.verification
+        id: updatedChild.id,
+        profile: updatedChild.profile,
+        verification: updatedChild.verification
       }
     });
   } catch (error) {
-    console.error(error);
+    console.error('Error verifying child:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -76,27 +92,29 @@ router.post('/school', [
     }
     
     // Simplified: In production, verify schoolCode against database
-    child.verification.schoolVerified = true;
-    if (!child.verification.verifiedAt) {
-      child.verification.verifiedAt = new Date();
-    }
+    // This should use the school code validation endpoint instead
+    const verification = { ...child.verification };
+    verification.schoolVerified = true;
     
-    await child.save();
+    await User.findByIdAndUpdate(childId, {
+      verification: verification
+    });
+    
+    const updatedChild = await User.findById(childId);
     
     res.json({
       message: 'School verification completed',
       child: {
-        id: child._id,
-        profile: child.profile,
-        verification: child.verification,
-        isFullyVerified: child.isFullyVerified()
+        id: updatedChild.id,
+        profile: updatedChild.profile,
+        verification: updatedChild.verification,
+        isFullyVerified: updatedChild.isFullyVerified()
       }
     });
   } catch (error) {
-    console.error(error);
+    console.error('Error verifying school:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
 module.exports = router;
-

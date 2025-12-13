@@ -86,8 +86,12 @@ struct NewsFeedView: View {
                     }
                 }
             }
-            .sheet(isPresented: $showCreatePost) {
+            .sheet(isPresented: $showCreatePost, onDismiss: {
+                // Refresh posts when the create post sheet is dismissed
+                loadPosts()
+            }) {
                 CreatePostView()
+                    .environmentObject(authManager)
             }
             .onAppear {
                 loadPosts()
@@ -106,16 +110,92 @@ struct NewsFeedView: View {
     }
     
     private func loadPostsAsync() async {
-        // TODO: Implement API call to fetch posts
-        // For now, simulate posts
-        try? await Task.sleep(nanoseconds: 500_000_000)
-        posts = []
-        isLoading = false
+        guard let token = authManager.token else {
+            await MainActor.run {
+                isLoading = false
+            }
+            return
+        }
+        
+        do {
+            let apiService = ApiService.shared
+            
+            struct PostsResponse: Codable {
+                let posts: [PostResponse]
+            }
+            
+            struct PostResponse: Codable {
+                let id: String
+                let content: String
+                let imageUrl: String?
+                let status: String
+                let author: AuthorResponse
+                let likes: [String]?
+                let comments: [CommentResponse]?
+                let createdAt: String
+            }
+            
+            struct AuthorResponse: Codable {
+                let id: String
+                let profile: ProfileResponse
+            }
+            
+            struct ProfileResponse: Codable {
+                let displayName: String?
+            }
+            
+            struct CommentResponse: Codable {
+                let id: String
+                let content: String
+            }
+            
+            let response: PostsResponse = try await apiService.makeRequest(
+                endpoint: "posts",
+                method: "GET",
+                token: token
+            )
+            
+            await MainActor.run {
+                // Only show approved posts
+                self.posts = response.posts.compactMap { postResponse in
+                    guard postResponse.status == "approved" else { return nil }
+                    
+                    let dateFormatter = ISO8601DateFormatter()
+                    dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                    let createdAt = dateFormatter.date(from: postResponse.createdAt) ?? Date()
+                    
+                    // Check if current user liked this post
+                    // We'll need to get the user ID - for now check if we have it in authManager
+                    // The user ID should be available from the login response
+                    var isLiked = false
+                    if let currentUserId = authManager.currentUser?.id {
+                        isLiked = postResponse.likes?.contains(currentUserId) ?? false
+                    }
+                    
+                    return Post(
+                        id: UUID(uuidString: postResponse.id) ?? UUID(),
+                        author: postResponse.author.profile.displayName ?? "Unknown",
+                        content: postResponse.content,
+                        imageUrl: postResponse.imageUrl,
+                        likes: postResponse.likes?.count ?? 0,
+                        comments: postResponse.comments?.count ?? 0,
+                        createdAt: createdAt,
+                        isLiked: isLiked
+                    )
+                }
+                self.isLoading = false
+            }
+        } catch {
+            print("Error loading posts: \(error)")
+            await MainActor.run {
+                self.isLoading = false
+            }
+        }
     }
 }
 
 struct Post: Identifiable {
-    let id = UUID()
+    let id: UUID
     let author: String
     let content: String
     let imageUrl: String?
@@ -337,14 +417,51 @@ struct CreatePostView: View {
     
     private func createPost() {
         guard !postContent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        guard let token = authManager.token else {
+            errorMessage = "Not authenticated. Please log in again."
+            showError = true
+            return
+        }
         
         isPosting = true
         Task {
-            // TODO: Implement API call to create post
-            // For now, simulate success
-            try? await Task.sleep(nanoseconds: 1_000_000_000)
-            isPosting = false
-            dismiss()
+            do {
+                let apiService = ApiService.shared
+                
+                struct CreatePostResponse: Codable {
+                    let post: PostResponse
+                    let message: String
+                }
+                
+                struct PostResponse: Codable {
+                    let id: String
+                    let content: String
+                    let imageUrl: String?
+                    let status: String
+                }
+                
+                let body: [String: Any] = [
+                    "content": postContent.trimmingCharacters(in: .whitespacesAndNewlines)
+                ]
+                
+                let _: CreatePostResponse = try await apiService.makeRequest(
+                    endpoint: "posts",
+                    method: "POST",
+                    body: body,
+                    token: token
+                )
+                
+                await MainActor.run {
+                    isPosting = false
+                    dismiss()
+                }
+            } catch {
+                await MainActor.run {
+                    isPosting = false
+                    errorMessage = "Failed to create post: \(error.localizedDescription)"
+                    showError = true
+                }
+            }
         }
     }
 }

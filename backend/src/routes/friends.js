@@ -1,6 +1,7 @@
 const express = require('express');
 const { auth, requireUserType } = require('../middleware/auth');
 const User = require('../models/User');
+const { getSupabase } = require('../config/database');
 
 const router = express.Router();
 
@@ -13,6 +14,7 @@ router.use(auth);
 router.post('/request', requireUserType('kid'), async (req, res) => {
   try {
     const { friendId } = req.body;
+    const supabase = await getSupabase();
     
     if (!friendId) {
       return res.status(400).json({ error: 'Friend ID is required' });
@@ -24,47 +26,126 @@ router.post('/request', requireUserType('kid'), async (req, res) => {
     }
     
     // Check if already friends
-    if (req.user.friends.includes(friendId)) {
-      return res.status(400).json({ error: 'Already friends' });
+    const { data: existingFriendship, error: friendCheckError } = await supabase
+      .from('friendships')
+      .select('*')
+      .or(`and(user_id.eq.${req.user.id},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${req.user.id})`)
+      .single();
+    
+    if (!friendCheckError && existingFriendship) {
+      if (existingFriendship.status === 'accepted') {
+        return res.status(400).json({ error: 'Already friends' });
+      } else if (existingFriendship.status === 'pending') {
+        return res.status(400).json({ error: 'Friend request already pending' });
+      }
     }
     
-    // Add friend (in real app, this would be a request system)
-    req.user.friends.push(friendId);
-    friend.friends.push(req.user._id);
+    // Create or update friendship
+    const { data: friendship, error: friendshipError } = await supabase
+      .from('friendships')
+      .upsert({
+        user_id: req.user.id,
+        friend_id: friendId,
+        status: 'pending'
+      }, {
+        onConflict: 'user_id,friend_id'
+      })
+      .select()
+      .single();
     
-    await req.user.save();
-    await friend.save();
+    if (friendshipError) {
+      console.error('Error creating friendship:', friendshipError);
+      return res.status(500).json({ error: 'Failed to send friend request' });
+    }
     
     // Auto-connect parents if both kids are verified
     if (req.user.isFullyVerified() && friend.isFullyVerified()) {
-      if (req.user.parentAccount && friend.parentAccount) {
-        const parent1 = await User.findById(req.user.parentAccount);
-        const parent2 = await User.findById(friend.parentAccount);
-        
+      const currentUser = await User.findById(req.user.id);
+      const friendUser = await User.findById(friendId);
+      
+      if (currentUser.parentAccount && friendUser.parentAccount) {
         // Check if parents are already connected
-        const alreadyConnected = parent1.parentConnections.some(
-          conn => conn.parent.toString() === parent2._id.toString()
-        );
+        const { data: existingConnection, error: connError } = await supabase
+          .from('parent_connections')
+          .select('*')
+          .or(`and(parent1_id.eq.${currentUser.parentAccount},parent2_id.eq.${friendUser.parentAccount}),and(parent1_id.eq.${friendUser.parentAccount},parent2_id.eq.${currentUser.parentAccount})`)
+          .single();
         
-        if (!alreadyConnected) {
-          parent1.parentConnections.push({ parent: parent2._id });
-          parent2.parentConnections.push({ parent: parent1._id });
-          await parent1.save();
-          await parent2.save();
+        if (connError || !existingConnection) {
+          // Create parent connection
+          await supabase
+            .from('parent_connections')
+            .insert({
+              parent1_id: currentUser.parentAccount,
+              parent2_id: friendUser.parentAccount
+            });
         }
       }
     }
     
+    const friendProfile = friend.profile || {};
+    
     res.json({ 
-      message: 'Friend added successfully',
+      message: 'Friend request sent successfully',
       friend: {
-        id: friend._id,
-        displayName: friend.profile.displayName,
-        avatar: friend.profile.avatar
+        id: friend.id,
+        profile: {
+          displayName: friendProfile.displayName || friend.email,
+          avatar: friendProfile.avatar
+        },
+        isVerified: friend.isFullyVerified()
       }
     });
   } catch (error) {
-    console.error(error);
+    console.error('Error sending friend request:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// @route   POST /api/friends/accept
+// @desc    Accept friend request (kids only)
+// @access  Private (Kid only)
+router.post('/accept', requireUserType('kid'), async (req, res) => {
+  try {
+    const { friendId } = req.body;
+    const supabase = await getSupabase();
+    
+    if (!friendId) {
+      return res.status(400).json({ error: 'Friend ID is required' });
+    }
+    
+    // Update friendship status to accepted
+    const { data: friendship, error: friendshipError } = await supabase
+      .from('friendships')
+      .update({ status: 'accepted' })
+      .or(`and(user_id.eq.${req.user.id},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${req.user.id})`)
+      .select()
+      .single();
+    
+    if (friendshipError || !friendship) {
+      return res.status(404).json({ error: 'Friend request not found' });
+    }
+    
+    const friend = await User.findById(friendId);
+    if (!friend) {
+      return res.status(404).json({ error: 'Friend not found' });
+    }
+    
+    const friendProfile = friend.profile || {};
+    
+    res.json({ 
+      message: 'Friend request accepted',
+      friend: {
+        id: friend.id,
+        profile: {
+          displayName: friendProfile.displayName || friend.email,
+          avatar: friendProfile.avatar
+        },
+        isVerified: friend.isFullyVerified()
+      }
+    });
+  } catch (error) {
+    console.error('Error accepting friend request:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -74,39 +155,127 @@ router.post('/request', requireUserType('kid'), async (req, res) => {
 // @access  Private (Kid only)
 router.get('/search', requireUserType('kid'), async (req, res) => {
   try {
-    const { query } = req.query;
+    const { query: searchQuery } = req.query;
+    const supabase = await getSupabase();
     
-    if (!query || query.length < 2) {
+    if (!searchQuery || searchQuery.length < 2) {
       return res.status(400).json({ error: 'Search query must be at least 2 characters' });
     }
     
-    const users = await User.find({
-      userType: 'kid',
-      _id: { $ne: req.user._id },
-      isActive: true,
-      $or: [
-        { 'profile.displayName': { $regex: query, $options: 'i' } },
-        { 'profile.firstName': { $regex: query, $options: 'i' } },
-        { 'profile.lastName': { $regex: query, $options: 'i' } }
-      ]
-    })
-    .select('profile verification')
-    .limit(20);
+    // Get current user's friends
+    const { data: friendships, error: friendsError } = await supabase
+      .from('friendships')
+      .select('friend_id')
+      .eq('user_id', req.user.id)
+      .eq('status', 'accepted');
     
-    const results = users.map(user => ({
-      id: user._id,
-      displayName: user.profile.displayName,
-      avatar: user.profile.avatar,
-      isVerified: user.isFullyVerified(),
-      isFriend: req.user.friends.includes(user._id)
-    }));
+    const friendIds = friendships ? friendships.map(f => f.friend_id) : [];
+    
+    // Search for users matching the query
+    // Note: Supabase doesn't support full-text search on JSONB easily, so we'll fetch all kids and filter
+    const { data: usersData, error: usersError } = await supabase
+      .from('users')
+      .select('id, profile, verification')
+      .eq('user_type', 'kid')
+      .eq('is_active', true)
+      .neq('id', req.user.id);
+    
+    if (usersError) {
+      console.error('Error searching users:', usersError);
+      return res.status(500).json({ error: 'Failed to search users' });
+    }
+    
+    // Filter by search query (case-insensitive)
+    const searchLower = searchQuery.toLowerCase();
+    const results = (usersData || [])
+      .filter(user => {
+        const profile = user.profile || {};
+        const displayName = (profile.displayName || '').toLowerCase();
+        const firstName = (profile.firstName || '').toLowerCase();
+        const lastName = (profile.lastName || '').toLowerCase();
+        
+        return displayName.includes(searchLower) || 
+               firstName.includes(searchLower) || 
+               lastName.includes(searchLower);
+      })
+      .slice(0, 20)
+      .map(user => {
+        const profile = user.profile || {};
+        const isVerified = user.verification?.parentVerified && user.verification?.schoolVerified;
+        
+        return {
+          id: user.id,
+          profile: {
+            displayName: profile.displayName || 'Unknown',
+            avatar: profile.avatar
+          },
+          isVerified: isVerified || false,
+          isFriend: friendIds.includes(user.id)
+        };
+      });
     
     res.json({ results });
   } catch (error) {
-    console.error(error);
+    console.error('Error searching friends:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// @route   GET /api/friends
+// @desc    Get friends list (kids only)
+// @access  Private (Kid only)
+router.get('/', requireUserType('kid'), async (req, res) => {
+  try {
+    const supabase = await getSupabase();
+    
+    // Get accepted friendships
+    const { data: friendships, error: friendsError } = await supabase
+      .from('friendships')
+      .select('friend_id')
+      .eq('user_id', req.user.id)
+      .eq('status', 'accepted');
+    
+    if (friendsError) {
+      console.error('Error fetching friendships:', friendsError);
+      return res.status(500).json({ error: 'Failed to fetch friends' });
+    }
+    
+    const friendIds = friendships ? friendships.map(f => f.friend_id) : [];
+    
+    if (friendIds.length === 0) {
+      return res.json({ friends: [] });
+    }
+    
+    // Fetch friend profiles
+    const { data: friendsData, error: friendsDataError } = await supabase
+      .from('users')
+      .select('id, profile, verification')
+      .in('id', friendIds);
+    
+    if (friendsDataError) {
+      console.error('Error fetching friend profiles:', friendsDataError);
+      return res.status(500).json({ error: 'Failed to fetch friend profiles' });
+    }
+    
+    const friends = (friendsData || []).map(friend => {
+      const profile = friend.profile || {};
+      const isVerified = friend.verification?.parentVerified && friend.verification?.schoolVerified;
+      
+      return {
+        id: friend.id,
+        profile: {
+          displayName: profile.displayName || 'Unknown',
+          avatar: profile.avatar
+        },
+        isVerified: isVerified || false
+      };
+    });
+    
+    res.json({ friends });
+  } catch (error) {
+    console.error('Error fetching friends:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
 module.exports = router;
-

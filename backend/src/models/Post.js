@@ -68,12 +68,12 @@ class Post {
     const dbData = {
       content: this.content,
       image_url: this.imageUrl,
-      likes: this.likes,
-      comments: this.comments,
+      likes: this.likes || [],
+      comments: this.comments || [],
       status: this.status,
-      moderated_by: this.moderatedBy,
-      moderated_at: this.moderatedAt,
-      rejection_reason: this.rejectionReason
+      moderated_by: this.moderatedBy || null,
+      moderated_at: this.moderatedAt ? this.moderatedAt.toISOString() : null,
+      rejection_reason: this.rejectionReason || null
     };
 
     const { data, error } = await supabase

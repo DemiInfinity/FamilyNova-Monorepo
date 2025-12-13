@@ -4,6 +4,7 @@ const { auth, requireUserType } = require('../middleware/auth');
 const SchoolCode = require('../models/SchoolCode');
 const School = require('../models/School');
 const User = require('../models/User');
+const { getSupabase } = require('../config/database');
 
 const router = express.Router();
 
@@ -32,27 +33,21 @@ router.post('/generate', [
       return res.status(404).json({ error: 'School not found' });
     }
     
-    // Create new code
-    const code = new SchoolCode({
-      school: schoolId,
-      generatedBy: schoolId,
-      grade
-    });
-    
-    await code.save();
+    // Generate code using SchoolCode model
+    const code = await SchoolCode.generateCode(schoolId, grade, schoolId);
     
     res.status(201).json({
       message: 'School code generated successfully',
       code: {
-        id: code._id,
+        id: code.id,
         code: code.code,
-        grade: code.grade,
+        grade: code.gradeLevel,
         expiresAt: code.expiresAt,
-        createdAt: code.createdAt
+        createdAt: code.generatedAt
       }
     });
   } catch (error) {
-    console.error(error);
+    console.error('Error generating school code:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -70,15 +65,51 @@ router.get('/', async (req, res) => {
     }
     
     const codes = await SchoolCode.find({
-      school: schoolId,
-      isActive: true
-    })
-      .populate('assignedTo', 'profile.displayName email')
-      .sort({ createdAt: -1 });
+      schoolId: schoolId
+    });
     
-    res.json({ codes });
+    // Get user info for codes that have been used
+    const usedByIds = codes.filter(c => c.usedBy).map(c => c.usedBy);
+    const usersMap = new Map();
+    
+    if (usedByIds.length > 0) {
+      const supabase = await getSupabase();
+      const { data: usersData, error: usersError } = await supabase
+        .from('users')
+        .select('id, profile, email')
+        .in('id', usedByIds);
+      
+      if (!usersError && usersData) {
+        usersData.forEach(user => {
+          usersMap.set(user.id, user);
+        });
+      }
+    }
+    
+    const formattedCodes = codes.map(code => {
+      const user = code.usedBy ? usersMap.get(code.usedBy) : null;
+      const userProfile = user?.profile || {};
+      
+      return {
+        id: code.id,
+        code: code.code,
+        grade: code.gradeLevel,
+        expiresAt: code.expiresAt,
+        usedBy: code.usedBy ? {
+          id: user?.id || code.usedBy,
+          profile: {
+            displayName: userProfile.displayName || user?.email || 'Unknown'
+          },
+          email: user?.email
+        } : null,
+        usedAt: code.usedAt,
+        createdAt: code.generatedAt
+      };
+    });
+    
+    res.json({ codes: formattedCodes });
   } catch (error) {
-    console.error(error);
+    console.error('Error fetching school codes:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -96,25 +127,22 @@ router.post('/validate', auth, requireUserType('kid'), [
     }
     
     const { code } = req.body;
-    const userId = req.user._id;
+    const userId = req.user.id;
     
     // Find code
-    const schoolCode = await SchoolCode.findOne({
-      code: code.toUpperCase(),
-      isActive: true
-    }).populate('school');
+    const schoolCode = await SchoolCode.findByCode(code.toUpperCase());
     
     if (!schoolCode) {
       return res.status(404).json({ error: 'Invalid code' });
     }
     
     // Check if code is expired
-    if (schoolCode.expiresAt < new Date()) {
+    if (schoolCode.isExpired()) {
       return res.status(400).json({ error: 'Code has expired' });
     }
     
     // Check if code is already used
-    if (schoolCode.assignedTo) {
+    if (schoolCode.isUsed()) {
       return res.status(400).json({ error: 'Code has already been used' });
     }
     
@@ -124,49 +152,51 @@ router.post('/validate', auth, requireUserType('kid'), [
       return res.status(403).json({ error: 'Only kids can use school codes' });
     }
     
-    // Assign code to user
-    schoolCode.assignedTo = userId;
-    schoolCode.usedAt = new Date();
-    await schoolCode.save();
-    
-    // Update user's school info
-    user.schoolAccount = schoolCode.school._id;
-    user.profile.school = schoolCode.school.name;
-    user.profile.grade = schoolCode.grade;
-    user.verification.schoolVerified = true;
-    user.verification.verifiedAt = new Date();
-    
-    // Add user to school's students list
-    const school = await School.findById(schoolCode.school._id);
-    if (!school.students.includes(userId)) {
-      school.students.push(userId);
-      await school.save();
+    // Get school info
+    const school = await School.findById(schoolCode.schoolId);
+    if (!school) {
+      return res.status(404).json({ error: 'School not found' });
     }
     
-    await user.save();
+    // Mark code as used
+    await schoolCode.markAsUsed(userId);
+    
+    // Update user's school info
+    const profile = { ...user.profile };
+    profile.school = school.name;
+    profile.grade = schoolCode.gradeLevel;
+    
+    const verification = { ...user.verification };
+    verification.schoolVerified = true;
+    
+    await User.findByIdAndUpdate(userId, {
+      schoolAccount: schoolCode.schoolId,
+      profile: profile,
+      verification: verification
+    });
     
     // Calculate monitoring level based on age
     let monitoringLevel = 'full';
-    if (user.profile.dateOfBirth) {
-      const age = calculateAge(user.profile.dateOfBirth);
+    if (profile.dateOfBirth) {
+      const age = calculateAge(profile.dateOfBirth);
       monitoringLevel = age >= 13 ? 'partial' : 'full';
     }
-    user.monitoringLevel = monitoringLevel;
-    await user.save();
+    
+    await User.findByIdAndUpdate(userId, { monitoringLevel: monitoringLevel });
     
     res.json({
       message: 'School code validated successfully',
       school: {
-        id: school._id,
+        id: school.id,
         name: school.name
       },
       user: {
-        schoolVerified: user.verification.schoolVerified,
-        monitoringLevel: user.monitoringLevel
+        schoolVerified: true,
+        monitoringLevel: monitoringLevel
       }
     });
   } catch (error) {
-    console.error(error);
+    console.error('Error validating school code:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -184,4 +214,3 @@ function calculateAge(dateOfBirth) {
 }
 
 module.exports = router;
-

@@ -94,6 +94,23 @@ class AuthManager: ObservableObject {
                 if let token = self.token {
                     UserDefaults.standard.set(token, forKey: "authToken")
                 }
+                
+                // Store user ID for later use
+                // Create a minimal User object with the ID from login response
+                self.currentUser = User(
+                    id: result.user.id,
+                    email: result.user.email,
+                    displayName: result.user.email, // Will be updated when profile is fetched
+                    profile: UserProfile(
+                        firstName: "",
+                        lastName: "",
+                        displayName: result.user.email,
+                        avatar: nil,
+                        school: nil,
+                        grade: nil
+                    ),
+                    verification: VerificationStatus(parentVerified: false, schoolVerified: false)
+                )
             }
         } else {
             struct ErrorResponse: Codable {
@@ -169,6 +186,23 @@ class AuthManager: ObservableObject {
                 if let token = self.token {
                     UserDefaults.standard.set(token, forKey: "authToken")
                 }
+                
+                // Store user ID for later use
+                // Create a minimal User object with the ID from login response
+                self.currentUser = User(
+                    id: result.user.id,
+                    email: result.user.email,
+                    displayName: result.user.email, // Will be updated when profile is fetched
+                    profile: UserProfile(
+                        firstName: "",
+                        lastName: "",
+                        displayName: result.user.email,
+                        avatar: nil,
+                        school: nil,
+                        grade: nil
+                    ),
+                    verification: VerificationStatus(parentVerified: false, schoolVerified: false)
+                )
             }
         } else {
             struct ErrorResponse: Codable {

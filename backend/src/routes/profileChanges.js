@@ -3,6 +3,7 @@ const { body, validationResult } = require('express-validator');
 const { auth, requireUserType } = require('../middleware/auth');
 const ProfileChangeRequest = require('../models/ProfileChangeRequest');
 const User = require('../models/User');
+const { getSupabase } = require('../config/database');
 
 const router = express.Router();
 
@@ -27,30 +28,26 @@ router.post('/request', requireUserType('kid'), [
     const { displayName, avatar, school, grade } = req.body;
     
     // Get current profile
-    const child = await User.findById(req.user._id);
+    const child = await User.findById(req.user.id);
     if (!child || !child.parentAccount) {
       return res.status(400).json({ error: 'No parent account linked' });
     }
     
     // Build changes object
     const changes = {};
-    const oldValues = {};
+    const currentProfile = { ...child.profile };
     
-    if (displayName !== undefined && displayName !== child.profile.displayName) {
+    if (displayName !== undefined && displayName !== child.profile?.displayName) {
       changes.displayName = displayName;
-      oldValues.oldDisplayName = child.profile.displayName;
     }
-    if (avatar !== undefined && avatar !== child.profile.avatar) {
+    if (avatar !== undefined && avatar !== child.profile?.avatar) {
       changes.avatar = avatar;
-      oldValues.oldAvatar = child.profile.avatar;
     }
-    if (school !== undefined && school !== child.profile.school) {
+    if (school !== undefined && school !== child.profile?.school) {
       changes.school = school;
-      oldValues.oldSchool = child.profile.school;
     }
-    if (grade !== undefined && grade !== child.profile.grade) {
+    if (grade !== undefined && grade !== child.profile?.grade) {
       changes.grade = grade;
-      oldValues.oldGrade = child.profile.grade;
     }
     
     if (Object.keys(changes).length === 0) {
@@ -58,36 +55,35 @@ router.post('/request', requireUserType('kid'), [
     }
     
     // Check for existing pending request
-    const existingRequest = await ProfileChangeRequest.findOne({
-      child: req.user._id,
+    const existingRequests = await ProfileChangeRequest.find({
+      kidId: req.user.id,
       status: 'pending'
     });
     
-    if (existingRequest) {
+    if (existingRequests.length > 0) {
       return res.status(400).json({ error: 'You already have a pending profile change request' });
     }
     
     // Create change request
-    const changeRequest = new ProfileChangeRequest({
-      child: req.user._id,
-      parent: child.parentAccount,
-      changes: { ...changes, ...oldValues },
+    const changeRequest = await ProfileChangeRequest.create({
+      kidId: req.user.id,
+      requestedChanges: changes,
+      currentProfile: currentProfile,
       status: 'pending'
     });
-    
-    await changeRequest.save();
     
     res.status(201).json({
       message: 'Profile change request submitted for parent approval',
       request: {
-        id: changeRequest._id,
-        changes: changeRequest.changes,
+        id: changeRequest.id,
+        requestedChanges: changeRequest.requestedChanges,
+        currentProfile: changeRequest.currentProfile,
         status: changeRequest.status,
-        createdAt: changeRequest.createdAt
+        requestedAt: changeRequest.requestedAt
       }
     });
   } catch (error) {
-    console.error(error);
+    console.error('Error creating profile change request:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -97,16 +93,68 @@ router.post('/request', requireUserType('kid'), [
 // @access  Private (Parent only)
 router.get('/pending', requireUserType('parent'), async (req, res) => {
   try {
-    const requests = await ProfileChangeRequest.find({
-      parent: req.user._id,
-      status: 'pending'
-    })
-      .populate('child', 'profile email')
-      .sort({ createdAt: -1 });
+    const supabase = await getSupabase();
     
-    res.json({ requests });
+    // Get parent's children
+    const { data: children, error: childrenError } = await supabase
+      .from('parent_children')
+      .select('child_id')
+      .eq('parent_id', req.user.id);
+    
+    if (childrenError) {
+      console.error('Error fetching children:', childrenError);
+      return res.status(500).json({ error: 'Failed to fetch children' });
+    }
+    
+    const childIds = children ? children.map(c => c.child_id) : [];
+    
+    if (childIds.length === 0) {
+      return res.json({ requests: [] });
+    }
+    
+    // Get pending requests for these children
+    const requests = await ProfileChangeRequest.find({
+      kidId: childIds, // Pass array directly - model will handle it
+      status: 'pending'
+    });
+    
+    // Get child profiles
+    const { data: childrenData, error: childrenDataError } = await supabase
+      .from('users')
+      .select('id, profile, email')
+      .in('id', childIds);
+    
+    const childrenMap = new Map();
+    if (!childrenDataError && childrenData) {
+      childrenData.forEach(child => {
+        childrenMap.set(child.id, child);
+      });
+    }
+    
+    // Format requests with child info
+    const formattedRequests = requests.map(request => {
+      const child = childrenMap.get(request.kidId);
+      const childProfile = child?.profile || {};
+      
+      return {
+        id: request.id,
+        kid: {
+          id: child?.id || request.kidId,
+          profile: {
+            displayName: childProfile.displayName || 'Unknown',
+            email: child?.email
+          }
+        },
+        requestedChanges: request.requestedChanges,
+        currentProfile: request.currentProfile,
+        status: request.status,
+        requestedAt: request.requestedAt
+      };
+    });
+    
+    res.json({ requests: formattedRequests });
   } catch (error) {
-    console.error(error);
+    console.error('Error fetching pending requests:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -126,15 +174,23 @@ router.put('/:requestId/approve', requireUserType('parent'), [
     
     const { requestId } = req.params;
     const { action, reason } = req.body;
+    const supabase = await getSupabase();
     
-    const request = await ProfileChangeRequest.findById(requestId)
-      .populate('child');
+    const request = await ProfileChangeRequest.findById(requestId);
     
     if (!request) {
       return res.status(404).json({ error: 'Request not found' });
     }
     
-    if (request.parent.toString() !== req.user._id.toString()) {
+    // Verify parent has access to this request
+    const { data: parentChild, error: relationError } = await supabase
+      .from('parent_children')
+      .select('child_id')
+      .eq('parent_id', req.user.id)
+      .eq('child_id', request.kidId)
+      .single();
+    
+    if (relationError || !parentChild) {
       return res.status(403).json({ error: 'Not authorized' });
     }
     
@@ -144,29 +200,35 @@ router.put('/:requestId/approve', requireUserType('parent'), [
     
     if (action === 'approve') {
       // Apply changes to child's profile
-      const child = await User.findById(request.child._id);
-      if (request.changes.displayName) {
-        child.profile.displayName = request.changes.displayName;
+      const child = await User.findById(request.kidId);
+      if (!child) {
+        return res.status(404).json({ error: 'Child not found' });
       }
-      if (request.changes.avatar) {
-        child.profile.avatar = request.changes.avatar;
+      
+      const profile = { ...child.profile };
+      if (request.requestedChanges.displayName) {
+        profile.displayName = request.requestedChanges.displayName;
       }
-      if (request.changes.school) {
-        child.profile.school = request.changes.school;
+      if (request.requestedChanges.avatar) {
+        profile.avatar = request.requestedChanges.avatar;
       }
-      if (request.changes.grade) {
-        child.profile.grade = request.changes.grade;
+      if (request.requestedChanges.school) {
+        profile.school = request.requestedChanges.school;
       }
-      await child.save();
+      if (request.requestedChanges.grade) {
+        profile.grade = request.requestedChanges.grade;
+      }
+      
+      await User.findByIdAndUpdate(request.kidId, { profile: profile });
       
       request.status = 'approved';
-      request.reviewedBy = req.user._id;
+      request.reviewedBy = req.user.id;
       request.reviewedAt = new Date();
     } else {
       request.status = 'rejected';
-      request.reviewedBy = req.user._id;
+      request.reviewedBy = req.user.id;
       request.reviewedAt = new Date();
-      request.rejectionReason = reason || 'Rejected by parent';
+      request.reason = reason || 'Rejected by parent';
     }
     
     await request.save();
@@ -174,16 +236,16 @@ router.put('/:requestId/approve', requireUserType('parent'), [
     res.json({
       message: `Profile change request ${action}d`,
       request: {
-        id: request._id,
+        id: request.id,
         status: request.status,
-        reviewedAt: request.reviewedAt
+        reviewedAt: request.reviewedAt,
+        reason: request.reason
       }
     });
   } catch (error) {
-    console.error(error);
+    console.error('Error approving/rejecting request:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
 module.exports = router;
-

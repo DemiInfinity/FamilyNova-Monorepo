@@ -29,7 +29,13 @@ class ProfileChangeRequest {
     const supabase = getSupabase();
     let query = supabase.from('profile_change_requests').select('*');
 
-    if (filter.kidId) query = query.eq('kid_id', filter.kidId);
+    if (filter.kidId) {
+      if (Array.isArray(filter.kidId)) {
+        query = query.in('kid_id', filter.kidId);
+      } else {
+        query = query.eq('kid_id', filter.kidId);
+      }
+    }
     if (filter.status) query = query.eq('status', filter.status);
 
     query = query.order('requested_at', { ascending: false });

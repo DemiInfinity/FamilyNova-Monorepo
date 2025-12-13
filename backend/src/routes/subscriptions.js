@@ -13,20 +13,20 @@ router.use(auth);
 // @access  Private (Parent only)
 router.get('/status', requireUserType('parent'), async (req, res) => {
   try {
-    let subscription = await Subscription.findOne({ user: req.user._id });
+    let subscription = await Subscription.findByUserId(req.user.id);
 
     // If no subscription exists, create a free one
     if (!subscription) {
-      subscription = new Subscription({
-        user: req.user._id,
+      subscription = await Subscription.create({
+        userId: req.user.id,
         plan: 'free',
-        status: 'active'
+        status: 'active',
+        startDate: new Date().toISOString()
       });
-      await subscription.save();
     }
 
     // Check if subscription has expired
-    if (subscription.endDate && new Date() > subscription.endDate && subscription.status === 'active') {
+    if (subscription.endDate && new Date() > new Date(subscription.endDate) && subscription.status === 'active') {
       subscription.status = 'expired';
       subscription.plan = 'free';
       await subscription.save();
@@ -34,6 +34,7 @@ router.get('/status', requireUserType('parent'), async (req, res) => {
 
     res.json({
       subscription: {
+        id: subscription.id,
         plan: subscription.plan,
         status: subscription.status,
         billingCycle: subscription.billingCycle,
@@ -45,7 +46,7 @@ router.get('/status', requireUserType('parent'), async (req, res) => {
       }
     });
   } catch (error) {
-    console.error(error);
+    console.error('Error fetching subscription:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -56,7 +57,7 @@ router.get('/status', requireUserType('parent'), async (req, res) => {
 router.post('/create', requireUserType('parent'), [
   body('plan').isIn(['pro']).withMessage('Invalid plan'),
   body('billingCycle').isIn(['monthly', 'annual']).withMessage('Invalid billing cycle'),
-  body('provider').isIn(['ios', 'android']).withMessage('Invalid provider'),
+  body('provider').isIn(['ios', 'android', 'web']).withMessage('Invalid provider'),
   body('providerSubscriptionId').notEmpty().withMessage('Provider subscription ID required'),
   body('receipt').notEmpty().withMessage('Receipt required for verification')
 ], async (req, res) => {
@@ -71,7 +72,7 @@ router.post('/create', requireUserType('parent'), [
     // TODO: Verify receipt with Apple/Google
     // For now, we'll trust the client (in production, verify server-side)
 
-    let subscription = await Subscription.findOne({ user: req.user._id });
+    let subscription = await Subscription.findByUserId(req.user.id);
 
     const now = new Date();
     const endDate = new Date();
@@ -90,24 +91,25 @@ router.post('/create', requireUserType('parent'), [
       subscription.provider = provider;
       subscription.providerSubscriptionId = providerSubscriptionId;
       subscription.receipt = receipt;
-      subscription.startDate = now;
-      subscription.endDate = endDate;
-      subscription.nextBillingDate = endDate;
+      subscription.startDate = now.toISOString();
+      subscription.endDate = endDate.toISOString();
+      subscription.nextBillingDate = endDate.toISOString();
       subscription.cancelledAt = null;
       subscription.isTrial = false;
     } else {
       // Create new subscription
-      subscription = new Subscription({
-        user: req.user._id,
+      subscription = await Subscription.create({
+        userId: req.user.id,
         plan: plan,
         status: 'active',
         billingCycle: billingCycle,
         provider: provider,
         providerSubscriptionId: providerSubscriptionId,
         receipt: receipt,
-        startDate: now,
-        endDate: endDate,
-        nextBillingDate: endDate
+        startDate: now.toISOString(),
+        endDate: endDate.toISOString(),
+        nextBillingDate: endDate.toISOString(),
+        isTrial: false
       });
     }
 
@@ -116,6 +118,7 @@ router.post('/create', requireUserType('parent'), [
     res.json({
       message: 'Subscription created successfully',
       subscription: {
+        id: subscription.id,
         plan: subscription.plan,
         status: subscription.status,
         billingCycle: subscription.billingCycle,
@@ -124,7 +127,7 @@ router.post('/create', requireUserType('parent'), [
       }
     });
   } catch (error) {
-    console.error(error);
+    console.error('Error creating subscription:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -134,7 +137,7 @@ router.post('/create', requireUserType('parent'), [
 // @access  Private (Parent only)
 router.post('/cancel', requireUserType('parent'), async (req, res) => {
   try {
-    const subscription = await Subscription.findOne({ user: req.user._id });
+    const subscription = await Subscription.findByUserId(req.user.id);
 
     if (!subscription) {
       return res.status(404).json({ error: 'No subscription found' });
@@ -145,20 +148,21 @@ router.post('/cancel', requireUserType('parent'), async (req, res) => {
     }
 
     subscription.status = 'cancelled';
-    subscription.cancelledAt = new Date();
+    subscription.cancelledAt = new Date().toISOString();
     // Keep access until endDate
     await subscription.save();
 
     res.json({
       message: 'Subscription cancelled. Access continues until end of billing period.',
       subscription: {
+        id: subscription.id,
         plan: subscription.plan,
         status: subscription.status,
         endDate: subscription.endDate
       }
     });
   } catch (error) {
-    console.error(error);
+    console.error('Error cancelling subscription:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -177,7 +181,7 @@ router.post('/verify-receipt', requireUserType('parent'), [
     }
 
     const { provider, receipt } = req.body;
-    const subscription = await Subscription.findOne({ user: req.user._id });
+    const subscription = await Subscription.findByUserId(req.user.id);
 
     if (!subscription) {
       return res.status(404).json({ error: 'No subscription found' });
@@ -193,10 +197,9 @@ router.post('/verify-receipt', requireUserType('parent'), [
       valid: true
     });
   } catch (error) {
-    console.error(error);
+    console.error('Error verifying receipt:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
 module.exports = router;
-

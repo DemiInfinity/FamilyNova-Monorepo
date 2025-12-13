@@ -3,6 +3,7 @@ const { body, validationResult } = require('express-validator');
 const { auth, requireUserType } = require('../middleware/auth');
 const Message = require('../models/Message');
 const User = require('../models/User');
+const { getSupabase } = require('../config/database');
 
 const router = express.Router();
 
@@ -22,7 +23,8 @@ router.post('/', requireUserType('kid'), [
       return res.status(400).json({ errors: errors.array() });
     }
     
-    const { receiverId, content, messageType } = req.body;
+    const { receiverId, content } = req.body;
+    const supabase = await getSupabase();
     
     // Verify receiver is a friend
     const receiver = await User.findById(receiverId);
@@ -30,41 +32,55 @@ router.post('/', requireUserType('kid'), [
       return res.status(404).json({ error: 'Receiver not found' });
     }
     
-    if (!req.user.friends.includes(receiverId)) {
+    // Check if they are friends
+    const { data: friendship, error: friendError } = await supabase
+      .from('friendships')
+      .select('*')
+      .or(`and(user_id.eq.${req.user.id},friend_id.eq.${receiverId}),and(user_id.eq.${receiverId},friend_id.eq.${req.user.id})`)
+      .eq('status', 'accepted')
+      .single();
+    
+    if (friendError || !friendship) {
       return res.status(403).json({ error: 'Can only message friends' });
     }
     
     // Check monitoring level - full monitoring means all messages are flagged for review
-    const sender = await User.findById(req.user._id);
-    const isModerated = sender.monitoringLevel === 'full';
+    const sender = await User.findById(req.user.id);
+    const status = sender.monitoringLevel === 'full' ? 'pending' : 'approved';
     
-    const message = new Message({
-      sender: req.user._id,
-      receiver: receiverId,
-      content,
-      messageType: messageType || 'text',
-      isModerated: isModerated // Full monitoring = requires approval, partial = auto-approved
+    const message = await Message.create({
+      senderId: req.user.id,
+      receiverId: receiverId,
+      content: content.trim(),
+      status: status
     });
     
-    await message.save();
+    // Get sender and receiver profiles for response
+    const senderProfile = sender.profile || {};
+    const receiverProfile = receiver.profile || {};
     
     res.status(201).json({
       message: {
-        id: message._id,
+        id: message.id,
         content: message.content,
+        status: message.status,
         sender: {
-          id: req.user._id,
-          displayName: req.user.profile.displayName
+          id: sender.id,
+          profile: {
+            displayName: senderProfile.displayName || sender.email
+          }
         },
         receiver: {
-          id: receiver._id,
-          displayName: receiver.profile.displayName
+          id: receiver.id,
+          profile: {
+            displayName: receiverProfile.displayName || receiver.email
+          }
         },
         createdAt: message.createdAt
       }
     });
   } catch (error) {
-    console.error(error);
+    console.error('Error sending message:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -75,38 +91,100 @@ router.post('/', requireUserType('kid'), [
 router.get('/', async (req, res) => {
   try {
     const { conversationWith } = req.query;
+    const supabase = await getSupabase();
     
-    let query = {
-      $or: [
-        { sender: req.user._id },
-        { receiver: req.user._id }
-      ]
-    };
+    let query = supabase
+      .from('messages')
+      .select('*')
+      .or(`sender_id.eq.${req.user.id},receiver_id.eq.${req.user.id}`);
     
     if (conversationWith) {
-      query = {
-        $or: [
-          { sender: req.user._id, receiver: conversationWith },
-          { sender: conversationWith, receiver: req.user._id }
-        ]
-      };
+      query = supabase
+        .from('messages')
+        .select('*')
+        .or(`and(sender_id.eq.${req.user.id},receiver_id.eq.${conversationWith}),and(sender_id.eq.${conversationWith},receiver_id.eq.${req.user.id})`);
     }
     
-    const messages = await Message.find(query)
-      .sort({ createdAt: -1 })
-      .limit(50)
-      .populate('sender receiver', 'profile displayName avatar')
-      .lean();
+    query = query.order('created_at', { ascending: false }).limit(50);
+    
+    const { data: messagesData, error: messagesError } = await query;
+    
+    if (messagesError) {
+      console.error('Error fetching messages:', messagesError);
+      return res.status(500).json({ error: 'Failed to fetch messages' });
+    }
+    
+    // Get unique sender and receiver IDs
+    const userIds = new Set();
+    if (messagesData) {
+      messagesData.forEach(msg => {
+        userIds.add(msg.sender_id);
+        userIds.add(msg.receiver_id);
+      });
+    }
+    
+    // Fetch user profiles
+    const userIdsArray = Array.from(userIds);
+    const { data: usersData, error: usersError } = await supabase
+      .from('users')
+      .select('id, profile')
+      .in('id', userIdsArray);
+    
+    const usersMap = new Map();
+    if (!usersError && usersData) {
+      usersData.forEach(user => {
+        usersMap.set(user.id, user);
+      });
+    }
     
     // Mark messages as read if user is receiver
-    await Message.updateMany(
-      { receiver: req.user._id, isRead: false },
-      { isRead: true, readAt: new Date() }
-    );
+    if (messagesData && messagesData.length > 0) {
+      const unreadMessageIds = messagesData
+        .filter(msg => msg.receiver_id === req.user.id && msg.status !== 'approved')
+        .map(msg => msg.id);
+      
+      if (unreadMessageIds.length > 0) {
+        await supabase
+          .from('messages')
+          .update({ status: 'approved', moderated_at: new Date().toISOString() })
+          .in('id', unreadMessageIds)
+          .eq('receiver_id', req.user.id);
+      }
+    }
     
-    res.json({ messages: messages.reverse() });
+    // Format messages with user info
+    const messages = (messagesData || []).reverse().map(msg => {
+      const sender = usersMap.get(msg.sender_id);
+      const receiver = usersMap.get(msg.receiver_id);
+      const senderProfile = sender?.profile || {};
+      const receiverProfile = receiver?.profile || {};
+      
+      return {
+        id: msg.id,
+        content: msg.content,
+        status: msg.status,
+        sender: {
+          id: msg.sender_id,
+          profile: {
+            displayName: senderProfile.displayName || 'Unknown',
+            avatar: senderProfile.avatar
+          }
+        },
+        receiver: {
+          id: msg.receiver_id,
+          profile: {
+            displayName: receiverProfile.displayName || 'Unknown',
+            avatar: receiverProfile.avatar
+          }
+        },
+        createdAt: msg.created_at,
+        updatedAt: msg.updated_at
+      };
+    });
+    
+    res.json({ messages });
   } catch (error) {
-    console.error(error);
+    console.error('Error fetching messages:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -117,45 +195,66 @@ router.get('/', async (req, res) => {
 router.put('/:messageId/moderate', requireUserType('parent'), async (req, res) => {
   try {
     const { messageId } = req.params;
-    const { action } = req.body; // 'approve', 'flag', 'delete'
+    const { action } = req.body; // 'approve', 'reject', 'delete'
+    const supabase = await getSupabase();
     
-    const message = await Message.findById(messageId)
-      .populate('sender receiver');
+    const message = await Message.findById(messageId);
     
     if (!message) {
       return res.status(404).json({ error: 'Message not found' });
     }
     
     // Verify parent has access to this message (child is sender or receiver)
-    const parent = await User.findById(req.user._id);
-    const hasAccess = parent.children.some(
-      childId => childId.toString() === message.sender._id.toString() || 
-                 childId.toString() === message.receiver._id.toString()
-    );
+    const { data: parentChildren, error: childrenError } = await supabase
+      .from('parent_children')
+      .select('child_id')
+      .eq('parent_id', req.user.id);
+    
+    if (childrenError) {
+      return res.status(500).json({ error: 'Failed to verify access' });
+    }
+    
+    const childIds = parentChildren ? parentChildren.map(c => c.child_id) : [];
+    const hasAccess = childIds.includes(message.senderId) || childIds.includes(message.receiverId);
     
     if (!hasAccess) {
       return res.status(403).json({ error: 'No access to this message' });
     }
     
-    if (action === 'approve') {
-      message.isModerated = true;
-      message.moderatedBy = req.user._id;
-      message.moderatedAt = new Date();
-    } else if (action === 'flag') {
-      message.flagged = true;
-      message.flaggedReason = req.body.reason || 'Flagged by parent';
-    } else if (action === 'delete') {
-      await Message.deleteOne({ _id: messageId });
+    if (action === 'delete') {
+      await supabase
+        .from('messages')
+        .delete()
+        .eq('id', messageId);
+      
       return res.json({ message: 'Message deleted' });
     }
     
+    if (action === 'approve') {
+      message.status = 'approved';
+      message.moderatedBy = req.user.id;
+      message.moderatedAt = new Date();
+    } else if (action === 'reject') {
+      message.status = 'rejected';
+      message.moderatedBy = req.user.id;
+      message.moderatedAt = new Date();
+    }
+    
     await message.save();
-    res.json({ message: 'Message moderated successfully', message });
+    
+    res.json({ 
+      message: 'Message moderated successfully',
+      message: {
+        id: message.id,
+        status: message.status,
+        moderatedBy: message.moderatedBy,
+        moderatedAt: message.moderatedAt
+      }
+    });
   } catch (error) {
-    console.error(error);
+    console.error('Error moderating message:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
 module.exports = router;
-
