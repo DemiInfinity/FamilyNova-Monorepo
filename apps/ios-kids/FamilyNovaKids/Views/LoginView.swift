@@ -12,6 +12,9 @@ struct LoginView: View {
     @State private var isLoading = false
     @State private var showError = false
     @State private var errorMessage = ""
+    @State private var showQRScanner = false
+    @State private var manualCode = ""
+    @State private var showManualCodeEntry = false
     
     var body: some View {
         ZStack {
@@ -114,6 +117,35 @@ struct LoginView: View {
                     .padding(.top, AppSpacing.xl)
                     .padding(.horizontal, AppSpacing.l)
                     .disabled(isLoading)
+                    
+                    // QR Code Login Button
+                    Button(action: { showQRScanner = true }) {
+                        HStack(spacing: AppSpacing.s) {
+                            Image(systemName: "qrcode.viewfinder")
+                                .font(.system(size: 20))
+                            Text("Scan QR Code")
+                                .font(AppFonts.button)
+                                .foregroundColor(AppColors.primaryPurple)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(Color.white)
+                        .cornerRadius(AppCornerRadius.medium)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: AppCornerRadius.medium)
+                                .stroke(AppColors.primaryPurple, lineWidth: 2)
+                        )
+                    }
+                    .padding(.top, AppSpacing.m)
+                    .padding(.horizontal, AppSpacing.l)
+                    
+                    // Manual Code Entry Button
+                    Button(action: { showManualCodeEntry = true }) {
+                        Text("Enter Code Manually")
+                            .font(AppFonts.caption)
+                            .foregroundColor(AppColors.darkGray)
+                    }
+                    .padding(.top, AppSpacing.s)
                 }
                 .padding(.bottom, AppSpacing.xxl)
             }
@@ -122,6 +154,26 @@ struct LoginView: View {
             Button("OK", role: .cancel) { }
         } message: {
             Text(errorMessage)
+        }
+        .sheet(isPresented: $showQRScanner) {
+            QRCodeScannerView(onCodeScanned: handleQRCode)
+        }
+        .alert("Enter Login Code", isPresented: $showManualCodeEntry) {
+            TextField("6-digit code", text: $manualCode)
+                .keyboardType(.numberPad)
+            Button("Cancel", role: .cancel) {
+                manualCode = ""
+            }
+            Button("Login") {
+                if manualCode.count == 6 {
+                    handleLoginCode(manualCode)
+                } else {
+                    errorMessage = "Please enter a 6-digit code"
+                    showError = true
+                }
+            }
+        } message: {
+            Text("Enter the 6-digit code from the parent app")
         }
     }
     
@@ -142,6 +194,30 @@ struct LoginView: View {
         Task {
             do {
                 try await authManager.login(email: email, password: password)
+            } catch {
+                errorMessage = error.localizedDescription
+                showError = true
+            }
+            isLoading = false
+        }
+    }
+    
+    private func handleQRCode(_ code: String) {
+        showQRScanner = false
+        handleLoginCode(code)
+    }
+    
+    private func handleLoginCode(_ code: String) {
+        guard code.count == 6 else {
+            errorMessage = "Invalid code format"
+            showError = true
+            return
+        }
+        
+        isLoading = true
+        Task {
+            do {
+                try await authManager.loginWithCode(code: code)
             } catch {
                 errorMessage = error.localizedDescription
                 showError = true

@@ -15,7 +15,7 @@ class Encryption {
         return "your-32-byte-encryption-key-here-must-match-backend"
     }()
     
-    private static let algorithm = kCCAlgorithmAES
+    private static let algorithm: CCAlgorithm = CCAlgorithm(kCCAlgorithmAES)
     private static let keySize = kCCKeySizeAES256
     private static let ivSize = kCCBlockSizeAES128
     private static let options = CCOptions(kCCOptionPKCS7Padding)
@@ -37,7 +37,7 @@ class Encryption {
         
         let cryptStatus = CCCrypt(
             CCOperation(kCCEncrypt),
-            algorithm,
+            CCAlgorithm(kCCAlgorithmAES), // Explicitly cast
             options,
             key,
             keySize,
@@ -84,7 +84,7 @@ class Encryption {
         
         let cryptStatus = CCCrypt(
             CCOperation(kCCDecrypt),
-            algorithm,
+            CCAlgorithm(kCCAlgorithmAES), // Explicitly cast
             options,
             key,
             keySize,

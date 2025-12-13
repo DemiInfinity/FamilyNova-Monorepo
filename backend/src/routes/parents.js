@@ -143,6 +143,7 @@ router.get('/children/:childId', async (req, res) => {
     res.json({
       child: {
         id: child.id,
+        email: child.email, // Include email for login information
         profile: child.profile,
         verification: child.verification,
         friends: friends,
@@ -305,6 +306,61 @@ router.get('/connections', async (req, res) => {
     
     res.json({
       connections: connectionsList
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// @route   POST /api/parents/children/:childId/login-code
+// @desc    Generate a temporary login code for child (QR code login)
+// @access  Private (Parent only)
+router.post('/children/:childId/login-code', async (req, res) => {
+  try {
+    const { childId } = req.params;
+    const { getSupabase } = require('../config/database');
+    const supabase = await getSupabase();
+    
+    // Verify child belongs to parent
+    const { data: parentChild, error: relationError } = await supabase
+      .from('parent_children')
+      .select('child_id')
+      .eq('parent_id', req.user.id)
+      .eq('child_id', childId)
+      .single();
+
+    if (relationError || !parentChild) {
+      return res.status(403).json({ error: 'Child not found or not linked to this parent' });
+    }
+    
+    // Generate a unique 6-digit code
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+    
+    // Store the login code in a temporary table (or use Redis in production)
+    // For now, we'll store it in a simple in-memory cache or database table
+    // In production, use Redis with expiration
+    
+    // Create a login_codes table entry (you'll need to add this to schema.sql)
+    const { error: codeError } = await supabase
+      .from('login_codes')
+      .insert({
+        code: code,
+        child_id: childId,
+        parent_id: req.user.id,
+        expires_at: expiresAt.toISOString(),
+        used: false
+      });
+
+    if (codeError) {
+      console.error('Error creating login code:', codeError);
+      return res.status(500).json({ error: 'Failed to generate login code' });
+    }
+    
+    res.json({
+      code: code,
+      expiresAt: expiresAt.toISOString()
     });
   } catch (error) {
     console.error(error);

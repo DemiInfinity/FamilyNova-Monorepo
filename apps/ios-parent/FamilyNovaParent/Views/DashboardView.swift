@@ -11,6 +11,8 @@ struct DashboardView: View {
     @State private var showCreateChild = false
     @State private var isLoading = false
     
+    private let cacheKey = "cached_children"
+    
     var body: some View {
         NavigationView {
             ScrollView {
@@ -55,6 +57,7 @@ struct DashboardView: View {
                         } else {
                             ForEach(children) { child in
                                 ChildCard(child: child)
+                                    .environmentObject(authManager)
                                     .padding(.horizontal, ParentAppSpacing.m)
                             }
                         }
@@ -122,7 +125,8 @@ struct DashboardView: View {
                 CreateChildAccountView()
                     .environmentObject(authManager)
                     .onDisappear {
-                        // Refresh children when the sheet is dismissed
+                        // Clear cache and refresh children when the sheet is dismissed
+                        clearCache()
                         Task {
                             await loadChildren()
                         }
@@ -141,8 +145,13 @@ struct DashboardView: View {
     
     private func loadChildren() async {
         guard let token = authManager.token else {
+            // Try to load from cache if no token
+            loadFromCache()
             return
         }
+        
+        // First, try to load from cache for instant display
+        loadFromCache()
         
         await MainActor.run {
             isLoading = true
@@ -172,15 +181,47 @@ struct DashboardView: View {
             await MainActor.run {
                 self.children = response.parent.children
                 self.isLoading = false
+                
+                // Cache the children data
+                self.saveToCache(children: response.parent.children)
             }
         } catch {
-            // If dashboard endpoint fails, try a simpler children endpoint
-            // For now, just set loading to false
+            // If API fails, keep cached data if available
             await MainActor.run {
                 self.isLoading = false
+                // If we don't have cached data and API failed, show empty
+                if self.children.isEmpty {
+                    loadFromCache()
+                }
             }
             print("Error loading children: \(error)")
         }
+    }
+    
+    private func loadFromCache() {
+        if let cachedData = UserDefaults.standard.data(forKey: cacheKey) {
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            
+            if let decoded = try? decoder.decode([Child].self, from: cachedData) {
+                DispatchQueue.main.async {
+                    self.children = decoded
+                }
+            }
+        }
+    }
+    
+    private func saveToCache(children: [Child]) {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        
+        if let encoded = try? encoder.encode(children) {
+            UserDefaults.standard.set(encoded, forKey: cacheKey)
+        }
+    }
+    
+    private func clearCache() {
+        UserDefaults.standard.removeObject(forKey: cacheKey)
     }
 }
 
@@ -205,6 +246,7 @@ struct WelcomeCard: View {
 
 struct ChildCard: View {
     let child: Child
+    @EnvironmentObject var authManager: AuthManager
     
     var body: some View {
         HStack(spacing: ParentAppSpacing.m) {
@@ -244,7 +286,8 @@ struct ChildCard: View {
             
             Spacer()
             
-            Button(action: {}) {
+            NavigationLink(destination: ChildDetailsView(child: child)
+                .environmentObject(authManager)) {
                 Text("View Details")
                     .font(ParentAppFonts.small)
                     .foregroundColor(.white)

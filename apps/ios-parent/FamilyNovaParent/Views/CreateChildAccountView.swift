@@ -325,7 +325,7 @@ struct CreateChildAccountView: View {
                     let verification: VerificationStatus
                 }
                 
-                let response: CreateChildResponse = try await apiService.makeRequest(
+                let _: CreateChildResponse = try await apiService.makeRequest(
                     endpoint: "parents/children/create",
                     method: "POST",
                     body: body,

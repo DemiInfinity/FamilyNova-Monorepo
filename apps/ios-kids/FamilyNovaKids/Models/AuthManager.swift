@@ -100,11 +100,83 @@ class AuthManager: ObservableObject {
         }
     }
     
+    func loginWithToken(childId: String, email: String, token: String) async {
+        // Store the token and mark as authenticated
+        await MainActor.run {
+            self.token = token
+            self.isAuthenticated = true
+            UserDefaults.standard.set(token, forKey: "authToken")
+            // TODO: Fetch user profile from API
+        }
+    }
+    
+    func loginWithCode(code: String) async throws {
+        let apiUrl = "https://family-nova-monorepo.vercel.app/api"
+        guard let url = URL(string: "\(apiUrl)/auth/login-code") else {
+            throw NSError(domain: "Invalid URL", code: 0)
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let body: [String: Any] = ["code": code]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NSError(domain: "Invalid response", code: 0)
+        }
+        
+        if (200...299).contains(httpResponse.statusCode) {
+            struct LoginCodeResponse: Codable {
+                let session: Session?
+                let user: UserResponse
+            }
+            
+            struct Session: Codable {
+                let access_token: String
+                let refresh_token: String
+                let expires_in: Int
+                let expires_at: Int?
+            }
+            
+            struct UserResponse: Codable {
+                let id: String
+                let email: String
+                let userType: String
+            }
+            
+            let result = try JSONDecoder().decode(LoginCodeResponse.self, from: data)
+            
+            await MainActor.run {
+                if let session = result.session {
+                    self.token = session.access_token
+                    UserDefaults.standard.set(session.refresh_token, forKey: "refreshToken")
+                } else {
+                    self.token = nil
+                }
+                self.isAuthenticated = self.token != nil
+                if let token = self.token {
+                    UserDefaults.standard.set(token, forKey: "authToken")
+                }
+            }
+        } else {
+            struct ErrorResponse: Codable {
+                let error: String
+            }
+            let errorData = try? JSONDecoder().decode(ErrorResponse.self, from: data)
+            throw NSError(domain: errorData?.error ?? "Login failed", code: httpResponse.statusCode)
+        }
+    }
+    
     func logout() {
         self.token = nil
         self.isAuthenticated = false
         self.currentUser = nil
         UserDefaults.standard.removeObject(forKey: "authToken")
+        UserDefaults.standard.removeObject(forKey: "refreshToken")
     }
 }
 

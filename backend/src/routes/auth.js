@@ -266,4 +266,76 @@ router.get('/me', auth, async (req, res) => {
   }
 });
 
+// @route   POST /api/auth/login-code
+// @desc    Login using a QR code login code
+// @access  Public
+router.post('/login-code', [
+  body('code').isLength({ min: 6, max: 6 }).isNumeric()
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    
+    const { code } = req.body;
+    const { getSupabase } = require('../config/database');
+    const supabase = await getSupabase();
+    
+    // Find the login code
+    const { data: loginCodeData, error: codeError } = await supabase
+      .from('login_codes')
+      .select('*')
+      .eq('code', code)
+      .eq('used', false)
+      .single();
+
+    if (codeError || !loginCodeData) {
+      return res.status(400).json({ error: 'Invalid or expired login code' });
+    }
+    
+    // Check if code has expired
+    const expiresAt = new Date(loginCodeData.expires_at);
+    if (expiresAt < new Date()) {
+      return res.status(400).json({ error: 'Login code has expired' });
+    }
+    
+    // Get the child user
+    const child = await User.findById(loginCodeData.child_id);
+    if (!child) {
+      return res.status(404).json({ error: 'Child account not found' });
+    }
+    
+    // Mark code as used
+    await supabase
+      .from('login_codes')
+      .update({ used: true, used_at: new Date().toISOString() })
+      .eq('id', loginCodeData.id);
+    
+    // Create a session for the child (using Supabase Auth)
+    // Note: We need to get the child's Supabase Auth user to create a session
+    // For now, we'll return a token that the client can use
+    // In production, you'd want to use Supabase's session management
+    
+    // Sign in the user using Supabase Auth
+    // Since we have the child's email, we can't directly sign them in without password
+    // We'll need to use a different approach - perhaps a temporary password reset or
+    // use Supabase's admin API to create a session
+    
+    // For now, return success with child info - client will need to handle session
+    res.json({
+      message: 'Login code validated',
+      child: {
+        id: child.id,
+        email: child.email,
+        userType: child.userType,
+        profile: child.profile
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 module.exports = router;
