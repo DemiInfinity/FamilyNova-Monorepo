@@ -10,8 +10,16 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Connect to Supabase
-connectDB();
+// Connect to Supabase (async, but don't block serverless startup)
+// In Vercel, connections are lazy-loaded per request
+if (process.env.VERCEL !== '1' && !process.env.VERCEL_ENV) {
+  connectDB();
+} else {
+  // In serverless, initialize on first request
+  connectDB().catch(err => {
+    console.error('Initial Supabase connection failed (will retry per request):', err);
+  });
+}
 
 // Serve static files from public directory
 app.use(express.static(path.join(__dirname, '../public')));
@@ -73,10 +81,14 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 FamilyNova API server running on port ${PORT}`);
-  console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
-});
+// Only start server if not in Vercel environment
+// Vercel will handle the serverless function invocation
+if (process.env.VERCEL !== '1' && !process.env.VERCEL_ENV) {
+  app.listen(PORT, () => {
+    console.log(`🚀 FamilyNova API server running on port ${PORT}`);
+    console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
+  });
+}
 
 module.exports = app;
 
