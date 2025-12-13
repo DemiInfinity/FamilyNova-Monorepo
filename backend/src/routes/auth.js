@@ -333,59 +333,29 @@ router.post('/login-code', [
     // For now, we'll return the user ID as a token and the client will need to handle it
     // In production, you'd want to use Supabase's proper session management
     
-    // Create a session using Supabase Admin API
-    // Use generateLink to create a magic link with a token
-    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
-      type: 'magiclink',
-      email: child.email,
-      options: {
-        redirectTo: 'familynovakids://login'
-      }
-    });
+    // Create a proper Supabase JWT token using the JWT secret
+    // This is the most reliable way to create a session token for code-based login
+    const jwt = require('jsonwebtoken');
     
-    let accessToken = null;
+    // Get JWT secret from environment (Supabase JWT secret, not service role key)
+    // This should be set in Supabase project settings -> API -> JWT Secret
+    const jwtSecret = process.env.SUPABASE_JWT_SECRET;
     
-    // Try to extract token from the generated link
-    if (!linkError && linkData && linkData.properties) {
-      const linkUrl = linkData.properties.action_link;
-      if (linkUrl) {
-        try {
-          // Supabase magic links have tokens in the URL
-          // Format: https://...supabase.co/auth/v1/verify?token=...&type=magiclink&redirect_to=...
-          const urlObj = new URL(linkUrl);
-          const tokenParam = urlObj.searchParams.get('token');
-          if (tokenParam) {
-            accessToken = tokenParam;
-          }
-        } catch (e) {
-          console.error('Error parsing link URL:', e);
-        }
-      }
+    if (!jwtSecret) {
+      console.error('SUPABASE_JWT_SECRET not configured. Cannot create session token for code-based login.');
+      return res.status(500).json({ error: 'Server configuration error: JWT secret not found' });
     }
     
-    // If we couldn't extract a valid token, we need to create a proper Supabase JWT
-    // The magic link token might not be a session token, so we'll create one using JWT
-    if (!accessToken) {
-      // Create a proper Supabase JWT token using the JWT secret
-      // Supabase JWT tokens require the JWT secret from the project settings
-      const jwt = require('jsonwebtoken');
-      
-      // Get JWT secret from environment (Supabase JWT secret, not service role key)
-      // This should be set in Supabase project settings -> API -> JWT Secret
-      const jwtSecret = process.env.SUPABASE_JWT_SECRET;
-      
-      if (!jwtSecret) {
-        console.error('SUPABASE_JWT_SECRET not configured. Cannot create session token for code-based login.');
-        return res.status(500).json({ error: 'Server configuration error: JWT secret not found' });
-      }
-      
-      // Create a Supabase-compatible JWT token
-      // Supabase JWT format: { aud: 'authenticated', exp: timestamp, sub: user_id, ... }
-      const now = Math.floor(Date.now() / 1000);
-      accessToken = jwt.sign(
+    // Create a Supabase-compatible JWT token
+    // Supabase JWT format: { aud: 'authenticated', exp: timestamp, sub: user_id, ... }
+    const now = Math.floor(Date.now() / 1000);
+    const expiresIn = 3600; // 1 hour
+    
+    try {
+      const accessToken = jwt.sign(
         {
           aud: 'authenticated',
-          exp: now + 3600, // 1 hour expiration
+          exp: now + expiresIn,
           iat: now,
           sub: child.id,
           email: child.email,
@@ -397,31 +367,39 @@ router.post('/login-code', [
         { algorithm: 'HS256' }
       );
       
-      console.log('Created JWT token for user:', child.id, 'Token length:', accessToken.length);
-    }
-    
-    // Validate the token was created
-    if (!accessToken) {
-      console.error('Failed to create access token for code-based login');
-      return res.status(500).json({ error: 'Failed to create session token' });
-    }
-    
-    // Update last login (removed duplicate call)
-    await User.findByIdAndUpdate(child.id, { lastLogin: new Date() });
-    
-    res.json({
-      session: {
-        access_token: accessToken,
-        refresh_token: null, // Code-based login doesn't provide refresh token
-        expires_in: 3600,
-        expires_at: Math.floor(Date.now() / 1000) + 3600
-      },
-      user: {
-        id: child.id,
-        email: child.email,
-        userType: child.userType
+      // Validate token format (should have 3 parts: header.payload.signature)
+      const tokenParts = accessToken.split('.');
+      if (tokenParts.length !== 3) {
+        console.error('Created JWT token has invalid format:', tokenParts.length, 'parts');
+        return res.status(500).json({ error: 'Failed to create valid session token' });
       }
-    });
+      
+      console.log('✅ Created JWT token for user:', child.id);
+      console.log('   Token length:', accessToken.length);
+      console.log('   Token parts:', tokenParts.length);
+      console.log('   Token preview:', accessToken.substring(0, 50) + '...');
+      
+      // Update last login
+      await User.findByIdAndUpdate(child.id, { lastLogin: new Date() });
+      
+      res.json({
+        session: {
+          access_token: accessToken,
+          refresh_token: null, // Code-based login doesn't provide refresh token
+          expires_in: expiresIn,
+          expires_at: now + expiresIn
+        },
+        user: {
+          id: child.id,
+          email: child.email,
+          userType: child.userType
+        }
+      });
+      return;
+    } catch (jwtError) {
+      console.error('Error creating JWT token:', jwtError);
+      return res.status(500).json({ error: 'Failed to create session token: ' + jwtError.message });
+    }
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Server error' });

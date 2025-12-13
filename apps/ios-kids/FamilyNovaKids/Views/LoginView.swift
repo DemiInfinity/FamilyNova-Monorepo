@@ -209,7 +209,7 @@ struct LoginView: View {
     
     private func handleLoginCode(_ code: String) {
         guard code.count == 6 else {
-            errorMessage = "Invalid code format"
+            errorMessage = "Invalid code format. Code must be 6 digits."
             showError = true
             return
         }
@@ -218,11 +218,17 @@ struct LoginView: View {
         Task {
             do {
                 try await authManager.loginWithCode(code: code)
+                await MainActor.run {
+                    isLoading = false
+                }
             } catch {
-                errorMessage = error.localizedDescription
-                showError = true
+                await MainActor.run {
+                    isLoading = false
+                    errorMessage = error.localizedDescription
+                    showError = true
+                    print("Login code error: \(error)")
+                }
             }
-            isLoading = false
         }
     }
 }

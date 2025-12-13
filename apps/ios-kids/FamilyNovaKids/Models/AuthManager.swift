@@ -182,6 +182,11 @@ class AuthManager: ObservableObject {
         }
         
         if (200...299).contains(httpResponse.statusCode) {
+            // Debug: Print raw response
+            if let responseString = String(data: data, encoding: .utf8) {
+                print("✅ Login code response received: \(responseString.prefix(200))...")
+            }
+            
             struct LoginCodeResponse: Codable {
                 let session: Session?
                 let user: UserResponse
@@ -201,34 +206,42 @@ class AuthManager: ObservableObject {
             }
             
             let result = try JSONDecoder().decode(LoginCodeResponse.self, from: data)
+            print("✅ Decoded login code response - Session exists: \(result.session != nil), User ID: \(result.user.id)")
+            
+            // Validate session exists
+            guard let session = result.session else {
+                print("⚠️ No session in login-code response")
+                throw NSError(domain: "No session", code: 0, userInfo: [NSLocalizedDescriptionKey: "No session returned from server"])
+            }
+            
+            // Trim token to remove any whitespace/newlines
+            var accessToken = session.access_token.trimmingCharacters(in: .whitespacesAndNewlines)
+            accessToken = accessToken.trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
+            
+            // Validate token format before storing
+            let parts = accessToken.split(separator: ".")
+            guard parts.count == 3 else {
+                print("⚠️ Invalid token format received from login-code - token has \(parts.count) parts (expected 3)")
+                print("Token preview: \(accessToken.prefix(50))...")
+                print("Token length: \(accessToken.count)")
+                throw NSError(domain: "Invalid token format", code: 0, userInfo: [NSLocalizedDescriptionKey: "Received invalid authentication token from server"])
+            }
             
             await MainActor.run {
-                if let session = result.session {
-                    // Trim token to remove any whitespace/newlines
-                    var accessToken = session.access_token.trimmingCharacters(in: .whitespacesAndNewlines)
-                    accessToken = accessToken.trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
-                    
-                    // Validate token format before storing
-                    let parts = accessToken.split(separator: ".")
-                    if parts.count == 3 {
-                        self.token = accessToken
-                        UserDefaults.standard.set(accessToken, forKey: "authToken")
-                        
-                        if let refreshToken = session.refresh_token, !refreshToken.isEmpty {
-                            var cleanRefreshToken = refreshToken.trimmingCharacters(in: .whitespacesAndNewlines)
-                            cleanRefreshToken = cleanRefreshToken.trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
-                            UserDefaults.standard.set(cleanRefreshToken, forKey: "refreshToken")
-                        } else {
-                            UserDefaults.standard.removeObject(forKey: "refreshToken")
-                        }
-                    } else {
-                        print("⚠️ Invalid token format received from login-code - not storing")
-                        self.token = nil
-                    }
+                self.token = accessToken
+                UserDefaults.standard.set(accessToken, forKey: "authToken")
+                print("✅ Token stored successfully. Length: \(accessToken.count), isAuthenticated will be set to true")
+                
+                if let refreshToken = session.refresh_token, !refreshToken.isEmpty {
+                    var cleanRefreshToken = refreshToken.trimmingCharacters(in: .whitespacesAndNewlines)
+                    cleanRefreshToken = cleanRefreshToken.trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
+                    UserDefaults.standard.set(cleanRefreshToken, forKey: "refreshToken")
                 } else {
-                    self.token = nil
+                    UserDefaults.standard.removeObject(forKey: "refreshToken")
                 }
-                self.isAuthenticated = self.token != nil
+                
+                self.isAuthenticated = true
+                print("✅ Authentication state updated - isAuthenticated: \(self.isAuthenticated), token exists: \(self.token != nil)")
                 
                 // Store user ID for later use
                 // Create a minimal User object with the ID from login response
