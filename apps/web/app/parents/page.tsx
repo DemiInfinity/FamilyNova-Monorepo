@@ -1,50 +1,50 @@
 'use client'
 
 import Link from 'next/link'
-import Logo from '../components/Logo'
+import Navbar from '../components/Navbar'
+import Footer from '../components/Footer'
 
 export default function ParentsPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-navy via-teal to-indigo">
-      <div className="container mx-auto px-4 py-16">
-        <div className="max-w-2xl mx-auto">
-          <Link href="/" className="text-white mb-8 inline-block">
-            ← Back to Home
-          </Link>
-          
-          <div className="bg-white rounded-2xl p-8 shadow-xl">
-            <div className="flex justify-center mb-6">
-              <Logo size="md" variant="parent" />
-            </div>
-            <h1 className="text-4xl font-bold text-navy mb-4">
-              Parent Portal
-            </h1>
-            <p className="text-gray-600 mb-8">
-              Monitor and protect your children's online experience
-            </p>
-            
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      <div className="container mx-auto px-4 py-20">
+        <div className="max-w-2xl mx-auto text-center">
+          <div className="text-6xl mb-6">📱</div>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            Parent App Available on Mobile
+          </h1>
+          <p className="text-lg text-gray-600 mb-8">
+            The FamilyNova Parent app is available on iOS and Android. Please download it from the App Store or Google Play Store.
+          </p>
+          <div className="bg-white p-8 rounded-lg border border-gray-200 mb-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Download the App</h2>
             <div className="space-y-4">
-              <input
-                type="email"
-                placeholder="Email"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent"
-              />
-              <input
-                type="password"
-                placeholder="Password"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent"
-              />
-              <button className="w-full bg-teal text-white py-3 rounded-lg font-semibold hover:bg-teal/90 transition">
-                Login
-              </button>
-              <button className="w-full border-2 border-teal text-teal py-3 rounded-lg font-semibold hover:bg-teal/10 transition">
-                Create Account
-              </button>
+              <div className="flex items-center justify-center space-x-4">
+                <div className="text-2xl">🍎</div>
+                <div>
+                  <div className="font-medium text-gray-900">iOS App</div>
+                  <div className="text-sm text-gray-500">Coming soon to App Store</div>
+                </div>
+              </div>
+              <div className="flex items-center justify-center space-x-4">
+                <div className="text-2xl">🤖</div>
+                <div>
+                  <div className="font-medium text-gray-900">Android App</div>
+                  <div className="text-sm text-gray-500">Coming soon to Google Play</div>
+                </div>
+              </div>
             </div>
           </div>
+          <Link
+            href="/"
+            className="text-blue-600 hover:text-blue-700 font-medium"
+          >
+            ← Back to Home
+          </Link>
         </div>
       </div>
+      <Footer />
     </div>
   )
 }
-

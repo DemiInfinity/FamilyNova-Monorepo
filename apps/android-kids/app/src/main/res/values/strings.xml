@@ -15,8 +15,9 @@
     
     <!-- Home Screen -->
     <string name="home_title">Home</string>
+    <string name="newsfeed_title">News</string>
     <string name="friends_title">Friends</string>
-    <string name="messages_title">Messages</string>
+    <string name="education_title">Learn</string>
     <string name="profile_title">Profile</string>
     
     <!-- Friends -->

@@ -32,13 +32,13 @@ router.post('/register', [
     const { email, password, userType, firstName, lastName, displayName } = req.body;
 
     // Check if user exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findByEmail(email);
     if (existingUser) {
       return res.status(400).json({ error: 'User already exists' });
     }
 
     // Create user
-    const user = new User({
+    const user = await User.create({
       email,
       password,
       userType,
@@ -49,14 +49,12 @@ router.post('/register', [
       }
     });
 
-    await user.save();
-
-    const token = generateToken(user._id);
+    const token = generateToken(user.id);
 
     res.status(201).json({
       token,
       user: {
-        id: user._id,
+        id: user.id,
         email: user.email,
         userType: user.userType,
         profile: user.profile,
@@ -85,7 +83,7 @@ router.post('/login', [
     const { email, password } = req.body;
 
     // Find user
-    const user = await User.findOne({ email });
+    const user = await User.findByEmail(email);
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -97,15 +95,14 @@ router.post('/login', [
     }
 
     // Update last login
-    user.lastLogin = new Date();
-    await user.save();
+    await User.findByIdAndUpdate(user.id, { lastLogin: new Date() });
 
-    const token = generateToken(user._id);
+    const token = generateToken(user.id);
 
     res.json({
       token,
       user: {
-        id: user._id,
+        id: user.id,
         email: user.email,
         userType: user.userType,
         profile: user.profile,
@@ -124,17 +121,21 @@ router.post('/login', [
 // @access  Private
 router.get('/me', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select('-password');
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Get children and friends (will need to implement these methods)
     res.json({
       user: {
-        id: user._id,
+        id: user.id,
         email: user.email,
         userType: user.userType,
         profile: user.profile,
         verification: user.verification,
-        isFullyVerified: user.isFullyVerified(),
-        children: user.children,
-        friends: user.friends
+        isFullyVerified: user.isFullyVerified()
+        // TODO: Add children and friends once relationships are implemented
       }
     });
   } catch (error) {

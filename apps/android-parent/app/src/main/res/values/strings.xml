@@ -16,7 +16,9 @@
     <string name="dashboard_title">Dashboard</string>
     <string name="children_title">My Children</string>
     <string name="monitoring_title">Monitoring</string>
-    <string name="connections_title">Parent Connections</string>
+    <string name="posts_title">Posts</string>
+    <string name="homework_title">Homework</string>
+    <string name="connections_title">Connections</string>
     <string name="settings_title">Settings</string>
     
     <!-- Children -->
@@ -36,6 +38,13 @@
     <string name="connected_parents">Connected Parents</string>
     <string name="message_parent">Message Parent</string>
     <string name="no_connections">No parent connections yet</string>
+    
+    <!-- Subscription -->
+    <string name="subscription_title">Subscription</string>
+    <string name="current_plan">Current Plan</string>
+    <string name="upgrade_to_pro">Upgrade to Pro</string>
+    <string name="manage_subscription">Manage Subscription</string>
+    <string name="cancel_subscription">Cancel Subscription</string>
     
     <!-- Common -->
     <string name="loading">Loading...</string>

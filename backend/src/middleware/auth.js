@@ -9,14 +9,19 @@ const auth = async (req, res, next) => {
       return res.status(401).json({ error: 'No token, authorization denied' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.userId).select('-password');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || process.env.SUPABASE_JWT_SECRET);
+    const user = await User.findById(decoded.userId);
     
     if (!user || !user.isActive) {
       return res.status(401).json({ error: 'User not found or inactive' });
     }
 
-    req.user = user;
+    // Remove password from user object
+    const userWithoutPassword = { ...user };
+    delete userWithoutPassword.password;
+
+    req.user = userWithoutPassword;
+    req.user._id = user.id; // For backward compatibility with existing routes
     next();
   } catch (error) {
     res.status(401).json({ error: 'Token is not valid' });

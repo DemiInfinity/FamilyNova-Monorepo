@@ -5,8 +5,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.example.familynova.fragments.HomeFragment;
+import com.example.familynova.fragments.NewsFeedFragment;
 import com.example.familynova.fragments.FriendsFragment;
-import com.example.familynova.fragments.MessagesFragment;
+import com.example.familynova.fragments.EducationFragment;
 import com.example.familynova.fragments.ProfileFragment;
 
 public class MainActivity extends AppCompatActivity {
@@ -25,10 +26,12 @@ public class MainActivity extends AppCompatActivity {
             int itemId = item.getItemId();
             if (itemId == R.id.nav_home) {
                 selectedFragment = new HomeFragment();
+            } else if (itemId == R.id.nav_newsfeed) {
+                selectedFragment = new NewsFeedFragment();
             } else if (itemId == R.id.nav_friends) {
                 selectedFragment = new FriendsFragment();
-            } else if (itemId == R.id.nav_messages) {
-                selectedFragment = new MessagesFragment();
+            } else if (itemId == R.id.nav_education) {
+                selectedFragment = new EducationFragment();
             } else if (itemId == R.id.nav_profile) {
                 selectedFragment = new ProfileFragment();
             }

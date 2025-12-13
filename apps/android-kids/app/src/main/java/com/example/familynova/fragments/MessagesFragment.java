@@ -1,5 +1,6 @@
 package com.example.familynova.fragments;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -8,37 +9,58 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.familynova.R;
-import com.google.android.material.button.MaterialButton;
-import com.google.android.material.textfield.TextInputEditText;
+import com.example.familynova.activities.ChatActivity;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MessagesFragment extends Fragment {
     
-    private RecyclerView messagesRecyclerView;
-    private TextInputEditText messageInput;
-    private MaterialButton sendButton;
+    private RecyclerView conversationsRecyclerView;
     private View emptyState;
+    private List<Conversation> conversations = new ArrayList<>();
     
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_messages, container, false);
         
-        messagesRecyclerView = view.findViewById(R.id.messagesRecyclerView);
-        messageInput = view.findViewById(R.id.messageInput);
-        sendButton = view.findViewById(R.id.sendButton);
+        conversationsRecyclerView = view.findViewById(R.id.conversationsRecyclerView);
         emptyState = view.findViewById(R.id.emptyState);
         
-        messagesRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        // TODO: Set adapter with messages data
-        
-        sendButton.setOnClickListener(v -> {
-            String message = messageInput.getText() != null ? messageInput.getText().toString().trim() : "";
-            if (!message.isEmpty()) {
-                // TODO: Send message via API
-                messageInput.setText("");
-            }
-        });
+        setupRecyclerView();
+        loadConversations();
         
         return view;
     }
+    
+    private void setupRecyclerView() {
+        conversationsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        // TODO: Set adapter with conversations
+        // When conversation clicked, open ChatActivity with friend ID
+    }
+    
+    private void loadConversations() {
+        // TODO: Load conversations from API
+        if (conversations.isEmpty()) {
+            emptyState.setVisibility(View.VISIBLE);
+            conversationsRecyclerView.setVisibility(View.GONE);
+        } else {
+            emptyState.setVisibility(View.GONE);
+            conversationsRecyclerView.setVisibility(View.VISIBLE);
+        }
+    }
+    
+    private void openChat(String friendId, String friendName) {
+        Intent intent = new Intent(getContext(), ChatActivity.class);
+        intent.putExtra("friendId", friendId);
+        intent.putExtra("friendName", friendName);
+        startActivity(intent);
+    }
+    
+    public static class Conversation {
+        public String friendId;
+        public String friendName;
+        public String lastMessage;
+        public String timestamp;
+        public boolean hasUnread;
+    }
 }
-

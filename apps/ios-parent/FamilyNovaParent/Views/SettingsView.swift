@@ -19,6 +19,13 @@ struct SettingsView: View {
                     }
                     .padding(.top, ParentAppSpacing.m)
                     
+                    // Subscription Section
+                    SettingsSection(title: "Subscription") {
+                        NavigationLink(destination: SubscriptionView().environmentObject(authManager)) {
+                            SettingsRow(icon: "star.fill", title: "Manage Subscription", action: {})
+                        }
+                    }
+                    
                     // Safety Section
                     SettingsSection(title: "Safety") {
                         SettingsRow(icon: "shield.fill", title: "Privacy Settings", action: {})

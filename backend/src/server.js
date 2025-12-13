@@ -2,13 +2,13 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
-const connectDB = require('./config/database');
+const { connectDB } = require('./config/database');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Connect to MongoDB
+// Connect to Supabase
 connectDB();
 
 // Middleware
@@ -33,6 +33,7 @@ app.use('/api/schools', require('./routes/schools'));
 app.use('/api/school-codes', require('./routes/schoolCodes'));
 app.use('/api/education', require('./routes/education'));
 app.use('/api/verification', require('./routes/verification'));
+app.use('/api/subscriptions', require('./routes/subscriptions'));
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -16,7 +16,6 @@ public class LoginActivity extends AppCompatActivity {
     private TextInputEditText emailInput;
     private TextInputEditText passwordInput;
     private MaterialButton loginButton;
-    private MaterialButton registerButton;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,7 +40,6 @@ public class LoginActivity extends AppCompatActivity {
         emailInput = findViewById(R.id.emailInput);
         passwordInput = findViewById(R.id.passwordInput);
         loginButton = findViewById(R.id.loginButton);
-        registerButton = findViewById(R.id.registerButton);
     }
     
     private void setupListeners() {
@@ -56,11 +54,6 @@ public class LoginActivity extends AppCompatActivity {
                 startActivity(new Intent(this, MainActivity.class));
                 finish();
             }
-        });
-        
-        registerButton.setOnClickListener(v -> {
-            // TODO: Navigate to registration screen
-            Toast.makeText(this, "Registration coming soon!", Toast.LENGTH_SHORT).show();
         });
     }
     

@@ -6,6 +6,8 @@ import androidx.fragment.app.Fragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.example.familynovaparent.fragments.DashboardFragment;
 import com.example.familynovaparent.fragments.MonitoringFragment;
+import com.example.familynovaparent.fragments.PostApprovalFragment;
+import com.example.familynovaparent.fragments.HomeworkFragment;
 import com.example.familynovaparent.fragments.ConnectionsFragment;
 import com.example.familynovaparent.fragments.SettingsFragment;
 
@@ -27,6 +29,10 @@ public class MainActivity extends AppCompatActivity {
                 selectedFragment = new DashboardFragment();
             } else if (itemId == R.id.nav_monitoring) {
                 selectedFragment = new MonitoringFragment();
+            } else if (itemId == R.id.nav_posts) {
+                selectedFragment = new PostApprovalFragment();
+            } else if (itemId == R.id.nav_homework) {
+                selectedFragment = new HomeworkFragment();
             } else if (itemId == R.id.nav_connections) {
                 selectedFragment = new ConnectionsFragment();
             } else if (itemId == R.id.nav_settings) {
@@ -46,6 +52,14 @@ public class MainActivity extends AppCompatActivity {
         if (savedInstanceState == null) {
             bottomNavigation.setSelectedItemId(R.id.nav_dashboard);
         }
+    }
+    
+    // Helper method to replace fragment (used by SettingsFragment)
+    public void replaceFragment(Fragment fragment) {
+        getSupportFragmentManager().beginTransaction()
+            .replace(R.id.fragmentContainer, fragment)
+            .addToBackStack(null)
+            .commit();
     }
 }
 

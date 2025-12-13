@@ -9,6 +9,14 @@
         android:icon="@android:drawable/ic_menu_myplaces"
         android:title="@string/monitoring_title" />
     <item
+        android:id="@+id/nav_posts"
+        android:icon="@android:drawable/ic_menu_agenda"
+        android:title="@string/posts_title" />
+    <item
+        android:id="@+id/nav_homework"
+        android:icon="@android:drawable/ic_menu_edit"
+        android:title="@string/homework_title" />
+    <item
         android:id="@+id/nav_connections"
         android:icon="@android:drawable/ic_menu_myplaces"
         android:title="@string/connections_title" />

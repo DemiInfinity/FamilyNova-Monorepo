@@ -8,61 +8,49 @@
     tools:context=".fragments.MessagesFragment">
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/messagesRecyclerView"
+        android:id="@+id/conversationsRecyclerView"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toTopOf="@id/messageInputLayout"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:listitem="@layout/item_message" />
-
-    <!-- Empty State -->
-    <TextView
-        android:id="@+id/emptyState"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/no_messages"
-        android:textColor="@color/dark_gray"
-        android:textSize="16sp"
-        android:visibility="gone"
+        android:padding="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Message Input -->
     <LinearLayout
-        android:id="@+id/messageInputLayout"
-        android:layout_width="0dp"
+        android:id="@+id/emptyState"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@color/white"
-        android:orientation="horizontal"
-        android:padding="8dp"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="32dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/messageInput"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:layout_weight="1"
-            android:hint="@string/type_message"
-            android:inputType="textMultiLine"
-            android:maxLines="3"
-            android:minHeight="48dp"
-            android:textSize="14sp" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/sendButton"
+        <TextView
             android:layout_width="wrap_content"
-            android:layout_height="48dp"
-            android:text="@string/send"
-            android:textSize="14sp"
-            app:cornerRadius="24dp" />
+            android:layout_height="wrap_content"
+            android:text="💬"
+            android:textSize="64sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="No conversations yet"
+            android:textColor="@color/dark_gray"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Start chatting with your friends!"
+            android:textColor="@color/dark_gray"
+            android:textSize="14sp" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
-
