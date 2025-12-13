@@ -381,10 +381,12 @@ router.post('/login-code', [
       
       // Create a Supabase-compatible JWT token
       // Supabase JWT format: { aud: 'authenticated', exp: timestamp, sub: user_id, ... }
+      const now = Math.floor(Date.now() / 1000);
       accessToken = jwt.sign(
         {
           aud: 'authenticated',
-          exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour expiration
+          exp: now + 3600, // 1 hour expiration
+          iat: now,
           sub: child.id,
           email: child.email,
           role: 'authenticated',
@@ -394,6 +396,14 @@ router.post('/login-code', [
         jwtSecret,
         { algorithm: 'HS256' }
       );
+      
+      console.log('Created JWT token for user:', child.id, 'Token length:', accessToken.length);
+    }
+    
+    // Validate the token was created
+    if (!accessToken) {
+      console.error('Failed to create access token for code-based login');
+      return res.status(500).json({ error: 'Failed to create session token' });
     }
     
     // Update last login (removed duplicate call)
