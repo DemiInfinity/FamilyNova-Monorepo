@@ -13,12 +13,14 @@ struct FamilyNovaKidsApp: App {
     
     var body: some Scene {
         WindowGroup {
-            if authManager.isAuthenticated {
-                MainTabView()
-                    .environmentObject(authManager)
-            } else {
-                LoginView()
-                    .environmentObject(authManager)
+            Group {
+                if authManager.isAuthenticated {
+                    MainTabView()
+                        .environmentObject(authManager)
+                } else {
+                    LoginView()
+                        .environmentObject(authManager)
+                }
             }
             .onOpenURL { url in
                 handleURL(url)
