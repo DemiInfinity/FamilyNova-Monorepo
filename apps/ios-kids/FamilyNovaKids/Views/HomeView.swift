@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct HomeView: View {
     @EnvironmentObject var authManager: AuthManager
@@ -16,6 +17,7 @@ struct HomeView: View {
     @State private var showCreatePost = false
     @State private var showPhotoPost = false
     @State private var showImageSourcePicker = false
+    @State private var photoPostSourceType: UIImagePickerController.SourceType? = nil
     
     var body: some View {
         NavigationView {
@@ -149,12 +151,29 @@ struct HomeView: View {
                 
                 // Camera button in the middle
                 ToolbarItem(placement: .principal) {
-                    Button(action: { showImageSourcePicker = true }) {
+                    Button(action: { 
+                        showImageSourcePicker = true 
+                    }) {
                         Image(systemName: "camera.fill")
                             .font(.system(size: 22))
                             .foregroundColor(AppColors.primaryBlue)
                     }
                 }
+            }
+            .confirmationDialog("Add Photo", isPresented: $showImageSourcePicker, titleVisibility: .visible) {
+                if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                    Button("Take Photo") {
+                        photoPostSourceType = .camera
+                        showPhotoPost = true
+                    }
+                }
+                Button("Choose from Library") {
+                    photoPostSourceType = .photoLibrary
+                    showPhotoPost = true
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("Select a photo to share with your friends")
             }
             .sheet(isPresented: $showProfile) {
                 ProfileView()
@@ -174,6 +193,20 @@ struct HomeView: View {
             }) {
                 CreatePostView()
                     .environmentObject(authManager)
+            }
+            .sheet(isPresented: $showPhotoPost) {
+                PhotoPostView(
+                    initialSourceType: photoPostSourceType,
+                    onPostCreated: {
+                        // Refresh posts after photo post is created
+                        Task {
+                            await loadPostsAsync()
+                        }
+                        // Reset source type
+                        photoPostSourceType = nil
+                    }
+                )
+                .environmentObject(authManager)
             }
             .onAppear {
                 loadPosts()

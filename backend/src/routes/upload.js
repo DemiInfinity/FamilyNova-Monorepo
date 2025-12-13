@@ -3,6 +3,7 @@ const multer = require('multer');
 const { auth, requireUserType } = require('../middleware/auth');
 const User = require('../models/User');
 const { getSupabase } = require('../config/database');
+const { ensureStorageBucket } = require('../utils/storage');
 
 const router = express.Router();
 
@@ -97,6 +98,16 @@ router.post('/banner', requireUserType('kid'), upload.single('image'), async (re
     const supabase = await getSupabase();
     const userId = req.user.id;
     
+    // Ensure storage bucket exists
+    const bucketCheck = await ensureStorageBucket();
+    if (!bucketCheck.success) {
+      console.error('Storage bucket check failed:', bucketCheck.error);
+      return res.status(500).json({ 
+        error: 'Storage bucket not available. Please contact support or create the bucket manually in Supabase Dashboard.',
+        details: 'Bucket name: user-profiles'
+      });
+    }
+    
     // Generate unique filename: userId/banner-timestamp.jpg
     const timestamp = Date.now();
     const fileExtension = req.file.originalname.split('.').pop() || 'jpg';
@@ -156,6 +167,26 @@ router.post('/post-image', requireUserType('kid'), upload.single('image'), async
 
     const supabase = await getSupabase();
     const userId = req.user.id;
+    
+    // Ensure storage bucket exists
+    const bucketCheck = await ensureStorageBucket();
+    if (!bucketCheck.success) {
+      console.error('Storage bucket check failed:', bucketCheck.error);
+      return res.status(500).json({ 
+        error: 'Storage bucket not available. Please contact support or create the bucket manually in Supabase Dashboard.',
+        details: 'Bucket name: user-profiles'
+      });
+    }
+    
+    // Ensure storage bucket exists
+    const bucketCheck = await ensureStorageBucket();
+    if (!bucketCheck.success) {
+      console.error('Storage bucket check failed:', bucketCheck.error);
+      return res.status(500).json({ 
+        error: 'Storage bucket not available. Please contact support or create the bucket manually in Supabase Dashboard.',
+        details: 'Bucket name: user-profiles'
+      });
+    }
     
     // Generate unique filename: userId/posts/post-timestamp.jpg
     const timestamp = Date.now();

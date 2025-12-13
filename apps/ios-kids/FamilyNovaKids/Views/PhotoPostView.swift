@@ -18,8 +18,15 @@ struct PhotoPostView: View {
     @State private var uploadedImageUrl: String? = nil
     @State private var imagePickerSourceType: UIImagePickerController.SourceType = .photoLibrary
     @State private var showImageSourceActionSheet = false
+    @State private var shouldShowImagePickerOnAppear = false
     
+    let initialSourceType: UIImagePickerController.SourceType?
     let onPostCreated: () -> Void
+    
+    init(initialSourceType: UIImagePickerController.SourceType? = nil, onPostCreated: @escaping () -> Void) {
+        self.initialSourceType = initialSourceType
+        self.onPostCreated = onPostCreated
+    }
     
     var body: some View {
         NavigationView {
@@ -200,6 +207,29 @@ struct PhotoPostView: View {
                     }
                     .font(AppFonts.button)
                     .foregroundColor(AppColors.primaryBlue)
+                }
+            }
+            .onAppear {
+                // If a source type was provided from HomeView, use it directly
+                if let sourceType = initialSourceType {
+                    imagePickerSourceType = sourceType
+                    // Check if the source type is available
+                    if UIImagePickerController.isSourceTypeAvailable(sourceType) {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            showImagePicker = true
+                        }
+                    } else {
+                        // Fallback to photo library if camera is not available
+                        imagePickerSourceType = .photoLibrary
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            showImagePicker = true
+                        }
+                    }
+                } else if selectedImage == nil {
+                    // Show image source picker when view first appears if no image is selected and no source type provided
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        showImageSourceActionSheet = true
+                    }
                 }
             }
             .confirmationDialog("Select Photo", isPresented: $showImageSourceActionSheet, titleVisibility: .visible) {

@@ -5,6 +5,7 @@ const morgan = require('morgan');
 const path = require('path');
 const { connectDB } = require('./config/database');
 const { decryptMiddleware } = require('./utils/encryption');
+const { initializeStorage } = require('./utils/storage');
 require('dotenv').config();
 
 const app = express();
@@ -13,7 +14,12 @@ const PORT = process.env.PORT || 3000;
 // Connect to Supabase (async, but don't block serverless startup)
 // In Vercel, connections are lazy-loaded per request
 if (process.env.VERCEL !== '1' && !process.env.VERCEL_ENV) {
-  connectDB();
+  connectDB().then(() => {
+    // Initialize storage bucket after DB connection
+    initializeStorage().catch(err => {
+      console.warn('Storage initialization failed:', err.message);
+    });
+  });
 } else {
   // In serverless, initialize on first request
   connectDB().catch(err => {
