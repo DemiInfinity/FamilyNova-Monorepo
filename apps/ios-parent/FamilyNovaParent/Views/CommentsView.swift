@@ -376,7 +376,7 @@ struct CommentsView: View {
                 )
                 
                 print("[CommentsView] ✅ Comment posted successfully!")
-                let authorName = response.comment.author.profile?.displayName ?? "Unknown"
+                let authorName = response.comment.author.profile.displayName ?? "Unknown"
                 print("[CommentsView] 📋 Response: ID=\(response.comment.id), Author=\(authorName), CreatedAt=\(response.comment.createdAt)")
                 
                 // Add the new comment optimistically to the UI immediately
@@ -386,7 +386,7 @@ struct CommentsView: View {
                 
                 let newCommentObj = Comment(
                     id: UUID(uuidString: response.comment.id) ?? UUID(),
-                    author: response.comment.author.profile?.displayName ?? "You",
+                    author: response.comment.author.profile.displayName ?? "You",
                     content: response.comment.content,
                     createdAt: createdAt
                 )
