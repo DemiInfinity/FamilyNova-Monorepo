@@ -20,7 +20,8 @@ class RealTimeService: ObservableObject {
     private var mentionsTimer: Timer?
     private var childReportsTimer: Timer?
     
-    private let pollingInterval: TimeInterval = 2.0 // Poll every 2 seconds for real-time feel
+    private let pollingInterval: TimeInterval = 2.0 // Poll every 2 seconds for messages (real-time)
+    private let friendRequestPollingInterval: TimeInterval = 30.0 // Poll every 30 seconds for friend requests (less frequent)
     
     private init() {}
     
@@ -167,13 +168,21 @@ class RealTimeService: ObservableObject {
     }
     
     // MARK: - Friend Request Polling
+    // Note: This uses polling as a fallback. Ideally, use Supabase real-time subscriptions or push notifications
     func startPollingFriendRequests(userId: String, token: String) {
         friendRequestTimer?.invalidate()
         
-        friendRequestTimer = Timer.scheduledTimer(withTimeInterval: pollingInterval * 2, repeats: true) { [weak self] _ in
+        // Poll less frequently (every 30 seconds) since friend requests are less time-sensitive
+        // In production, this should be replaced with Supabase real-time subscriptions or push notifications
+        friendRequestTimer = Timer.scheduledTimer(withTimeInterval: friendRequestPollingInterval, repeats: true) { [weak self] _ in
             Task {
                 await self?.checkForFriendRequests(userId: userId, token: token)
             }
+        }
+        
+        // Also check immediately when starting
+        Task {
+            await checkForFriendRequests(userId: userId, token: token)
         }
     }
     
