@@ -180,6 +180,7 @@ struct FeedView: View {
                     
                     return Post(
                         id: UUID(uuidString: postResponse.id) ?? UUID(),
+                        authorId: postResponse.author.id,
                         author: postResponse.author.profile.displayName ?? "Unknown",
                         authorAvatar: postResponse.author.profile.avatar,
                         content: postResponse.content,
@@ -219,6 +220,7 @@ struct FeedView: View {
 
 struct Post: Identifiable {
     let id: UUID
+    let authorId: String
     let author: String
     let authorAvatar: String?
     let content: String
@@ -401,8 +403,13 @@ struct PostCard: View {
             // Refresh comments count when sheet is dismissed
             refreshCommentsCount()
         }) {
-            CommentsView(postId: post.id, postAuthor: post.author, postContent: post.content)
-                .environmentObject(authManager)
+            CommentsView(
+                postId: post.id,
+                postAuthor: post.author,
+                postContent: post.content,
+                postAuthorId: post.authorId
+            )
+            .environmentObject(authManager)
         }
         .alert("Delete Post", isPresented: $showDeleteConfirmation) {
             Button("Cancel", role: .cancel) { }

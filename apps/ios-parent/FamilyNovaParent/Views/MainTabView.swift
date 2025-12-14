@@ -8,6 +8,7 @@ import SwiftUI
 
 struct MainTabView: View {
     @State private var selectedTab = 0
+    @State private var toastNotification: ToastNotificationData?
     @EnvironmentObject var authManager: AuthManager
     
     var body: some View {
@@ -53,6 +54,7 @@ struct MainTabView: View {
                 .tag(4)
         }
         .accentColor(CosmicColors.nebulaPurple)
+        .toastNotification($toastNotification)
         .onAppear {
             // Cosmic theme for tab bar
             let appearance = UITabBarAppearance()
@@ -62,6 +64,38 @@ struct MainTabView: View {
             
             UITabBar.appearance().standardAppearance = appearance
             UITabBar.appearance().scrollEdgeAppearance = appearance
+            
+            // Listen for toast notifications
+            NotificationCenter.default.addObserver(
+                forName: NSNotification.Name("ShowToastNotification"),
+                object: nil,
+                queue: .main
+            ) { notification in
+                if let userInfo = notification.userInfo,
+                   let title = userInfo["title"] as? String,
+                   let message = userInfo["message"] as? String,
+                   let icon = userInfo["icon"] as? String {
+                    
+                    let color: Color
+                    if let type = userInfo["type"] as? String, type == "message" {
+                        color = CosmicColors.nebulaBlue
+                    } else {
+                        color = CosmicColors.nebulaPurple
+                    }
+                    
+                    toastNotification = ToastNotificationData(
+                        title: title,
+                        message: message,
+                        icon: icon,
+                        color: color
+                    )
+                    
+                    // Auto-dismiss after 3 seconds
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                        toastNotification = nil
+                    }
+                }
+            }
         }
     }
 }

@@ -143,12 +143,33 @@ struct SplashScreenView: View {
                 let profile: ProfileData
                 let postsCount: Int?
                 let friendsCount: Int?
+                let children: [ChildData]?
             }
             
             struct ProfileData: Codable {
                 let displayName: String?
+                let firstName: String?
+                let lastName: String?
                 let avatar: String?
                 let banner: String?
+            }
+            
+            struct ChildData: Codable {
+                let id: String
+                let profile: ChildProfileData
+                let verification: VerificationData
+            }
+            
+            struct ChildProfileData: Codable {
+                let displayName: String
+                let avatar: String?
+                let school: String?
+                let grade: String?
+            }
+            
+            struct VerificationData: Codable {
+                let parentVerified: Bool
+                let schoolVerified: Bool
             }
             
             let response: ProfileResponse = try await apiService.makeRequest(
@@ -170,6 +191,42 @@ struct SplashScreenView: View {
             DataManager.shared.cacheProfile(cachedProfile, userId: response.user.id)
             // Store user ID for cache key lookups
             UserDefaults.standard.set(response.user.id, forKey: "current_user_id")
+            
+            // Set currentUser in AuthManager
+            await MainActor.run {
+                // Parse children if available
+                let children: [Child] = (response.user.children ?? []).map { childData in
+                    Child(
+                        id: childData.id,
+                        profile: ChildProfile(
+                            displayName: childData.profile.displayName,
+                            avatar: childData.profile.avatar,
+                            school: childData.profile.school,
+                            grade: childData.profile.grade
+                        ),
+                        verification: VerificationStatus(
+                            parentVerified: childData.verification.parentVerified,
+                            schoolVerified: childData.verification.schoolVerified
+                        ),
+                        lastLogin: nil
+                    )
+                }
+                
+                authManager.currentUser = ParentUser(
+                    id: response.user.id,
+                    email: response.user.email,
+                    profile: ParentProfile(
+                        firstName: response.user.profile.firstName ?? response.user.profile.displayName?.components(separatedBy: " ").first ?? "",
+                        lastName: response.user.profile.lastName ?? response.user.profile.displayName?.components(separatedBy: " ").last ?? "",
+                        displayName: response.user.profile.displayName ?? "Unknown",
+                        avatar: response.user.profile.avatar
+                    ),
+                    children: children,
+                    parentConnections: []
+                )
+                
+                print("[SplashScreen] Set currentUser with ID: \(response.user.id), children: \(children.count)")
+            }
         } catch {
             print("[SplashScreen] Error loading profile: \(error)")
         }

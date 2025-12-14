@@ -346,6 +346,7 @@ struct ProfileView: View {
                         
                         return Post(
                             id: UUID(uuidString: postResponse.id) ?? UUID(),
+                            authorId: postResponse.author.id,
                             author: postResponse.author.profile.displayName ?? "Unknown",
                             authorAvatar: postResponse.author.profile.avatar,
                             content: postResponse.content,

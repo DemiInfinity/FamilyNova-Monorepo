@@ -68,10 +68,30 @@ struct NotificationsView: View {
     
     private func loadNotifications() {
         isLoading = true
-        // TODO: Load notifications from API
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            notifications = []
-            isLoading = false
+        
+        // Load from saved notifications
+        let savedNotifications = NotificationManager.shared.getSavedNotifications()
+        
+        notifications = savedNotifications.map { saved in
+            NotificationItem(
+                id: saved.id,
+                type: mapNotificationType(saved.type),
+                title: saved.title,
+                message: saved.message,
+                timestamp: saved.timestamp,
+                isRead: saved.isRead
+            )
+        }
+        
+        isLoading = false
+    }
+    
+    private func mapNotificationType(_ type: NotificationManager.NotificationType) -> NotificationItem.NotificationType {
+        switch type {
+        case .message: return .comment // Using comment icon for messages
+        case .friendRequest: return .friendRequest
+        case .mention: return .mention
+        case .system: return .system
         }
     }
 }
@@ -82,7 +102,7 @@ struct NotificationItem: Identifiable {
     let title: String
     let message: String
     let timestamp: Date
-    let isRead: Bool
+    var isRead: Bool
     
     enum NotificationType {
         case friendRequest
@@ -140,7 +160,7 @@ struct NotificationRow: View {
         switch type {
         case .friendRequest: return "person.badge.plus"
         case .postLike: return "heart.fill"
-        case .comment: return "bubble.left.fill"
+        case .comment: return "message.fill" // Use message icon for message notifications
         case .mention: return "at"
         case .system: return "bell.fill"
         }

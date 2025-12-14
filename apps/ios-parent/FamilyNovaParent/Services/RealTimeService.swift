@@ -30,8 +30,9 @@ class RealTimeService: ObservableObject {
         stopPollingMessages(for: conversationId)
         
         let timer = Timer.scheduledTimer(withTimeInterval: pollingInterval, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
             Task {
-                await self?.checkForNewMessages(conversationId: conversationId, userId: userId, friendId: friendId, token: token)
+                await self.checkForNewMessages(conversationId: conversationId, userId: userId, friendId: friendId, token: token)
             }
         }
         
@@ -129,6 +130,20 @@ class RealTimeService: ObservableObject {
                     }
                     DataManager.shared.cacheMessages(updatedMessages, userId: userId)
                     
+                    // Trigger notification for messages from friend (before MainActor.run)
+                    let messagesFromFriend = trulyNewMessages.filter { $0.senderId.lowercased() == friendId.lowercased() }
+                    var friendName = "Friend"
+                    if !messagesFromFriend.isEmpty {
+                        // Fetch friend name from cache or API
+                        friendName = await getFriendName(friendId: friendId, token: token) ?? "Friend"
+                        
+                        NotificationManager.shared.scheduleMessageNotification(
+                            from: friendName,
+                            content: messagesFromFriend.first?.content ?? "New message",
+                            friendId: friendId
+                        )
+                    }
+                    
                     // Notify about new messages and trigger view update
                     await MainActor.run {
                         // Create a new dictionary to trigger onChange
@@ -143,15 +158,6 @@ class RealTimeService: ObservableObject {
                             object: nil,
                             userInfo: ["conversationId": conversationId]
                         )
-                        
-                        // Trigger notification for messages from friend
-                        let messagesFromFriend = trulyNewMessages.filter { $0.senderId.lowercased() == friendId.lowercased() }
-                        if !messagesFromFriend.isEmpty {
-                            NotificationManager.shared.scheduleMessageNotification(
-                                from: "Friend",
-                                content: messagesFromFriend.first?.content ?? "New message"
-                            )
-                        }
                     }
                 }
             }
@@ -292,6 +298,47 @@ class RealTimeService: ObservableObject {
         stopPollingFriendRequests()
         stopPollingMentions()
         stopPollingChildReports()
+    }
+    
+    // MARK: - Helper Functions
+    private func getFriendName(friendId: String, token: String) async -> String? {
+        // First try to get from cached friends
+        if let cachedFriends = DataManager.shared.getCachedFriends(),
+           let friend = cachedFriends.first(where: { $0.id.lowercased() == friendId.lowercased() }) {
+            return friend.displayName
+        }
+        
+        // If not in cache, try to fetch from API
+        do {
+            let apiService = ApiService.shared
+            
+            struct FriendResponse: Codable {
+                let friends: [FriendData]
+            }
+            
+            struct FriendData: Codable {
+                let id: String
+                let profile: FriendProfile
+            }
+            
+            struct FriendProfile: Codable {
+                let displayName: String?
+            }
+            
+            let response: FriendResponse = try await apiService.makeRequest(
+                endpoint: "friends",
+                method: "GET",
+                token: token
+            )
+            
+            if let friend = response.friends.first(where: { $0.id.lowercased() == friendId.lowercased() }) {
+                return friend.profile.displayName ?? "Friend"
+            }
+        } catch {
+            print("[RealTimeService] Error fetching friend name: \(error)")
+        }
+        
+        return nil
     }
 }
 

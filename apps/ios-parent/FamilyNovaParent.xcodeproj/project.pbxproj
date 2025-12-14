@@ -55,6 +55,7 @@
 		B8B3AAAD5EC87D7ED72E7673 /* HomeworkView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2477775C97DAFC2A27119BEE /* HomeworkView.swift */; };
 		BB441D50DE5080D990326E0F /* ActivityReportsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27DA4A81B3C59C9665CFF8D1 /* ActivityReportsView.swift */; };
 		C0B2A340774B1D8D767F0D0F /* HomeFeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90D315FD0E49B6DEF1202E77 /* HomeFeedView.swift */; };
+		C159A49CCAA365472BBD630E /* ToastNotification.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27968F36D35051D43C19EE63 /* ToastNotification.swift */; };
 		C8AFA3888CE7D23F8F4A208B /* RegisterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFC2DCE579D198E7C0AAEA02 /* RegisterView.swift */; };
 		CACAA0C61A2F7AF13B5032BB /* QRCodeGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34813A3D32E39C23E8056F98 /* QRCodeGenerator.swift */; };
 		DDCFD8619CD87B6F127C906F /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90B12BDBCE5FB3505F4DFF86 /* DashboardView.swift */; };
@@ -67,6 +68,7 @@
 		1AA4891E0465C5EA4C7A4EB0 /* ShowMyFriendCodeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowMyFriendCodeView.swift; sourceTree = "<group>"; };
 		1FDB135486912D9735B22569 /* ConnectionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionsView.swift; sourceTree = "<group>"; };
 		2477775C97DAFC2A27119BEE /* HomeworkView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeworkView.swift; sourceTree = "<group>"; };
+		27968F36D35051D43C19EE63 /* ToastNotification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastNotification.swift; sourceTree = "<group>"; };
 		27DA4A81B3C59C9665CFF8D1 /* ActivityReportsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityReportsView.swift; sourceTree = "<group>"; };
 		2B9CEA9A6117E2207D17A720 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		2E139914E755FEAA3736F68E /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
@@ -232,6 +234,7 @@
 				2E139914E755FEAA3736F68E /* DesignSystem.swift */,
 				A29D9B6230D3B4E6EE9BF850 /* Encryption.swift */,
 				34813A3D32E39C23E8056F98 /* QRCodeGenerator.swift */,
+				27968F36D35051D43C19EE63 /* ToastNotification.swift */,
 			);
 			path = Utils;
 			sourceTree = "<group>";
@@ -351,6 +354,7 @@
 				B063305195AF329434678669 /* Subscription.swift in Sources */,
 				8A87C5738C31ABFC2A80B860 /* SubscriptionService.swift in Sources */,
 				A9FBF997D169FD6A77A5A5E4 /* SubscriptionView.swift in Sources */,
+				C159A49CCAA365472BBD630E /* ToastNotification.swift in Sources */,
 				A3ED1D8AB2189396891393D9 /* UnifiedCreatePostView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

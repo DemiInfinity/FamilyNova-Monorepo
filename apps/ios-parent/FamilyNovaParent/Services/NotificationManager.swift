@@ -25,14 +25,20 @@ class NotificationManager {
         }
     }
     
-    func scheduleMessageNotification(from senderName: String, content: String) {
+    func scheduleMessageNotification(from senderName: String, content: String, friendId: String? = nil) {
+        // Always schedule system notification (works in background and foreground)
         let notificationContent = UNMutableNotificationContent()
         notificationContent.title = "New message from \(senderName)"
         notificationContent.body = content
         notificationContent.sound = .default
         notificationContent.badge = NSNumber(value: (UIApplication.shared.applicationIconBadgeNumber + 1))
         notificationContent.categoryIdentifier = "MESSAGE"
-        notificationContent.userInfo = ["type": "message", "sender": senderName]
+        notificationContent.userInfo = [
+            "type": "message",
+            "sender": senderName,
+            "friendId": friendId ?? "",
+            "content": content
+        ]
         
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 0.1, repeats: false)
         let request = UNNotificationRequest(
@@ -44,8 +50,83 @@ class NotificationManager {
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
                 print("[NotificationManager] Error scheduling notification: \(error)")
+            } else {
+                print("[NotificationManager] Scheduled message notification from \(senderName)")
             }
         }
+        
+        // Save to notification history
+        saveNotification(
+            type: .message,
+            title: "New message from \(senderName)",
+            message: content,
+            metadata: ["friendId": friendId ?? "", "sender": senderName]
+        )
+        
+        // Post notification for toast (if app is in foreground)
+        NotificationCenter.default.post(
+            name: NSNotification.Name("ShowToastNotification"),
+            object: nil,
+            userInfo: [
+                "title": "New message from \(senderName)",
+                "message": content,
+                "icon": "message.fill",
+                "type": "message"
+            ]
+        )
+    }
+    
+    private func saveNotification(type: NotificationType, title: String, message: String, metadata: [String: String] = [:]) {
+        let notification = SavedNotification(
+            id: UUID(),
+            type: type,
+            title: title,
+            message: message,
+            timestamp: Date(),
+            isRead: false,
+            metadata: metadata
+        )
+        
+        var notifications = getSavedNotifications()
+        notifications.insert(notification, at: 0) // Add to beginning
+        
+        // Keep only last 100 notifications
+        if notifications.count > 100 {
+            notifications = Array(notifications.prefix(100))
+        }
+        
+        // Save to UserDefaults
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        if let encoded = try? encoder.encode(notifications) {
+            UserDefaults.standard.set(encoded, forKey: "saved_notifications")
+        }
+    }
+    
+    func getSavedNotifications() -> [SavedNotification] {
+        guard let data = UserDefaults.standard.data(forKey: "saved_notifications") else {
+            return []
+        }
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        guard let notifications = try? decoder.decode([SavedNotification].self, from: data) else {
+            return []
+        }
+        return notifications
+    }
+    
+    func markNotificationAsRead(_ id: UUID) {
+        var notifications = getSavedNotifications()
+        if let index = notifications.firstIndex(where: { $0.id == id }) {
+            notifications[index].isRead = true
+            if let encoded = try? JSONEncoder().encode(notifications) {
+                UserDefaults.standard.set(encoded, forKey: "saved_notifications")
+            }
+        }
+    }
+    
+    func clearAllNotifications() {
+        UserDefaults.standard.removeObject(forKey: "saved_notifications")
     }
     
     func scheduleFriendRequestNotification(from userName: String) {
@@ -137,5 +218,22 @@ class NotificationManager {
             }
         }
     }
+    
+    enum NotificationType: String, Codable {
+        case message
+        case friendRequest
+        case mention
+        case system
+    }
+}
+
+struct SavedNotification: Identifiable, Codable {
+    let id: UUID
+    let type: NotificationManager.NotificationType
+    let title: String
+    let message: String
+    let timestamp: Date
+    var isRead: Bool
+    let metadata: [String: String]
 }
 

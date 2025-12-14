@@ -127,11 +127,29 @@ router.get('/', async (req, res) => {
       const postIds = userPostsData ? userPostsData.map(p => p.id) : [];
       
       // Fetch comments and reactions for these posts
-      const { data: commentsData } = await supabase
+      const { data: commentsData, error: commentsError } = await supabase
         .from('comments')
         .select('*')
         .in('post_id', postIds)
         .order('created_at', { ascending: true });
+      
+      // Get author IDs for comments
+      const commentAuthorIds = commentsData ? [...new Set(commentsData.map(c => c.author_id))] : [];
+      
+      // Fetch comment authors with profiles
+      const { data: commentAuthorsData, error: commentAuthorsError } = commentAuthorIds.length > 0
+        ? await supabase
+            .from('users')
+            .select('id, profile')
+            .in('id', commentAuthorIds)
+        : { data: [], error: null };
+      
+      const commentAuthorsMap = new Map();
+      if (!commentAuthorsError && commentAuthorsData) {
+        commentAuthorsData.forEach(author => {
+          commentAuthorsMap.set(author.id, author);
+        });
+      }
       
       const { data: reactionsData } = await supabase
         .from('reactions')
@@ -140,16 +158,28 @@ router.get('/', async (req, res) => {
       
       // Group comments and reactions by post
       const commentsByPost = new Map();
-      if (commentsData) {
+      if (!commentsError && commentsData) {
         for (const comment of commentsData) {
           if (!commentsByPost.has(comment.post_id)) {
             commentsByPost.set(comment.post_id, []);
           }
+          const commentAuthor = commentAuthorsMap.get(comment.author_id);
+          const commentAuthorProfile = commentAuthor?.profile || {};
+          // Format createdAt as ISO8601 string
+          const commentCreatedAt = comment.created_at instanceof Date
+            ? comment.created_at.toISOString()
+            : (comment.created_at || new Date().toISOString());
+          
           commentsByPost.get(comment.post_id).push({
             id: comment.id,
             content: comment.content,
-            author: { id: comment.author_id },
-            createdAt: comment.created_at instanceof Date ? comment.created_at.toISOString() : comment.created_at
+            author: {
+              id: comment.author_id,
+              profile: {
+                displayName: commentAuthorProfile.displayName || 'Unknown'
+              }
+            },
+            createdAt: commentCreatedAt
           });
         }
       }
