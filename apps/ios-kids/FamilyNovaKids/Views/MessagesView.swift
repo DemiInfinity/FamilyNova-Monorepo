@@ -6,10 +6,15 @@
 import SwiftUI
 
 struct MessagesView: View {
+    let initialFriend: Friend?
     @State private var conversations: [Conversation] = []
     @State private var selectedFriend: Friend?
     @State private var showFriendPicker = false
     @State private var isLoading = false
+    
+    init(initialFriend: Friend? = nil) {
+        self.initialFriend = initialFriend
+    }
     
     var body: some View {
         NavigationView {
@@ -24,6 +29,8 @@ struct MessagesView: View {
                 
                 if let selectedFriend = selectedFriend {
                     ChatView(friend: selectedFriend)
+                } else if let initialFriend = initialFriend {
+                    ChatView(friend: initialFriend)
                 } else {
                     VStack(spacing: AppSpacing.l) {
                         if conversations.isEmpty {
@@ -76,11 +83,11 @@ struct MessagesView: View {
                     }
                 }
             }
-            .navigationTitle(selectedFriend == nil ? "Messages" : selectedFriend?.displayName ?? "Chat")
+            .navigationTitle((selectedFriend ?? initialFriend) == nil ? "Messages" : (selectedFriend ?? initialFriend)?.displayName ?? "Chat")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    if selectedFriend == nil {
+                    if (selectedFriend ?? initialFriend) == nil {
                         Button(action: { showFriendPicker = true }) {
                             Image(systemName: "plus.circle.fill")
                                 .font(.system(size: 24))
@@ -89,7 +96,7 @@ struct MessagesView: View {
                     }
                 }
                 ToolbarItem(placement: .navigationBarLeading) {
-                    if selectedFriend != nil {
+                    if (selectedFriend ?? initialFriend) != nil {
                         Button(action: { selectedFriend = nil }) {
                             HStack(spacing: AppSpacing.xs) {
                                 Image(systemName: "chevron.left")
@@ -108,7 +115,12 @@ struct MessagesView: View {
                 }
             }
             .onAppear {
-                loadConversations()
+                if let initialFriend = initialFriend {
+                    selectedFriend = initialFriend
+                }
+                if (selectedFriend ?? initialFriend) == nil {
+                    loadConversations()
+                }
             }
         }
     }

@@ -31,36 +31,38 @@ struct ProfileView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Color.white.ignoresSafeArea()
+                CosmicBackground()
                 
                 if isLoading {
-                    VStack(spacing: AppSpacing.l) {
+                    VStack(spacing: CosmicSpacing.l) {
                         ProgressView()
                             .scaleEffect(1.5)
+                            .tint(CosmicColors.nebulaPurple)
                         Text("Loading profile...")
-                            .font(AppFonts.body)
-                            .foregroundColor(AppColors.darkGray)
+                            .font(CosmicFonts.body)
+                            .foregroundColor(CosmicColors.textSecondary)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     ScrollView {
                         VStack(spacing: 0) {
-                            // Cover Image/Banner (like Facebook/Twitter)
+                            // Cover Banner
                             ZStack(alignment: .bottomLeading) {
-                                // Cover Banner
-                                LinearGradient(
-                                    colors: [AppColors.primaryBlue, AppColors.primaryPurple],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
+                                Group {
+                                    if let bannerUrl = bannerUrl, !bannerUrl.isEmpty {
+                                        AsyncImage(url: URL(string: bannerUrl)) { image in
+                                            image
+                                                .resizable()
+                                                .aspectRatio(contentMode: .fill)
+                                        } placeholder: {
+                                            CosmicColors.spaceGradient
+                                        }
+                                    } else {
+                                        CosmicColors.spaceGradient
+                                    }
+                                }
                                 .frame(height: 200)
-                                .overlay(
-                                    // Pattern overlay for visual interest
-                                    Image(systemName: "sparkles")
-                                        .font(.system(size: 100))
-                                        .foregroundColor(.white.opacity(0.1))
-                                        .offset(x: 50, y: 50)
-                                )
+                                .clipped()
                                 
                                 // Profile Picture overlaying the cover
                                 ZStack {
@@ -69,216 +71,198 @@ struct ProfileView: View {
                                         .frame(width: 120, height: 120)
                                         .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
                                     
-                                    Circle()
-                                        .fill(
-                                            LinearGradient(
-                                                colors: [AppColors.primaryBlue, AppColors.primaryPurple],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            )
-                                        )
-                                        .frame(width: 110, height: 110)
-                                    
-                                    Text("👤")
-                                        .font(.system(size: 55))
+                                    Group {
+                                        if let avatarUrl = avatarUrl, !avatarUrl.isEmpty {
+                                            AsyncImage(url: URL(string: avatarUrl)) { image in
+                                                image
+                                                    .resizable()
+                                                    .aspectRatio(contentMode: .fill)
+                                            } placeholder: {
+                                                Circle()
+                                                    .fill(CosmicColors.primaryGradient)
+                                            }
+                                        } else {
+                                            Circle()
+                                                .fill(CosmicColors.primaryGradient)
+                                                .overlay(
+                                                    Text((displayName.isEmpty ? email : displayName).prefix(1).uppercased())
+                                                        .font(.system(size: 48, weight: .bold))
+                                                        .foregroundColor(.white)
+                                                )
+                                        }
+                                    }
+                                    .frame(width: 110, height: 110)
+                                    .clipShape(Circle())
                                 }
-                                .offset(x: 20, y: 60)
+                                .offset(x: CosmicSpacing.m, y: 60)
                             }
                             
-                            // User Info Section
-                            VStack(alignment: .leading, spacing: AppSpacing.m) {
-                                // Name and Handle
-                                VStack(alignment: .leading, spacing: AppSpacing.xs) {
-                                    HStack(spacing: AppSpacing.xs) {
-                                        Text(displayName.isEmpty ? email : displayName)
-                                            .font(.system(size: 24, weight: .bold))
-                                            .foregroundColor(AppColors.black)
-                                        
-                                        // Verification badges
-                                        if parentVerified {
-                                            Image(systemName: "checkmark.seal.fill")
-                                                .foregroundColor(AppColors.primaryBlue)
-                                                .font(.system(size: 18))
-                                        }
-                                        if schoolVerified {
-                                            Image(systemName: "building.2.fill")
-                                                .foregroundColor(AppColors.primaryPurple)
-                                                .font(.system(size: 18))
+                            // Profile Info
+                            VStack(alignment: .leading, spacing: CosmicSpacing.m) {
+                                HStack {
+                                    VStack(alignment: .leading, spacing: CosmicSpacing.xs) {
+                                        HStack(spacing: CosmicSpacing.xs) {
+                                            Text(displayName.isEmpty ? email : displayName)
+                                                .font(CosmicFonts.title)
+                                                .foregroundColor(CosmicColors.textPrimary)
+                                            
+                                            // Verification badges
+                                            if parentVerified {
+                                                Image(systemName: "checkmark.seal.fill")
+                                                    .foregroundColor(CosmicColors.nebulaBlue)
+                                                    .font(.system(size: 18))
+                                            }
+                                            if schoolVerified {
+                                                Image(systemName: "building.2.fill")
+                                                    .foregroundColor(CosmicColors.nebulaPurple)
+                                                    .font(.system(size: 18))
+                                            }
                                         }
                                     }
                                     
-                                    Text("@\(email.components(separatedBy: "@").first ?? "user")")
-                                        .font(AppFonts.body)
-                                        .foregroundColor(AppColors.darkGray)
+                                    Spacer()
                                     
-                                    // Bio/Info
-                                    if let school = school, !school.isEmpty {
-                                        HStack(spacing: AppSpacing.xs) {
-                                            Image(systemName: "building.2")
-                                                .foregroundColor(AppColors.mediumGray)
-                                                .font(.system(size: 14))
-                                            Text(school)
-                                                .font(AppFonts.caption)
-                                                .foregroundColor(AppColors.darkGray)
+                                    // Edit Profile Button
+                                    Button(action: {
+                                        showEditProfile = true
+                                    }) {
+                                        HStack(spacing: CosmicSpacing.xs) {
+                                            Image(systemName: "pencil")
+                                            Text("Edit Profile")
+                                                .font(CosmicFonts.button)
                                         }
-                                        .padding(.top, AppSpacing.xs)
-                                    }
-                                    
-                                    if let grade = grade, !grade.isEmpty {
-                                        HStack(spacing: AppSpacing.xs) {
-                                            Image(systemName: "book")
-                                                .foregroundColor(AppColors.mediumGray)
-                                                .font(.system(size: 14))
-                                            Text(grade)
-                                                .font(AppFonts.caption)
-                                                .foregroundColor(AppColors.darkGray)
-                                        }
+                                        .foregroundColor(.white)
+                                        .padding(.horizontal, CosmicSpacing.l)
+                                        .padding(.vertical, CosmicSpacing.s)
+                                        .background(CosmicColors.nebulaPurple)
+                                        .cornerRadius(CosmicCornerRadius.medium)
                                     }
                                 }
-                                .padding(.leading, 20)
-                                .padding(.top, 70)
+                                .padding(.horizontal, CosmicSpacing.m)
+                                .padding(.top, 80)
                                 
-                                // Stats Bar (like Twitter/Bluesky)
-                                HStack(spacing: AppSpacing.xl) {
-                                    StatItem(count: postsCount, label: "Posts")
-                                    StatItem(count: friendsCount, label: "Friends")
-                                    StatItem(count: 0, label: "Following") // Future feature
+                                // Stats
+                                HStack(spacing: CosmicSpacing.l) {
+                                    VStack {
+                                        Text("\(postsCount)")
+                                            .font(CosmicFonts.headline)
+                                            .foregroundColor(CosmicColors.textPrimary)
+                                        Text("Posts")
+                                            .font(CosmicFonts.caption)
+                                            .foregroundColor(CosmicColors.textMuted)
+                                    }
+                                    
+                                    VStack {
+                                        Text("\(friendsCount)")
+                                            .font(CosmicFonts.headline)
+                                            .foregroundColor(CosmicColors.textPrimary)
+                                        Text("Friends")
+                                            .font(CosmicFonts.caption)
+                                            .foregroundColor(CosmicColors.textMuted)
+                                    }
                                 }
-                                .padding(.horizontal, 20)
-                                .padding(.top, AppSpacing.m)
-                                .padding(.bottom, AppSpacing.s)
+                                .frame(maxWidth: .infinity)
+                                .padding(.top, CosmicSpacing.m)
                                 
-                                Divider()
-                                    .padding(.horizontal, 20)
-                                
-                                // Tabs (Posts, Photos, etc.)
+                                // Tabs
                                 HStack(spacing: 0) {
                                     TabButton(title: "Posts", isSelected: selectedTab == 0) {
                                         selectedTab = 0
                                     }
+                                    
                                     TabButton(title: "Photos", isSelected: selectedTab == 1) {
                                         selectedTab = 1
                                     }
                                 }
-                                .padding(.horizontal, 20)
-                                .padding(.top, AppSpacing.s)
+                                .padding(.horizontal, CosmicSpacing.m)
+                                .padding(.top, CosmicSpacing.l)
                                 
                                 // Content based on selected tab
                                 if selectedTab == 0 {
                                     // Posts Feed
                                     if isLoadingPosts && posts.isEmpty {
-                                        VStack(spacing: AppSpacing.l) {
+                                        VStack(spacing: CosmicSpacing.l) {
                                             ProgressView()
                                             Text("Loading posts...")
-                                                .font(AppFonts.body)
-                                                .foregroundColor(AppColors.darkGray)
+                                                .font(CosmicFonts.body)
+                                                .foregroundColor(CosmicColors.textSecondary)
                                         }
-                                        .padding(AppSpacing.xxl)
+                                        .padding(CosmicSpacing.xxl)
                                     } else if posts.isEmpty {
-                                        VStack(spacing: AppSpacing.l) {
+                                        VStack(spacing: CosmicSpacing.l) {
                                             Text("📝")
                                                 .font(.system(size: 60))
                                             Text("No posts yet")
-                                                .font(AppFonts.headline)
-                                                .foregroundColor(AppColors.primaryPurple)
+                                                .font(CosmicFonts.headline)
+                                                .foregroundColor(CosmicColors.nebulaPurple)
                                             Text("Share your first post!")
-                                                .font(AppFonts.body)
-                                                .foregroundColor(AppColors.darkGray)
+                                                .font(CosmicFonts.body)
+                                                .foregroundColor(CosmicColors.textSecondary)
                                         }
                                         .frame(maxWidth: .infinity)
-                                        .padding(AppSpacing.xxl)
+                                        .padding(CosmicSpacing.xxl)
                                     } else {
-                                        LazyVStack(spacing: AppSpacing.m) {
+                                        LazyVStack(spacing: CosmicSpacing.m) {
                                             ForEach(posts) { post in
-                                                PostCard(post: post, onDelete: {
-                                                    deletePost(postId: post.id)
-                                                })
+                                                CosmicPostCard(post: post)
                                                     .environmentObject(authManager)
-                                                    .padding(.horizontal, AppSpacing.m)
                                             }
                                         }
-                                        .padding(.top, AppSpacing.m)
+                                        .padding(.horizontal, CosmicSpacing.m)
+                                        .padding(.top, CosmicSpacing.m)
                                     }
                                 } else {
-                                    // Photos tab - show posts with images
-                                    if isLoadingPosts && posts.isEmpty {
-                                        VStack(spacing: AppSpacing.l) {
-                                            ProgressView()
-                                            Text("Loading photos...")
-                                                .font(AppFonts.body)
-                                                .foregroundColor(AppColors.darkGray)
+                                    let photos = posts.filter { $0.imageUrl != nil && !$0.imageUrl!.isEmpty }
+                                    if photos.isEmpty {
+                                        VStack(spacing: CosmicSpacing.m) {
+                                            Text("📷")
+                                                .font(.system(size: 60))
+                                            Text("No photos yet")
+                                                .font(CosmicFonts.headline)
+                                                .foregroundColor(CosmicColors.textPrimary)
                                         }
-                                        .padding(AppSpacing.xxl)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(CosmicSpacing.xxl)
                                     } else {
-                                        let postsWithImages = posts.filter { $0.imageUrl != nil && !$0.imageUrl!.isEmpty }
-                                        
-                                        if postsWithImages.isEmpty {
-                                            VStack(spacing: AppSpacing.l) {
-                                                Text("📷")
-                                                    .font(.system(size: 60))
-                                                Text("No photos yet")
-                                                    .font(AppFonts.headline)
-                                                    .foregroundColor(AppColors.primaryPurple)
-                                                Text("Photos from your posts will appear here")
-                                                    .font(AppFonts.body)
-                                                    .foregroundColor(AppColors.darkGray)
-                                            }
-                                            .frame(maxWidth: .infinity)
-                                            .padding(AppSpacing.xxl)
-                                        } else {
-                                            // Grid layout for photos
-                                            LazyVGrid(columns: [
-                                                GridItem(.flexible(), spacing: AppSpacing.s),
-                                                GridItem(.flexible(), spacing: AppSpacing.s),
-                                                GridItem(.flexible(), spacing: AppSpacing.s)
-                                            ], spacing: AppSpacing.s) {
-                                                ForEach(postsWithImages) { post in
-                                                    if let imageUrl = post.imageUrl, !imageUrl.isEmpty {
-                                                        NavigationLink(destination: PostDetailView(post: post)) {
-                                                            AsyncImage(url: URL(string: imageUrl)) { image in
-                                                                image
-                                                                    .resizable()
-                                                                    .aspectRatio(contentMode: .fill)
-                                                            } placeholder: {
-                                                                RoundedRectangle(cornerRadius: AppCornerRadius.medium)
-                                                                    .fill(AppColors.mediumGray.opacity(0.3))
-                                                                    .overlay(
-                                                                        ProgressView()
-                                                                    )
-                                                            }
-                                                            .frame(width: 110, height: 110)
-                                                            .clipShape(RoundedRectangle(cornerRadius: AppCornerRadius.medium))
-                                                        }
+                                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: CosmicSpacing.s) {
+                                            ForEach(photos) { post in
+                                                if let imageUrl = post.imageUrl {
+                                                    AsyncImage(url: URL(string: imageUrl)) { image in
+                                                        image
+                                                            .resizable()
+                                                            .aspectRatio(contentMode: .fill)
+                                                    } placeholder: {
+                                                        Rectangle()
+                                                            .fill(CosmicColors.glassBackground)
                                                     }
+                                                    .frame(width: 100, height: 100)
+                                                    .clipShape(RoundedRectangle(cornerRadius: CosmicCornerRadius.small))
                                                 }
                                             }
-                                            .padding(.horizontal, AppSpacing.m)
-                                            .padding(.top, AppSpacing.m)
                                         }
+                                        .padding(.horizontal, CosmicSpacing.m)
+                                        .padding(.top, CosmicSpacing.m)
                                     }
                                 }
                             }
-                            .background(Color.white)
+                            .padding(.bottom, CosmicSpacing.xl)
                         }
                     }
                 }
             }
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationTitle(displayName.isEmpty ? email : displayName)
+            .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: { dismiss() }) {
                         Image(systemName: "xmark")
-                            .foregroundColor(AppColors.black)
+                            .foregroundColor(CosmicColors.textPrimary)
                             .font(.system(size: 18, weight: .semibold))
                     }
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {
-                        Button(action: { showEditProfile = true }) {
-                            Label("Edit Profile", systemImage: "pencil")
-                        }
-                        
                         if !schoolVerified {
                             Button(action: { showSchoolCodeEntry = true }) {
                                 Label("Link School", systemImage: "building.2")
@@ -292,7 +276,7 @@ struct ProfileView: View {
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle")
-                            .foregroundColor(AppColors.primaryBlue)
+                            .foregroundColor(CosmicColors.nebulaPurple)
                             .font(.system(size: 20))
                     }
                 }
@@ -385,18 +369,20 @@ struct ProfileView: View {
                 }
                 
                 let response: PostsResponse = try await apiService.makeRequest(
-                    endpoint: "posts",
+                    endpoint: "posts?userId=\(userId)",
                     method: "GET",
                     token: token
                 )
                 
                 await MainActor.run {
-                    // Filter to only show user's own posts (posts created by this user)
-                    // Compare author.id with userId to ensure we only show posts created by the current user
+                    // All posts returned are already filtered by userId, just ensure they're approved
                     let userPosts = response.posts.filter { postResponse in
-                        // Ensure we're comparing strings correctly and only showing approved posts
-                        postResponse.author.id == userId && postResponse.status == "approved"
+                        postResponse.status == "approved"
                     }
+                    
+                    print("[ProfileView] Total posts from API: \(response.posts.count)")
+                    print("[ProfileView] Approved posts: \(userPosts.count)")
+                    print("[ProfileView] Current user ID: \(userId)")
                     
                     let dateFormatter = ISO8601DateFormatter()
                     dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
@@ -412,6 +398,7 @@ struct ProfileView: View {
                         return Post(
                             id: UUID(uuidString: postResponse.id) ?? UUID(),
                             author: postResponse.author.profile.displayName ?? "Unknown",
+                            authorId: postResponse.author.id,
                             authorAvatar: postResponse.author.profile.avatar,
                             content: postResponse.content,
                             imageUrl: postResponse.imageUrl,
@@ -613,45 +600,6 @@ struct ProfileView: View {
     }
 }
 
-struct SchoolCodeEntryCard: View {
-    @Binding var showCodeEntry: Bool
-    
-    var body: some View {
-        Button(action: { showCodeEntry = true }) {
-            HStack(spacing: AppSpacing.m) {
-                ZStack {
-                    Circle()
-                        .fill(AppColors.primaryOrange.opacity(0.2))
-                        .frame(width: 60, height: 60)
-                    
-                    Text("🏫")
-                        .font(.system(size: 32))
-                }
-                
-                VStack(alignment: .leading, spacing: AppSpacing.xs) {
-                    Text("Link Your School")
-                        .font(AppFonts.headline)
-                        .foregroundColor(AppColors.primaryOrange)
-                    Text("Enter your school code to verify your account")
-                        .font(AppFonts.caption)
-                        .foregroundColor(AppColors.darkGray)
-                }
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .foregroundColor(AppColors.primaryOrange)
-            }
-            .padding(AppSpacing.l)
-            .background(
-                RoundedRectangle(cornerRadius: AppCornerRadius.large)
-                    .fill(AppColors.primaryOrange.opacity(0.1))
-            )
-        }
-        .buttonStyle(PlainButtonStyle())
-    }
-}
-
 struct SchoolCodeEntryView: View {
     @Environment(\.dismiss) var dismiss
     @State private var code = ""
@@ -665,59 +613,54 @@ struct SchoolCodeEntryView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                LinearGradient(
-                    colors: [AppColors.gradientBlue.opacity(0.1), AppColors.gradientPurple.opacity(0.1)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
+                CosmicBackground()
                 
-                VStack(spacing: AppSpacing.xl) {
+                VStack(spacing: CosmicSpacing.xl) {
                     // Header
-                    VStack(spacing: AppSpacing.m) {
+                    VStack(spacing: CosmicSpacing.m) {
                         Text("🏫")
                             .font(.system(size: 80))
                         Text("Enter School Code")
-                            .font(AppFonts.title)
-                            .foregroundColor(AppColors.primaryPurple)
+                            .font(CosmicFonts.title)
+                            .foregroundColor(CosmicColors.nebulaPurple)
                         Text("Get your 6-digit code from your school")
-                            .font(AppFonts.body)
-                            .foregroundColor(AppColors.darkGray)
+                            .font(CosmicFonts.body)
+                            .foregroundColor(CosmicColors.textSecondary)
                             .multilineTextAlignment(.center)
-                            .padding(.horizontal, AppSpacing.xl)
+                            .padding(.horizontal, CosmicSpacing.xl)
                     }
-                    .padding(.top, AppSpacing.xxl)
+                    .padding(.top, CosmicSpacing.xxl)
                     
                     // Code Input
-                    VStack(alignment: .leading, spacing: AppSpacing.s) {
+                    VStack(alignment: .leading, spacing: CosmicSpacing.s) {
                         Text("School Code")
-                            .font(AppFonts.caption)
-                            .foregroundColor(AppColors.darkGray)
+                            .font(CosmicFonts.caption)
+                            .foregroundColor(CosmicColors.textSecondary)
                         
                         TextField("Enter 6-digit code", text: $code)
                             .textFieldStyle(.plain)
-                            .foregroundColor(AppColors.black)
+                            .foregroundColor(CosmicColors.textPrimary)
                             .font(.system(size: 32, weight: .bold, design: .monospaced))
                             .multilineTextAlignment(.center)
                             .autocapitalization(.allCharacters)
                             .keyboardType(.asciiCapable)
-                            .padding(AppSpacing.l)
-                            .background(Color.white)
-                            .cornerRadius(AppCornerRadius.large)
+                            .padding(CosmicSpacing.l)
+                            .background(CosmicColors.glassBackground)
+                            .cornerRadius(CosmicCornerRadius.large)
                             .overlay(
-                                RoundedRectangle(cornerRadius: AppCornerRadius.large)
-                                    .stroke(AppColors.primaryBlue, lineWidth: 2)
+                                RoundedRectangle(cornerRadius: CosmicCornerRadius.large)
+                                    .stroke(CosmicColors.nebulaBlue, lineWidth: 2)
                             )
                             .onChange(of: code) { newValue in
                                 // Limit to 6 characters and uppercase
                                 code = String(newValue.prefix(6)).uppercased()
                             }
                     }
-                    .padding(.horizontal, AppSpacing.m)
+                    .padding(.horizontal, CosmicSpacing.m)
                     
                     // Submit Button
                     Button(action: submitCode) {
-                        HStack(spacing: AppSpacing.s) {
+                        HStack(spacing: CosmicSpacing.s) {
                             if isSubmitting {
                                 ProgressView()
                                     .progressViewStyle(CircularProgressViewStyle(tint: .white))
@@ -725,23 +668,17 @@ struct SchoolCodeEntryView: View {
                                 Text("✅")
                                     .font(.system(size: 24))
                                 Text("Verify School")
-                                    .font(AppFonts.button)
+                                    .font(CosmicFonts.button)
                                     .foregroundColor(.white)
                             }
                         }
                         .frame(maxWidth: .infinity)
                         .frame(height: 60)
-                        .background(
-                            LinearGradient(
-                                colors: [AppColors.primaryBlue, AppColors.primaryPurple],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .cornerRadius(AppCornerRadius.large)
-                        .shadow(color: AppColors.primaryBlue.opacity(0.3), radius: 8, x: 0, y: 4)
+                        .background(CosmicColors.nebulaPurple)
+                        .cornerRadius(CosmicCornerRadius.large)
+                        .shadow(color: CosmicColors.nebulaPurple.opacity(0.3), radius: 8, x: 0, y: 4)
                     }
-                    .padding(.horizontal, AppSpacing.m)
+                    .padding(.horizontal, CosmicSpacing.m)
                     .disabled(code.count != 6 || isSubmitting)
                     .opacity(code.count == 6 ? 1.0 : 0.5)
                     
@@ -755,8 +692,8 @@ struct SchoolCodeEntryView: View {
                     Button("Cancel") {
                         dismiss()
                     }
-                    .font(AppFonts.button)
-                    .foregroundColor(AppColors.primaryBlue)
+                    .font(CosmicFonts.button)
+                    .foregroundColor(CosmicColors.nebulaBlue)
                 }
             }
             .alert("Error", isPresented: $showError) {
@@ -791,145 +728,7 @@ struct SchoolCodeEntryView: View {
     }
 }
 
-struct ProfileHeaderCard: View {
-    let displayName: String
-    let email: String
-    
-    var body: some View {
-        VStack(spacing: AppSpacing.m) {
-            // Avatar with fun gradient
-            ZStack {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [AppColors.primaryBlue, AppColors.primaryPurple],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 120, height: 120)
-                
-                Text("👤")
-                    .font(.system(size: 60))
-            }
-            .shadow(color: AppColors.primaryBlue.opacity(0.3), radius: 10, x: 0, y: 5)
-            
-            Text(displayName)
-                .font(AppFonts.title)
-                .foregroundColor(AppColors.primaryPurple)
-            
-            Text(email)
-                .font(AppFonts.body)
-                .foregroundColor(AppColors.darkGray)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(AppSpacing.xl)
-        .background(
-            RoundedRectangle(cornerRadius: AppCornerRadius.extraLarge)
-                .fill(Color.white)
-                .shadow(color: AppColors.primaryBlue.opacity(0.2), radius: 10, x: 0, y: 5)
-        )
-    }
-}
-
-struct VerificationCard: View {
-    let parentVerified: Bool
-    let schoolVerified: Bool
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.m) {
-            HStack {
-                Text("✅")
-                    .font(.system(size: 24))
-                Text("Verification Status")
-                    .font(AppFonts.headline)
-                    .foregroundColor(AppColors.primaryPurple)
-            }
-            
-            VStack(alignment: .leading, spacing: AppSpacing.m) {
-                HStack(spacing: AppSpacing.m) {
-                    ZStack {
-                        Circle()
-                            .fill(parentVerified ? AppColors.success.opacity(0.2) : AppColors.error.opacity(0.2))
-                            .frame(width: 50, height: 50)
-                        Text(parentVerified ? "✓" : "✗")
-                            .font(.system(size: 24, weight: .bold))
-                            .foregroundColor(parentVerified ? AppColors.success : AppColors.error)
-                    }
-                    Text("Parent Verified")
-                        .font(AppFonts.body)
-                        .foregroundColor(parentVerified ? AppColors.success : AppColors.error)
-                }
-                
-                HStack(spacing: AppSpacing.m) {
-                    ZStack {
-                        Circle()
-                            .fill(schoolVerified ? AppColors.success.opacity(0.2) : AppColors.error.opacity(0.2))
-                            .frame(width: 50, height: 50)
-                        Text(schoolVerified ? "✓" : "✗")
-                            .font(.system(size: 24, weight: .bold))
-                            .foregroundColor(schoolVerified ? AppColors.success : AppColors.error)
-                    }
-                    Text("School Verified")
-                        .font(AppFonts.body)
-                        .foregroundColor(schoolVerified ? AppColors.success : AppColors.error)
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(AppSpacing.xl)
-        .background(
-            RoundedRectangle(cornerRadius: AppCornerRadius.large)
-                .fill(Color.white)
-                .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
-        )
-    }
-}
-
-struct ProfileInfoCard: View {
-    let school: String
-    let grade: String
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.l) {
-            HStack(spacing: AppSpacing.m) {
-                Text("🏫")
-                    .font(.system(size: 32))
-                VStack(alignment: .leading, spacing: AppSpacing.xs) {
-                    Text("School")
-                        .font(AppFonts.small)
-                        .foregroundColor(AppColors.darkGray)
-                    Text(school)
-                        .font(AppFonts.headline)
-                        .foregroundColor(AppColors.primaryBlue)
-                }
-            }
-            
-            HStack(spacing: AppSpacing.m) {
-                Text("📚")
-                    .font(.system(size: 32))
-                VStack(alignment: .leading, spacing: AppSpacing.xs) {
-                    Text("Grade")
-                        .font(AppFonts.small)
-                        .foregroundColor(AppColors.darkGray)
-                    Text(grade)
-                        .font(AppFonts.headline)
-                        .foregroundColor(AppColors.primaryPurple)
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(AppSpacing.xl)
-        .background(
-            RoundedRectangle(cornerRadius: AppCornerRadius.large)
-                .fill(Color.white)
-                .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
-        )
-    }
-}
-
 #Preview {
     ProfileView()
         .environmentObject(AuthManager())
 }
-

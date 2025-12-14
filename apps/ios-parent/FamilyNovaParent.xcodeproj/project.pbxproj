@@ -31,6 +31,7 @@
 		5CE0BDF764E5ED76385E0988 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68EC8D887EFC3CBBE5BF0BF9 /* SettingsView.swift */; };
 		677D84F98FE3B6F07AF6D75E /* CreatePostView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4234AFC9DE2A40F144C9372B /* CreatePostView.swift */; };
 		68D20CFCFCCC0E33E864730D /* PostDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10648C2C06564999E6C9174 /* PostDetailView.swift */; };
+		740A05AD4F4FD9B98774D166 /* OrientationLock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BF7F3789FC37DA54E336195 /* OrientationLock.swift */; };
 		79C6D1CFEE8D4BC12D695317 /* ImagePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE8F3B95FCBA26EC6B26DB39 /* ImagePicker.swift */; };
 		7C1D6E4BD47BCD475C0FC8FD /* PhotoPostView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB44BE4F87B6244D283FC833 /* PhotoPostView.swift */; };
 		7CDCDC3D6847DC66491871D9 /* ScanFriendQRView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F77E21DBE10F147FE0A26B7B /* ScanFriendQRView.swift */; };
@@ -71,6 +72,7 @@
 		27968F36D35051D43C19EE63 /* ToastNotification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastNotification.swift; sourceTree = "<group>"; };
 		27DA4A81B3C59C9665CFF8D1 /* ActivityReportsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityReportsView.swift; sourceTree = "<group>"; };
 		2B9CEA9A6117E2207D17A720 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		2BF7F3789FC37DA54E336195 /* OrientationLock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrientationLock.swift; sourceTree = "<group>"; };
 		2E139914E755FEAA3736F68E /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
 		34813A3D32E39C23E8056F98 /* QRCodeGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCodeGenerator.swift; sourceTree = "<group>"; };
 		3AB9F496FB8D5779D03C4760 /* FeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedView.swift; sourceTree = "<group>"; };
@@ -233,6 +235,7 @@
 				8517CF81473CC0482936608B /* CosmicDesignSystem.swift */,
 				2E139914E755FEAA3736F68E /* DesignSystem.swift */,
 				A29D9B6230D3B4E6EE9BF850 /* Encryption.swift */,
+				2BF7F3789FC37DA54E336195 /* OrientationLock.swift */,
 				34813A3D32E39C23E8056F98 /* QRCodeGenerator.swift */,
 				27968F36D35051D43C19EE63 /* ToastNotification.swift */,
 			);
@@ -336,6 +339,7 @@
 				291B03416E3C0F764A214D52 /* MyPostsView.swift in Sources */,
 				243B0E9BB4E969DF64BF3434 /* NotificationManager.swift in Sources */,
 				54EE1B48E41AB30096A6189F /* NotificationsView.swift in Sources */,
+				740A05AD4F4FD9B98774D166 /* OrientationLock.swift in Sources */,
 				7C1D6E4BD47BCD475C0FC8FD /* PhotoPostView.swift in Sources */,
 				0D971AA8A79088E0D740A9C5 /* PostApprovalView.swift in Sources */,
 				68D20CFCFCCC0E33E864730D /* PostDetailView.swift in Sources */,

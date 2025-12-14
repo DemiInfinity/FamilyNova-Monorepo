@@ -35,13 +35,11 @@ targets:
           - armv7
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
-          - UIInterfaceOrientationLandscapeLeft
-          - UIInterfaceOrientationLandscapeRight
         UISupportedInterfaceOrientations~ipad:
           - UIInterfaceOrientationPortrait
-          - UIInterfaceOrientationPortraitUpsideDown
-          - UIInterfaceOrientationLandscapeLeft
-          - UIInterfaceOrientationLandscapeRight
+        NSCameraUsageDescription: Nova+ needs access to your camera to take photos for posts and profile pictures.
+        NSPhotoLibraryUsageDescription: Nova+ needs access to your photo library to select photos for posts and profile pictures.
+        NSPhotoLibraryAddUsageDescription: Nova+ needs access to save photos to your photo library.
         NSAppTransportSecurity:
           NSAllowsArbitraryLoads: true
         CFBundleURLTypes:

@@ -15,6 +15,8 @@ struct FamilyNovaParentApp: App {
     @State private var showSplash = true
     @State private var isLoadingComplete = false
     
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    
     init() {
         // Request notification permissions on app launch
         NotificationManager.shared.requestAuthorization()
@@ -26,6 +28,7 @@ struct FamilyNovaParentApp: App {
                 if showSplash && authManager.isAuthenticated && !isLoadingComplete {
                     SplashScreenView(isLoadingComplete: $isLoadingComplete)
                         .environmentObject(authManager)
+                        .lockOrientationToPortrait()
                         .onChange(of: isLoadingComplete) { newValue in
                             if newValue {
                                 // Small delay before hiding splash
@@ -41,6 +44,7 @@ struct FamilyNovaParentApp: App {
                         .environmentObject(authManager)
                         .environmentObject(dataManager)
                         .environmentObject(realTimeService)
+                        .lockOrientationToPortrait()
                         .onAppear {
                             // Start real-time polling for friend requests, mentions, and child reports
                             if let userId = authManager.currentUser?.id,
@@ -56,6 +60,7 @@ struct FamilyNovaParentApp: App {
                 } else {
                     LoginView()
                         .environmentObject(authManager)
+                        .lockOrientationToPortrait()
                 }
             }
         }

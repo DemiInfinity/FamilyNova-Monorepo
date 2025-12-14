@@ -251,6 +251,7 @@ struct HomeView: View {
                     return Post(
                         id: UUID(uuidString: postResponse.id) ?? UUID(),
                         author: postResponse.author.profile.displayName ?? "Unknown",
+                        authorId: postResponse.author.id,
                         authorAvatar: postResponse.author.profile.avatar,
                         content: postResponse.content,
                         imageUrl: postResponse.imageUrl,

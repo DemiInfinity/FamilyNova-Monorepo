@@ -10,16 +10,41 @@ import SwiftUI
 @main
 struct FamilyNovaKidsApp: App {
     @StateObject private var authManager = AuthManager()
+    @State private var showSplash = true
+    @State private var isLoadingComplete = false
+    
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    
+    init() {
+        // Request notification permissions on app launch
+        // Note: NotificationManager may need to be created for kids app
+    }
     
     var body: some Scene {
         WindowGroup {
-            Group {
-                if authManager.isAuthenticated {
+            ZStack {
+                if showSplash && authManager.isAuthenticated && !isLoadingComplete {
+                    SplashScreenView(isLoadingComplete: $isLoadingComplete)
+                        .environmentObject(authManager)
+                        .lockOrientationToPortrait()
+                        .onChange(of: isLoadingComplete) { newValue in
+                            if newValue {
+                                // Small delay before hiding splash
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                    withAnimation {
+                                        showSplash = false
+                                    }
+                                }
+                            }
+                        }
+                } else if authManager.isAuthenticated {
                     MainTabView()
                         .environmentObject(authManager)
+                        .lockOrientationToPortrait()
                 } else {
                     LoginView()
                         .environmentObject(authManager)
+                        .lockOrientationToPortrait()
                 }
             }
             .onOpenURL { url in

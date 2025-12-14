@@ -180,6 +180,7 @@ struct NewsFeedView: View {
                     return Post(
                         id: UUID(uuidString: postResponse.id) ?? UUID(),
                         author: postResponse.author.profile.displayName ?? "Unknown",
+                        authorId: postResponse.author.id,
                         authorAvatar: postResponse.author.profile.avatar,
                         content: postResponse.content,
                         imageUrl: postResponse.imageUrl,
@@ -219,6 +220,7 @@ struct NewsFeedView: View {
 struct Post: Identifiable {
     let id: UUID
     let author: String
+    let authorId: String
     let authorAvatar: String?
     let content: String
     let imageUrl: String?
@@ -400,7 +402,7 @@ struct PostCard: View {
             // Refresh comments count when sheet is dismissed
             refreshCommentsCount()
         }) {
-            CommentsView(postId: post.id, postAuthor: post.author, postContent: post.content)
+            CommentsView(postId: post.id, postAuthor: post.author, postContent: post.content, postAuthorId: post.authorId)
                 .environmentObject(authManager)
         }
         .alert("Delete Post", isPresented: $showDeleteConfirmation) {
@@ -699,6 +701,33 @@ struct TextOnlyPostView: View {
                 }
             }
         }
+    }
+}
+
+struct ReactionPickerView: View {
+    let onReactionSelected: (String) -> Void
+    let onDismiss: () -> Void
+    
+    let reactions = ["👍", "❤️", "😂", "😮", "😢", "😡"]
+    
+    var body: some View {
+        HStack(spacing: AppSpacing.m) {
+            ForEach(reactions, id: \.self) { reaction in
+                Button(action: {
+                    onReactionSelected(reaction)
+                }) {
+                    Text(reaction)
+                        .font(.system(size: 32))
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+        }
+        .padding(AppSpacing.m)
+        .background(
+            RoundedRectangle(cornerRadius: AppCornerRadius.large)
+                .fill(Color.white)
+                .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 5)
+        )
     }
 }
 

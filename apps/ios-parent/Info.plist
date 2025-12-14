@@ -49,15 +49,16 @@
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Nova+ needs access to your camera to take photos for posts and profile pictures.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Nova+ needs access to your photo library to select photos for posts and profile pictures.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Nova+ needs access to save photos to your photo library.</string>
 </dict>
 </plist>

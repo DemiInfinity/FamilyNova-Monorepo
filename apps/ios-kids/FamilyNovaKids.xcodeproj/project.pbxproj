@@ -16,16 +16,20 @@
 		27F22D70D0616E145F98E135 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D903125BCE0D887035F56615 /* MainTabView.swift */; };
 		2F7334618BAED15C4ED4C184 /* QRCodeScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586F02C3E1D8F8877F72AA0F /* QRCodeScannerView.swift */; };
 		3778C4DF7756E74971D7639A /* MoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 054A2CA643F02F6DB2FD866F /* MoreView.swift */; };
+		3D806F6C91773B41D4391026 /* SplashScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 077B21112C6B0ED5D6AF767A /* SplashScreenView.swift */; };
 		4463F1A3C84FEA03317D9BD6 /* FamilyNovaKidsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 206973E0C1713B23F609D729 /* FamilyNovaKidsApp.swift */; };
 		4A6BCEA7AF57A5DD85DCA946 /* EditProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7696D9D7026A69E6863A4A37 /* EditProfileView.swift */; };
 		519ED126EA82D46A15D93073 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F0FEEE7038CCEF7EF42DA61 /* DesignSystem.swift */; };
 		54FFEB9881A7C3B3848A3618 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6D39A49A834774DDFD8E2B7 /* LoginView.swift */; };
+		5A5516D0513F67A5D5739981 /* DataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 834657D9C34C0C99F673D30C /* DataManager.swift */; };
+		61BDCA0A907078FC2E191B9E /* OrientationLock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00719A3970D4926AB58985A4 /* OrientationLock.swift */; };
 		7E89F15AF6EAEFF9D1063C3C /* ProfileComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F140EA56DD7E4B84AF1FA58 /* ProfileComponents.swift */; };
 		8054A230FA2DF40CE19DF2A7 /* EducationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73DE3C61121D8F6D0DB7FF9C /* EducationView.swift */; };
 		82CE12E90E2ABA647EA71EB6 /* HomeFeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 826EBA7703F36032C85447E3 /* HomeFeedView.swift */; };
 		8F636396DBAB52C1F90DF6EE /* MessagesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0051B2974DE8FA660890E611 /* MessagesView.swift */; };
 		8F6E095187310C20A58BA441 /* UnifiedCreatePostView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C8E04880FBE32DCF71B4484 /* UnifiedCreatePostView.swift */; };
 		90768F3726769FE1FD721736 /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 180B1EA80AA8300FD72EC45E /* NotificationsView.swift */; };
+		9A38C92424B25BD1E8CBE715 /* FriendProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DB782956CD4E26883A36635 /* FriendProfileView.swift */; };
 		9A8D44996AB6CF80DAFCB44E /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00188477EA5B502DE4C288C2 /* AuthManager.swift */; };
 		A60538D8BCB199D1FA0CF80D /* PostDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1663CEFEEEF47C2A201F2479 /* PostDetailView.swift */; };
 		A613639036EA6613B7284CDC /* PhotoPostView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B8AB112F780252D5E0E69A1 /* PhotoPostView.swift */; };
@@ -46,7 +50,9 @@
 /* Begin PBXFileReference section */
 		00188477EA5B502DE4C288C2 /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
 		0051B2974DE8FA660890E611 /* MessagesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagesView.swift; sourceTree = "<group>"; };
+		00719A3970D4926AB58985A4 /* OrientationLock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrientationLock.swift; sourceTree = "<group>"; };
 		054A2CA643F02F6DB2FD866F /* MoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoreView.swift; sourceTree = "<group>"; };
+		077B21112C6B0ED5D6AF767A /* SplashScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashScreenView.swift; sourceTree = "<group>"; };
 		0B56FA8A050FF5BEE4ADEFD1 /* AddFriendView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddFriendView.swift; sourceTree = "<group>"; };
 		0C6445252107C04FA967800E /* Encryption.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Encryption.swift; sourceTree = "<group>"; };
 		0E8BDA839A6F9667CF4A0661 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -57,6 +63,7 @@
 		33F9B5CF2B194A9A3945DC97 /* CreatePostView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreatePostView.swift; sourceTree = "<group>"; };
 		40AEF65FC52B3BD80E8834BB /* ApiService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiService.swift; sourceTree = "<group>"; };
 		4B8AB112F780252D5E0E69A1 /* PhotoPostView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoPostView.swift; sourceTree = "<group>"; };
+		4DB782956CD4E26883A36635 /* FriendProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendProfileView.swift; sourceTree = "<group>"; };
 		4F140EA56DD7E4B84AF1FA58 /* ProfileComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileComponents.swift; sourceTree = "<group>"; };
 		586F02C3E1D8F8877F72AA0F /* QRCodeScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCodeScannerView.swift; sourceTree = "<group>"; };
 		5C8E04880FBE32DCF71B4484 /* UnifiedCreatePostView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedCreatePostView.swift; sourceTree = "<group>"; };
@@ -67,6 +74,7 @@
 		7696D9D7026A69E6863A4A37 /* EditProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileView.swift; sourceTree = "<group>"; };
 		79704BFE6F84EB26BC5BE5E7 /* CommentsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentsView.swift; sourceTree = "<group>"; };
 		826EBA7703F36032C85447E3 /* HomeFeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeFeedView.swift; sourceTree = "<group>"; };
+		834657D9C34C0C99F673D30C /* DataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataManager.swift; sourceTree = "<group>"; };
 		9232DEE195959FCC38D8C24E /* CosmicDesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CosmicDesignSystem.swift; sourceTree = "<group>"; };
 		9EF591E8F26664F5D0A3CEB6 /* ExploreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreView.swift; sourceTree = "<group>"; };
 		A4586E6708E1DD4B0CA92A6A /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
@@ -88,6 +96,7 @@
 				9232DEE195959FCC38D8C24E /* CosmicDesignSystem.swift */,
 				5F0FEEE7038CCEF7EF42DA61 /* DesignSystem.swift */,
 				0C6445252107C04FA967800E /* Encryption.swift */,
+				00719A3970D4926AB58985A4 /* OrientationLock.swift */,
 			);
 			path = Utils;
 			sourceTree = "<group>";
@@ -119,6 +128,7 @@
 				73DE3C61121D8F6D0DB7FF9C /* EducationView.swift */,
 				EE61C2599349C4239FD28BD9 /* EnterFriendCodeView.swift */,
 				9EF591E8F26664F5D0A3CEB6 /* ExploreView.swift */,
+				4DB782956CD4E26883A36635 /* FriendProfileView.swift */,
 				112E215FADA87ECCBE53F955 /* FriendsView.swift */,
 				826EBA7703F36032C85447E3 /* HomeFeedView.swift */,
 				688D19148AD62EDE7929F9D0 /* HomeView.swift */,
@@ -137,6 +147,7 @@
 				B374F53FCBD18CF21E036022 /* ScanFriendQRView.swift */,
 				0E8BDA839A6F9667CF4A0661 /* SettingsView.swift */,
 				BA5D07F00DAE81CC8B7FB161 /* ShowMyFriendCodeView.swift */,
+				077B21112C6B0ED5D6AF767A /* SplashScreenView.swift */,
 				5C8E04880FBE32DCF71B4484 /* UnifiedCreatePostView.swift */,
 			);
 			path = Views;
@@ -146,6 +157,7 @@
 			isa = PBXGroup;
 			children = (
 				40AEF65FC52B3BD80E8834BB /* ApiService.swift */,
+				834657D9C34C0C99F673D30C /* DataManager.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -255,6 +267,7 @@
 				D37F01B5C78ED3C3C0F137D7 /* CommentsView.swift in Sources */,
 				F981E7C0430BB12D5A7D673D /* CosmicDesignSystem.swift in Sources */,
 				EF89A6DE6D9F6BE7AE8FA61F /* CreatePostView.swift in Sources */,
+				5A5516D0513F67A5D5739981 /* DataManager.swift in Sources */,
 				519ED126EA82D46A15D93073 /* DesignSystem.swift in Sources */,
 				4A6BCEA7AF57A5DD85DCA946 /* EditProfileView.swift in Sources */,
 				8054A230FA2DF40CE19DF2A7 /* EducationView.swift in Sources */,
@@ -262,6 +275,7 @@
 				16AB87923CEB1F1251FA7021 /* EnterFriendCodeView.swift in Sources */,
 				08F3604A91A7F0586954ADA3 /* ExploreView.swift in Sources */,
 				4463F1A3C84FEA03317D9BD6 /* FamilyNovaKidsApp.swift in Sources */,
+				9A38C92424B25BD1E8CBE715 /* FriendProfileView.swift in Sources */,
 				D05C101A27983DB12DCF7E9C /* FriendsView.swift in Sources */,
 				82CE12E90E2ABA647EA71EB6 /* HomeFeedView.swift in Sources */,
 				DE3AB865D3DE533DEF86786C /* HomeView.swift in Sources */,
@@ -272,6 +286,7 @@
 				3778C4DF7756E74971D7639A /* MoreView.swift in Sources */,
 				FEA4824C926E586662379738 /* NewsFeedView.swift in Sources */,
 				90768F3726769FE1FD721736 /* NotificationsView.swift in Sources */,
+				61BDCA0A907078FC2E191B9E /* OrientationLock.swift in Sources */,
 				A613639036EA6613B7284CDC /* PhotoPostView.swift in Sources */,
 				A60538D8BCB199D1FA0CF80D /* PostDetailView.swift in Sources */,
 				7E89F15AF6EAEFF9D1063C3C /* ProfileComponents.swift in Sources */,
@@ -280,6 +295,7 @@
 				0C5C080B1B8AA7EF5CD196A8 /* ScanFriendQRView.swift in Sources */,
 				1CF8D9A174668ED7FE7D3C4A /* SettingsView.swift in Sources */,
 				E45636BAEF171D7A1DF94FAA /* ShowMyFriendCodeView.swift in Sources */,
+				3D806F6C91773B41D4391026 /* SplashScreenView.swift in Sources */,
 				8F6E095187310C20A58BA441 /* UnifiedCreatePostView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

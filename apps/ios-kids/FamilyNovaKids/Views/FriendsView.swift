@@ -211,7 +211,9 @@ struct FriendsView: View {
                                 ScrollView {
                                     LazyVStack(spacing: AppSpacing.m) {
                                         ForEach(friends) { friend in
-                                            FriendRow(friend: friend, showAddButton: false)
+                                            NavigationLink(destination: FriendProfileView(friend: friend)) {
+                                                FriendRow(friend: friend, showAddButton: false)
+                                            }
                                         }
                                     }
                                     .padding(.horizontal, AppSpacing.m)

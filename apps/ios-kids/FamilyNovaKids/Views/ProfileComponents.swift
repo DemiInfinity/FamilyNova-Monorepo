@@ -31,17 +31,17 @@ struct TabButton: View {
     
     var body: some View {
         Button(action: action) {
-            VStack(spacing: AppSpacing.xs) {
+            VStack(spacing: CosmicSpacing.xs) {
                 Text(title)
-                    .font(AppFonts.headline)
-                    .foregroundColor(isSelected ? AppColors.primaryBlue : AppColors.darkGray)
+                    .font(CosmicFonts.headline)
+                    .foregroundColor(isSelected ? CosmicColors.nebulaPurple : CosmicColors.textMuted)
                 
                 Rectangle()
-                    .fill(isSelected ? AppColors.primaryBlue : Color.clear)
+                    .fill(isSelected ? CosmicColors.nebulaPurple : Color.clear)
                     .frame(height: 3)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, AppSpacing.s)
+            .padding(.vertical, CosmicSpacing.s)
         }
         .buttonStyle(PlainButtonStyle())
     }
