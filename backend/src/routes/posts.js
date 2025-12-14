@@ -144,6 +144,17 @@ router.get('/', async (req, res) => {
             .in('id', commentAuthorIds)
         : { data: [], error: null };
       
+      if (commentAuthorsError) {
+        console.error('[Posts] Error fetching comment authors:', commentAuthorsError);
+      }
+      
+      console.log(`[Posts] Fetched ${commentAuthorIds.length} comment author IDs, got ${commentAuthorsData?.length || 0} authors`);
+      if (commentAuthorsData) {
+        commentAuthorsData.forEach(author => {
+          console.log(`[Posts] Comment author ${author.id}: profile =`, JSON.stringify(author.profile));
+        });
+      }
+      
       const commentAuthorsMap = new Map();
       if (!commentAuthorsError && commentAuthorsData) {
         commentAuthorsData.forEach(author => {
@@ -164,7 +175,12 @@ router.get('/', async (req, res) => {
             commentsByPost.set(comment.post_id, []);
           }
           const commentAuthor = commentAuthorsMap.get(comment.author_id);
+          if (!commentAuthor) {
+            console.log(`[Posts] WARNING: Comment author ${comment.author_id} not found in map`);
+          }
           const commentAuthorProfile = commentAuthor?.profile || {};
+          console.log(`[Posts] Comment ${comment.id} author ${comment.author_id} profile:`, JSON.stringify(commentAuthorProfile));
+          
           // Format createdAt as ISO8601 string
           const commentCreatedAt = comment.created_at instanceof Date
             ? comment.created_at.toISOString()
@@ -176,7 +192,7 @@ router.get('/', async (req, res) => {
             author: {
               id: comment.author_id,
               profile: {
-                displayName: commentAuthorProfile.displayName || 'Unknown'
+                displayName: commentAuthorProfile?.displayName || commentAuthorProfile?.display_name || 'Unknown'
               }
             },
             createdAt: commentCreatedAt
