@@ -12,7 +12,9 @@ class Encryption {
         if let key = ProcessInfo.processInfo.environment["ENCRYPTION_KEY"] {
             return key
         }
-        return "your-32-byte-encryption-key-here-must-match-backend"
+        // Default key - MUST match backend ENCRYPTION_KEY
+        // Production: Store in Keychain for better security
+        return "89818c2bcf3c17e6b20cf097d0997f5a043267b797fe32c753f5d809cdc941f7"
     }()
     
     private static let algorithm: CCAlgorithm = CCAlgorithm(kCCAlgorithmAES)

@@ -143,8 +143,24 @@ function decryptMiddleware(req, res, next) {
         // If decryption fails and body only has encrypted field, return error
         // This means the client intended to send encrypted data but it's invalid
         if (!hasOtherFields) {
-          console.error('[Decrypt] Decryption failed for encrypted-only request:', error.message);
-          return res.status(400).json({ error: 'Failed to decrypt request data. Please check your encryption key or data format.' });
+          const errorType = error.code === 'ERR_OSSL_BAD_DECRYPT' 
+            ? 'Encryption key mismatch or corrupted data' 
+            : 'Invalid encrypted data format';
+          
+          console.error('[Decrypt] Decryption failed for encrypted-only request:', {
+            error: error.message,
+            errorCode: error.code,
+            errorType: errorType,
+            encryptedLength: encryptedValue?.length || 0,
+            hasEncryptionKey: !!process.env.ENCRYPTION_KEY,
+            encryptionKeyLength: process.env.ENCRYPTION_KEY?.length || 0
+          });
+          
+          return res.status(400).json({ 
+            error: 'Failed to decrypt request data',
+            details: errorType,
+            hint: 'Please ensure the ENCRYPTION_KEY environment variable matches between the client and server.'
+          });
         }
         
         // If there are other fields, treat as unencrypted request
