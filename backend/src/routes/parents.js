@@ -18,8 +18,8 @@ router.get('/profile', asyncHandler(async (req, res) => {
   const { getSupabase } = require('../config/database');
   const supabase = getSupabase();
   const user = await getUserById(req.user.id, 'User not found');
-    
-    // Get friends (parents can have friends too)
+  
+  // Get friends (parents can have friends too)
     const { data: friendships, error: friendsError } = await supabase
       .from('friendships')
       .select('friend_id')
@@ -90,24 +90,20 @@ router.get('/profile', asyncHandler(async (req, res) => {
     
     const finalPostsCount = postsCount || 0;
     
-    res.json({ 
-      user: {
-        id: user.id,
-        email: user.email,
-        profile: user.profile,
-        verification: user.verification,
-        friends: friends,
-        friendsCount: friends.length,
-        children: children,
-        childrenCount: children.length,
-        postsCount: finalPostsCount
-      }
-    });
-  } catch (error) {
-    console.error('Error fetching parent profile:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
+  res.json({ 
+    user: {
+      id: user.id,
+      email: user.email,
+      profile: user.profile,
+      verification: user.verification,
+      friends: friends,
+      friendsCount: friends.length,
+      children: children,
+      childrenCount: children.length,
+      postsCount: finalPostsCount
+    }
+  });
+}));
 
 // @route   GET /api/parents/dashboard
 // @desc    Get parent dashboard data
