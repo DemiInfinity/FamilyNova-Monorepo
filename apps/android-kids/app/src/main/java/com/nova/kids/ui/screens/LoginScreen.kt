@@ -6,6 +6,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,6 +32,9 @@ fun LoginScreen(
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var showQRScanner by remember { mutableStateOf(false) }
+    var showManualCodeEntry by remember { mutableStateOf(false) }
+    var manualCode by remember { mutableStateOf("") }
     val isLoading by authViewModel.isLoading.collectAsState()
     val errorMessage by authViewModel.errorMessage.collectAsState()
     
@@ -38,6 +44,59 @@ fun LoginScreen(
         if (isAuthenticated) {
             onLoginSuccess()
         }
+    }
+    
+    if (showQRScanner) {
+        QRCodeScannerScreen(
+            onCodeScanned = { code ->
+                if (code.length == 6) {
+                    authViewModel.loginWithCode(code)
+                }
+            },
+            onDismiss = { showQRScanner = false }
+        )
+        return
+    }
+    
+    if (showManualCodeEntry) {
+        AlertDialog(
+            onDismissRequest = { showManualCodeEntry = false },
+            title = { Text("Enter Login Code") },
+            text = {
+                OutlinedTextField(
+                    value = manualCode,
+                    onValueChange = { 
+                        // Limit to 6 digits
+                        manualCode = it.filter { it.isDigit() }.take(6)
+                    },
+                    label = { Text("6-digit code") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    placeholder = { Text("000000") }
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (manualCode.length == 6) {
+                            authViewModel.loginWithCode(manualCode)
+                            showManualCodeEntry = false
+                            manualCode = ""
+                        }
+                    },
+                    enabled = manualCode.length == 6
+                ) {
+                    Text("Login")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { 
+                    showManualCodeEntry = false
+                    manualCode = ""
+                }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
     
     Box(
@@ -159,6 +218,41 @@ fun LoginScreen(
                         fontWeight = FontWeight.SemiBold
                     )
                 }
+            }
+            
+            Spacer(modifier = Modifier.height(CosmicSpacing.M))
+            
+            // QR Code Login Button
+            OutlinedButton(
+                onClick = { showQRScanner = true },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = CosmicSpacing.L)
+                    .height(50.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = CosmicColors.NebulaPurple
+                ),
+                border = BorderStroke(2.dp, CosmicColors.NebulaPurple),
+                shape = RoundedCornerShape(CosmicCornerRadius.Medium)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.QrCode,
+                    contentDescription = "QR Code",
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(CosmicSpacing.S))
+                Text("Scan QR Code", fontSize = 14.sp)
+            }
+            
+            Spacer(modifier = Modifier.height(CosmicSpacing.S))
+            
+            // Manual Code Entry Button
+            TextButton(onClick = { showManualCodeEntry = true }) {
+                Text(
+                    text = "Enter Code Manually",
+                    color = CosmicColors.TextSecondary,
+                    fontSize = 12.sp
+                )
             }
             
             Spacer(modifier = Modifier.height(CosmicSpacing.M))

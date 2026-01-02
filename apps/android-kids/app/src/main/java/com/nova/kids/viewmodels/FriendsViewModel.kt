@@ -19,6 +19,12 @@ class FriendsViewModel(private val authViewModel: AuthViewModel) : ViewModel() {
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+    
+    private val _searchResults = MutableStateFlow<List<Friend>>(emptyList())
+    val searchResults: StateFlow<List<Friend>> = _searchResults.asStateFlow()
+    
+    private val _isSearching = MutableStateFlow(false)
+    val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
 
     fun loadFriends() {
         viewModelScope.launch {
@@ -43,6 +49,63 @@ class FriendsViewModel(private val authViewModel: AuthViewModel) : ViewModel() {
                 e.printStackTrace()
             } finally {
                 _isLoading.value = false
+            }
+        }
+    }
+    
+    fun searchFriends(query: String) {
+        viewModelScope.launch {
+            _isSearching.value = true
+            try {
+                // TODO: Implement actual search API call using authViewModel.token
+                // For now, filter local friends
+                val results = _friends.value.filter { friend ->
+                    friend.displayName.contains(query, ignoreCase = true)
+                }
+                _searchResults.value = results
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                _isSearching.value = false
+            }
+        }
+    }
+    
+    fun addFriendByCode(code: String, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val token = authViewModel.token.value ?: return@launch
+                
+                val request = com.nova.kids.api.AddFriendByCodeRequest(code = code.uppercase())
+                val response = api.addFriendByCode("Bearer $token", request)
+                if (response.isSuccessful && response.body() != null) {
+                    // Reload friends list
+                    loadFriends()
+                    onResult(true)
+                } else {
+                    onResult(false)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                onResult(false)
+            }
+        }
+    }
+    
+    fun getMyFriendCode(onResult: (String?) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val token = authViewModel.token.value ?: return@launch
+                
+                val response = api.getMyFriendCode("Bearer $token")
+                if (response.isSuccessful && response.body() != null) {
+                    onResult(response.body()!!.code)
+                } else {
+                    onResult(null)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                onResult(null)
             }
         }
     }

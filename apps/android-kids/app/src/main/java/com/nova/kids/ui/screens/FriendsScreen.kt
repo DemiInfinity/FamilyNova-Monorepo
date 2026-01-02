@@ -26,10 +26,12 @@ import com.nova.kids.models.Friend
 import com.nova.kids.viewmodels.AuthViewModel
 import com.nova.kids.viewmodels.FriendsViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FriendsScreen(
     authViewModel: AuthViewModel,
-    onFriendClick: (Friend) -> Unit = {}
+    onFriendClick: (Friend) -> Unit = {},
+    onAddFriendClick: () -> Unit = {}
 ) {
     val friendsViewModel = remember { FriendsViewModel(authViewModel) }
     val friends by friendsViewModel.friends.collectAsState()
@@ -55,7 +57,7 @@ fun FriendsScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { /* TODO: Open add friend screen */ },
+                onClick = onAddFriendClick,
                 containerColor = CosmicColors.NebulaPurple
             ) {
                 Icon(Icons.Default.PersonAdd, "Add Friend")

@@ -13,6 +13,9 @@
 		13F379C7B1E97DF69BA6799B /* ApiService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75934214D37B149BF6775DA6 /* ApiService.swift */; };
 		14499997877699B488D44A50 /* FriendsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E31D667D2A6553C711B01325 /* FriendsView.swift */; };
 		16F975C33AECC182AB6CF13C /* DataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E42ADA0BF0707FBF004EBA10 /* DataManager.swift */; };
+		1A8C1B852F08770F00CCE565 /* ErrorHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A8C1B822F08770F00CCE565 /* ErrorHandler.swift */; };
+		1A8C1B862F08770F00CCE565 /* LoadingState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A8C1B832F08770F00CCE565 /* LoadingState.swift */; };
+		1A8C1B872F08770F00CCE565 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A8C1B842F08770F00CCE565 /* NetworkMonitor.swift */; };
 		1B03CD1ED47129A9D0475C68 /* FeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AB9F496FB8D5779D03C4760 /* FeedView.swift */; };
 		1CAE2E3F4C9E683B3A2A649A /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA3DF5584C3C1C13C32CF070 /* AuthManager.swift */; };
 		203C9AC2CECF5DE768CDC0CC /* RealTimeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D49C3AAE4D3EB101FA2FAB31 /* RealTimeService.swift */; };
@@ -66,6 +69,9 @@
 
 /* Begin PBXFileReference section */
 		14027AF6B2A0C159DC6DC58F /* ProfileComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileComponents.swift; sourceTree = "<group>"; };
+		1A8C1B822F08770F00CCE565 /* ErrorHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorHandler.swift; sourceTree = "<group>"; };
+		1A8C1B832F08770F00CCE565 /* LoadingState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingState.swift; sourceTree = "<group>"; };
+		1A8C1B842F08770F00CCE565 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
 		1AA4891E0465C5EA4C7A4EB0 /* ShowMyFriendCodeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowMyFriendCodeView.swift; sourceTree = "<group>"; };
 		1FDB135486912D9735B22569 /* ConnectionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionsView.swift; sourceTree = "<group>"; };
 		2477775C97DAFC2A27119BEE /* HomeworkView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeworkView.swift; sourceTree = "<group>"; };
@@ -231,6 +237,9 @@
 		F90C9E164413A027B64D8956 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
+				1A8C1B822F08770F00CCE565 /* ErrorHandler.swift */,
+				1A8C1B832F08770F00CCE565 /* LoadingState.swift */,
+				1A8C1B842F08770F00CCE565 /* NetworkMonitor.swift */,
 				73DEA75A086EE59C1B46EB7C /* AppDetection.swift */,
 				8517CF81473CC0482936608B /* CosmicDesignSystem.swift */,
 				2E139914E755FEAA3736F68E /* DesignSystem.swift */,
@@ -350,6 +359,9 @@
 				E46CD59DBB350B3BA1B1C8A5 /* QRCodeScannerView.swift in Sources */,
 				203C9AC2CECF5DE768CDC0CC /* RealTimeService.swift in Sources */,
 				C8AFA3888CE7D23F8F4A208B /* RegisterView.swift in Sources */,
+				1A8C1B852F08770F00CCE565 /* ErrorHandler.swift in Sources */,
+				1A8C1B862F08770F00CCE565 /* LoadingState.swift in Sources */,
+				1A8C1B872F08770F00CCE565 /* NetworkMonitor.swift in Sources */,
 				F34A3FF72C9E7411B78A9F58 /* SafetyDashboardView.swift in Sources */,
 				7CDCDC3D6847DC66491871D9 /* ScanFriendQRView.swift in Sources */,
 				5CE0BDF764E5ED76385E0988 /* SettingsView.swift in Sources */,

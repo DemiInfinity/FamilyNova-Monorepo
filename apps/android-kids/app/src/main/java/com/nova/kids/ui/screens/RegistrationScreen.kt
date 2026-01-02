@@ -210,9 +210,9 @@ fun RegistrationScreen(
             )
             
             // Error message
-            if (errorMessage.isNotEmpty()) {
+            if (!errorMessage.isNullOrEmpty()) {
                 Text(
-                    text = errorMessage,
+                    text = errorMessage ?: "",
                     color = MaterialTheme.colorScheme.error,
                     fontSize = 12.sp,
                     modifier = Modifier

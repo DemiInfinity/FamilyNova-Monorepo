@@ -89,6 +89,34 @@ class AuthViewModel : ViewModel() {
         }
     }
     
+    fun loginWithCode(code: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _errorMessage.value = null
+            
+            try {
+                val response = api.loginWithCode(com.nova.kids.api.LoginCodeRequest(code = code))
+                if (response.isSuccessful && response.body() != null) {
+                    val loginResponse = response.body()!!
+                    val accessToken = loginResponse.session?.access_token ?: ""
+                    
+                    _token.value = accessToken
+                    _isAuthenticated.value = true
+                    dataManager.saveToken(accessToken)
+                    dataManager.saveUserId(loginResponse.user.id)
+                    
+                    loadUserProfile()
+                } else {
+                    _errorMessage.value = "Invalid or expired login code"
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Error: ${e.message}"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+    
     fun register(email: String, password: String, firstName: String, lastName: String, displayName: String) {
         viewModelScope.launch {
             _isLoading.value = true

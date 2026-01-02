@@ -2,7 +2,9 @@ package com.nova.kids.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -20,6 +22,7 @@ import com.nova.kids.design.CosmicSpacing
 import com.nova.kids.viewmodels.AuthViewModel
 import com.nova.kids.viewmodels.CreatePostViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreatePostScreen(authViewModel: AuthViewModel) {
     val createPostViewModel = remember { CreatePostViewModel(authViewModel) }

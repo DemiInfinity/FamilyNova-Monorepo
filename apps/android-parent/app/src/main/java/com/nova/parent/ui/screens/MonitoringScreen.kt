@@ -24,6 +24,7 @@ import com.nova.parent.viewmodels.MonitoringViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MonitoringScreen(
     authViewModel: AuthViewModel,
@@ -33,11 +34,11 @@ fun MonitoringScreen(
     val messages by monitoringViewModel.messages.collectAsState()
     val isLoading by monitoringViewModel.isLoading.collectAsState()
     val selectedChild by monitoringViewModel.selectedChild.collectAsState()
-    
+
     LaunchedEffect(Unit) {
         monitoringViewModel.loadMessages()
     }
-    
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -88,7 +89,7 @@ fun MonitoringScreen(
                             // TODO: Add child filter chips
                         }
                     }
-                    
+
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(ParentAppSpacing.M),
@@ -129,7 +130,7 @@ fun MessageMonitoringCard(message: com.nova.parent.viewmodels.MonitoredMessage) 
                     fontWeight = FontWeight.SemiBold,
                     color = ParentAppColors.PrimaryNavy
                 )
-                
+
                 Surface(
                     color = if (message.monitoringLevel == "full") ParentAppColors.PrimaryTeal else ParentAppColors.MediumGray,
                     shape = RoundedCornerShape(ParentAppCornerRadius.Small)
@@ -142,17 +143,17 @@ fun MessageMonitoringCard(message: com.nova.parent.viewmodels.MonitoredMessage) 
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(ParentAppSpacing.S))
-            
+
             Text(
                 text = message.content,
                 fontSize = 14.sp,
                 color = ParentAppColors.Black
             )
-            
+
             Spacer(modifier = Modifier.height(ParentAppSpacing.XS))
-            
+
             Text(
                 text = formatTimestamp(message.timestamp),
                 fontSize = 12.sp,
@@ -205,4 +206,3 @@ private fun formatTimestamp(timestamp: String): String {
         timestamp
     }
 }
-

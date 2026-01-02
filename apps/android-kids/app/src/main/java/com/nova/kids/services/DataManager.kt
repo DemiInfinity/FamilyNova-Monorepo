@@ -49,7 +49,11 @@ object DataManager {
     }
     
     suspend fun getToken(): String? {
-        return requireContext().dataStore.data.first()[tokenKey]
+        return try {
+            requireContext().dataStore.data.first()[tokenKey]
+        } catch (e: Exception) {
+            null
+        }
     }
     
     suspend fun saveUserId(userId: String) {
@@ -59,7 +63,11 @@ object DataManager {
     }
     
     suspend fun getUserId(): String? {
-        return requireContext().dataStore.data.first()[userIdKey]
+        return try {
+            requireContext().dataStore.data.first()[userIdKey]
+        } catch (e: Exception) {
+            null
+        }
     }
     
     // Posts Caching

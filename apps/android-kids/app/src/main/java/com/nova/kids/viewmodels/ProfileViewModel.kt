@@ -41,7 +41,11 @@ class ProfileViewModel(
             _isLoading.value = true
             try {
                 val token = authViewModel.token.value ?: return@launch
+                // targetUserId reserved for viewing other users' profiles
                 val targetUserId = userId ?: authViewModel.currentUser.value?.id ?: return@launch
+                
+                @Suppress("UNUSED_VARIABLE")
+                val unused = targetUserId // Will be used when implementing profile viewing
                 
                 val response = api.getProfile("Bearer $token")
                 if (response.isSuccessful && response.body() != null) {

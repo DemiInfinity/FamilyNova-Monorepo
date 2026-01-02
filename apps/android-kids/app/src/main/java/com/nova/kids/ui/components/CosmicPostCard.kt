@@ -7,7 +7,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,10 +25,12 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 @Composable
+@Suppress("UNUSED_PARAMETER")
 fun CosmicPostCard(
     post: Post,
-    authViewModel: AuthViewModel,
-    modifier: Modifier = Modifier
+    authViewModel: AuthViewModel, // Reserved for future features (like/unlike)
+    modifier: Modifier = Modifier,
+    onCommentClick: (String) -> Unit = {}
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -122,10 +124,8 @@ fun CosmicPostCard(
                     )
                 }
                 
-                var showComments by remember { mutableStateOf(false) }
-                
                 Row {
-                    IconButton(onClick = { showComments = true }) {
+                    IconButton(onClick = { onCommentClick(post.id.toString()) }) {
                         Icon(
                             imageVector = Icons.Default.Comment,
                             contentDescription = "Comment",
@@ -137,11 +137,6 @@ fun CosmicPostCard(
                         color = CosmicColors.TextMuted,
                         modifier = Modifier.align(Alignment.CenterVertically)
                     )
-                }
-                
-                if (showComments) {
-                    // Navigate to comments screen - this would need navigation context
-                    // For now, we'll handle this in the parent composable
                 }
                 
                 IconButton(onClick = { /* Share */ }) {

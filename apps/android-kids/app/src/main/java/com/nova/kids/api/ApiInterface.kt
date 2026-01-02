@@ -12,6 +12,9 @@ interface ApiInterface {
     @POST("auth/register")
     suspend fun register(@Body request: RegisterRequest): Response<RegisterResponse>
     
+    @POST("auth/login-code")
+    suspend fun loginWithCode(@Body request: LoginCodeRequest): Response<LoginResponse>
+    
     // Profile
     @GET("kids/profile")
     suspend fun getProfile(@Header("Authorization") token: String): Response<ProfileResponse>
@@ -67,6 +70,17 @@ interface ApiInterface {
         @Query("query") query: String
     ): Response<FriendsSearchResponse>
     
+    @POST("friends/add-by-code")
+    suspend fun addFriendByCode(
+        @Header("Authorization") token: String,
+        @Body request: AddFriendByCodeRequest
+    ): Response<AddFriendByCodeResponse>
+    
+    @GET("friends/my-code")
+    suspend fun getMyFriendCode(
+        @Header("Authorization") token: String
+    ): Response<FriendCodeResponse>
+    
     // Messages
     @GET("messages")
     suspend fun getMessages(
@@ -108,6 +122,10 @@ data class RegisterRequest(
     val firstName: String,
     val lastName: String,
     val displayName: String
+)
+
+data class LoginCodeRequest(
+    val code: String
 )
 
 data class LoginResponse(
@@ -294,5 +312,19 @@ data class SendMessageResponse(
 data class UploadResponse(
     val url: String,
     val message: String
+)
+
+data class AddFriendByCodeRequest(
+    val code: String
+)
+
+data class AddFriendByCodeResponse(
+    val message: String,
+    val friend: FriendData
+)
+
+data class FriendCodeResponse(
+    val code: String,
+    val expiresAt: String?
 )
 

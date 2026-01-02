@@ -2,6 +2,7 @@ package com.nova.kids.services
 
 import android.util.Log
 import com.nova.kids.api.ApiInterface
+import com.nova.kids.models.FriendRequest
 import com.nova.kids.models.Message
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,8 +35,8 @@ class RealTimeService private constructor() {
     private val _newMessages = MutableStateFlow<Map<String, List<Message>>>(emptyMap())
     val newMessages: StateFlow<Map<String, List<Message>>> = _newMessages.asStateFlow()
     
-    private val _friendRequests = MutableStateFlow<List<com.nova.kids.models.FriendRequest>>(emptyList())
-    val friendRequests: StateFlow<List<com.nova.kids.models.FriendRequest>> = _friendRequests.asStateFlow()
+    private val _friendRequests = MutableStateFlow<List<FriendRequest>>(emptyList())
+    val friendRequests: StateFlow<List<FriendRequest>> = _friendRequests.asStateFlow()
     
     private val messagePollingJobs = mutableMapOf<String, Job>()
     private var friendRequestPollingJob: Job? = null
@@ -89,10 +90,10 @@ class RealTimeService private constructor() {
                             val createdAt = dateFormat.parse(messageData.createdAt) ?: Date()
                             Message(
                                 id = UUID.fromString(messageData.id),
-                                senderId = UUID.fromString(messageData.senderId),
-                                receiverId = UUID.fromString(messageData.receiverId),
+                                senderId = messageData.senderId,
+                                receiverId = messageData.receiverId,
                                 content = messageData.content,
-                                createdAt = createdAt
+                                timestamp = createdAt
                             )
                         } catch (e: Exception) {
                             Log.e(TAG, "Error parsing message: ${e.message}")
@@ -151,10 +152,11 @@ class RealTimeService private constructor() {
         friendRequestPollingJob = null
     }
     
+    @Suppress("UNUSED_PARAMETER")
     private suspend fun checkForFriendRequests(userId: String, token: String) {
         try {
-            val authHeader = "Bearer $token"
-            // Assuming there's a friend requests endpoint
+            // TODO: Implement friend requests endpoint
+            // val authHeader = "Bearer $token"
             // val response = api.getFriendRequests(authHeader)
             // Process friend requests...
         } catch (e: Exception) {
@@ -169,12 +171,4 @@ class RealTimeService private constructor() {
     }
 }
 
-// Friend Request model (if not exists)
-data class FriendRequest(
-    val id: String,
-    val fromUserId: String,
-    val toUserId: String,
-    val status: String,
-    val createdAt: Date
-)
 

@@ -27,10 +27,12 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 @Composable
+@Suppress("UNUSED_PARAMETER")
 fun NovaTheme(
     darkTheme: Boolean = true,
     content: @Composable () -> Unit
 ) {
+    // darkTheme parameter reserved for future light theme support
     val colorScheme = DarkColorScheme
     val view = LocalView.current
     if (!view.isInEditMode) {

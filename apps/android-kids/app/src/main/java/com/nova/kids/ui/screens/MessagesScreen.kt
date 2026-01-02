@@ -29,6 +29,7 @@ import com.nova.kids.viewmodels.MessagesViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MessagesScreen(authViewModel: AuthViewModel) {
     val messagesViewModel = remember { MessagesViewModel(authViewModel) }
@@ -166,6 +167,7 @@ fun ConversationRow(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
     friend: Friend,

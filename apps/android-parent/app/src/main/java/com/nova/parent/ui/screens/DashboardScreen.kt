@@ -24,6 +24,7 @@ import com.nova.parent.models.Child
 import com.nova.parent.viewmodels.AuthViewModel
 import com.nova.parent.viewmodels.DashboardViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     authViewModel: AuthViewModel,
@@ -36,7 +37,7 @@ fun DashboardScreen(
     val dashboardViewModel: DashboardViewModel = viewModel { DashboardViewModel(authViewModel) }
     val children by dashboardViewModel.children.collectAsState()
     val isLoading by dashboardViewModel.isLoading.collectAsState()
-    
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -68,7 +69,7 @@ fun DashboardScreen(
                     item {
                         WelcomeCard()
                     }
-                    
+
                     // My Children Section
                     item {
                         Row(
@@ -94,7 +95,7 @@ fun DashboardScreen(
                             }
                         }
                     }
-                    
+
                     if (children.isEmpty()) {
                         item {
                             EmptyChildrenCard(onCreateChild = { showCreateChild = true })
@@ -107,7 +108,7 @@ fun DashboardScreen(
                             )
                         }
                     }
-                    
+
                     // Pending Profile Changes
                     item {
                         Row(
@@ -126,11 +127,11 @@ fun DashboardScreen(
                             }
                         }
                     }
-                    
+
                     item {
                         ProfileChangesCard()
                     }
-                    
+
                     // Pending Posts
                     item {
                         Row(
@@ -149,12 +150,24 @@ fun DashboardScreen(
                             }
                         }
                     }
-                    
+
                     item {
                         PendingPostsCard()
                     }
                 }
             }
+        }
+
+        // Create Child Dialog
+        if (showCreateChild) {
+            CreateChildAccountScreen(
+                authViewModel = authViewModel,
+                onSuccess = {
+                    showCreateChild = false
+                    dashboardViewModel.loadChildren()
+                },
+                onDismiss = { showCreateChild = false }
+            )
         }
     }
 }
@@ -180,7 +193,7 @@ fun WelcomeCard() {
                 color = ParentAppColors.PrimaryNavy
             )
             Text(
-                text = "Monitor and protect your children's online experience",
+                text = "Monitor and protect your children\'s online experience",
                 fontSize = 14.sp,
                 color = ParentAppColors.DarkGray,
                 modifier = Modifier.padding(top = ParentAppSpacing.S)
@@ -216,9 +229,9 @@ fun ChildCard(
                     .size(60.dp)
                     .background(ParentAppColors.PrimaryTeal, RoundedCornerShape(ParentAppCornerRadius.Round))
             )
-            
+
             Spacer(modifier = Modifier.width(ParentAppSpacing.M))
-            
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = child.profile.displayName ?: child.email,
@@ -232,7 +245,7 @@ fun ChildCard(
                     color = ParentAppColors.DarkGray
                 )
             }
-            
+
             Icon(
                 Icons.Default.ChevronRight,
                 contentDescription = null,
@@ -332,4 +345,3 @@ fun PendingPostsCard() {
         }
     }
 }
-

@@ -16,7 +16,10 @@ import com.nova.kids.viewmodels.AuthViewModel
 import com.nova.kids.viewmodels.PostsViewModel
 
 @Composable
-fun HomeFeedScreen(authViewModel: AuthViewModel) {
+fun HomeFeedScreen(
+    authViewModel: AuthViewModel,
+    onNavigateToComments: (String) -> Unit = {}
+) {
     val postsViewModel = remember { PostsViewModel(authViewModel) }
     val posts by postsViewModel.posts.collectAsState()
     val isLoading by postsViewModel.isLoading.collectAsState()
@@ -50,7 +53,11 @@ fun HomeFeedScreen(authViewModel: AuthViewModel) {
                 verticalArrangement = Arrangement.spacedBy(CosmicSpacing.M)
             ) {
                 items(posts) { post ->
-                    CosmicPostCard(post = post, authViewModel = authViewModel)
+                    CosmicPostCard(
+                        post = post,
+                        authViewModel = authViewModel,
+                        onCommentClick = onNavigateToComments
+                    )
                 }
             }
         }

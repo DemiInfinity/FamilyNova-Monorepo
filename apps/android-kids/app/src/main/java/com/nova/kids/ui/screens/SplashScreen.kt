@@ -19,10 +19,12 @@ import com.nova.kids.viewmodels.AuthViewModel
 import kotlinx.coroutines.delay
 
 @Composable
+@Suppress("UNUSED_PARAMETER")
 fun SplashScreen(
     authViewModel: AuthViewModel,
     onLoadingComplete: () -> Unit
 ) {
+    // authViewModel may be used for checking authentication state
     var loadingProgress by remember { mutableStateOf(0f) }
     var loadingMessage by remember { mutableStateOf("Initializing...") }
     var isLoadingComplete by remember { mutableStateOf(false) }
@@ -104,7 +106,7 @@ fun SplashScreen(
                 
                 // Progress Bar
                 LinearProgressIndicator(
-                    progress = { loadingProgress },
+                    progress = loadingProgress,
                     modifier = Modifier
                         .fillMaxWidth(0.6f)
                         .height(4.dp),

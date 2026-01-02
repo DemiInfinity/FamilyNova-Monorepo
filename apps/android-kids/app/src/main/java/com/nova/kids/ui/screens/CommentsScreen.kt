@@ -21,9 +21,9 @@ import coil.compose.AsyncImage
 import com.nova.kids.design.CosmicColors
 import com.nova.kids.design.CosmicCornerRadius
 import com.nova.kids.design.CosmicSpacing
-import com.nova.kids.models.Post
 import com.nova.kids.viewmodels.AuthViewModel
 import com.nova.kids.viewmodels.CommentsViewModel
+import androidx.navigation.NavController
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -34,13 +34,14 @@ data class Comment(
     val createdAt: Date
 )
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CommentsScreen(
-    post: Post,
+    postId: String,
     authViewModel: AuthViewModel,
-    onDismiss: () -> Unit
+    navController: androidx.navigation.NavController
 ) {
-    val commentsViewModel = remember { CommentsViewModel(authViewModel, post.id.toString()) }
+    val commentsViewModel = remember { CommentsViewModel(authViewModel, postId) }
     val comments by commentsViewModel.comments.collectAsState()
     val isLoading by commentsViewModel.isLoading.collectAsState()
     var newComment by remember { mutableStateOf("") }
@@ -55,7 +56,7 @@ fun CommentsScreen(
             TopAppBar(
                 title = { Text("Comments") },
                 navigationIcon = {
-                    IconButton(onClick = onDismiss) {
+                    IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, "Back")
                     }
                 },
@@ -82,47 +83,6 @@ fun CommentsScreen(
             Column(
                 modifier = Modifier.fillMaxSize()
             ) {
-                // Post Preview
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(CosmicSpacing.M),
-                    shape = RoundedCornerShape(CosmicCornerRadius.Medium),
-                    colors = CardDefaults.cardColors(
-                        containerColor = CosmicColors.GlassBackground
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(CosmicSpacing.M),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        AsyncImage(
-                            model = post.authorAvatar,
-                            contentDescription = "Avatar",
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .background(CosmicColors.NebulaPurple),
-                        )
-                        Spacer(modifier = Modifier.width(CosmicSpacing.M))
-                        Column {
-                            Text(
-                                text = post.author,
-                                fontWeight = FontWeight.SemiBold,
-                                color = CosmicColors.TextPrimary
-                            )
-                            Text(
-                                text = post.content.take(50) + if (post.content.length > 50) "..." else "",
-                                fontSize = 12.sp,
-                                color = CosmicColors.TextSecondary,
-                                maxLines = 2
-                            )
-                        }
-                    }
-                }
-
                 // Comments List
                 if (isLoading && comments.isEmpty()) {
                     Box(
@@ -228,9 +188,12 @@ fun CommentRow(comment: Comment) {
                 .padding(CosmicSpacing.M),
             verticalAlignment = Alignment.Top
         ) {
-            Circle()
-                .fill(CosmicColors.NebulaPurple)
-                .size(32.dp)
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(CosmicColors.NebulaPurple)
+            )
             
             Spacer(modifier = Modifier.width(CosmicSpacing.S))
             

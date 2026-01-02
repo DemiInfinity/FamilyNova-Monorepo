@@ -26,14 +26,15 @@ import com.nova.parent.viewmodels.AuthViewModel
 import com.nova.parent.viewmodels.CreateChildViewModel
 import java.util.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateChildAccountScreen(
     authViewModel: AuthViewModel,
     onSuccess: () -> Unit = {},
     onDismiss: () -> Unit = {}
 ) {
-    val createChildViewModel: CreateChildViewModel = viewModel { CreateChildViewModel(authViewModel) }
-    
+    val createChildViewModel: CreateChildViewModel = viewModel()
+
     var firstName by remember { mutableStateOf("") }
     var lastName by remember { mutableStateOf("") }
     var displayName by remember { mutableStateOf("") }
@@ -42,17 +43,17 @@ fun CreateChildAccountScreen(
     var confirmPassword by remember { mutableStateOf("") }
     var school by remember { mutableStateOf("") }
     var grade by remember { mutableStateOf("") }
-    
+
     val isCreating by createChildViewModel.isCreating.collectAsState()
     val isSuccess by createChildViewModel.isSuccess.collectAsState()
     val errorMessage by createChildViewModel.errorMessage.collectAsState()
-    
+
     LaunchedEffect(isSuccess) {
         if (isSuccess) {
             onSuccess()
         }
     }
-    
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -88,7 +89,7 @@ fun CreateChildAccountScreen(
                     modifier = Modifier.size(48.dp),
                     tint = ParentAppColors.PrimaryTeal
                 )
-                
+
                 Text(
                     text = "Create Child Account",
                     fontSize = 24.sp,
@@ -96,16 +97,16 @@ fun CreateChildAccountScreen(
                     color = ParentAppColors.PrimaryNavy,
                     modifier = Modifier.padding(top = ParentAppSpacing.M)
                 )
-                
+
                 Text(
                     text = "Create a safe account for your child",
                     fontSize = 14.sp,
                     color = ParentAppColors.DarkGray,
                     modifier = Modifier.padding(top = ParentAppSpacing.S)
                 )
-                
+
                 Spacer(modifier = Modifier.height(ParentAppSpacing.XL))
-                
+
                 // Form Fields
                 OutlinedTextField(
                     value = firstName,
@@ -114,9 +115,9 @@ fun CreateChildAccountScreen(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
-                
+
                 Spacer(modifier = Modifier.height(ParentAppSpacing.M))
-                
+
                 OutlinedTextField(
                     value = lastName,
                     onValueChange = { lastName = it },
@@ -124,9 +125,9 @@ fun CreateChildAccountScreen(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
-                
+
                 Spacer(modifier = Modifier.height(ParentAppSpacing.M))
-                
+
                 OutlinedTextField(
                     value = displayName,
                     onValueChange = { displayName = it },
@@ -134,9 +135,9 @@ fun CreateChildAccountScreen(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
-                
+
                 Spacer(modifier = Modifier.height(ParentAppSpacing.M))
-                
+
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
@@ -145,9 +146,9 @@ fun CreateChildAccountScreen(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                     singleLine = true
                 )
-                
+
                 Spacer(modifier = Modifier.height(ParentAppSpacing.M))
-                
+
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
@@ -157,9 +158,9 @@ fun CreateChildAccountScreen(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     singleLine = true
                 )
-                
+
                 Spacer(modifier = Modifier.height(ParentAppSpacing.M))
-                
+
                 OutlinedTextField(
                     value = confirmPassword,
                     onValueChange = { confirmPassword = it },
@@ -169,9 +170,9 @@ fun CreateChildAccountScreen(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     singleLine = true
                 )
-                
+
                 Spacer(modifier = Modifier.height(ParentAppSpacing.M))
-                
+
                 OutlinedTextField(
                     value = school,
                     onValueChange = { school = it },
@@ -179,9 +180,9 @@ fun CreateChildAccountScreen(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
-                
+
                 Spacer(modifier = Modifier.height(ParentAppSpacing.M))
-                
+
                 OutlinedTextField(
                     value = grade,
                     onValueChange = { grade = it },
@@ -189,7 +190,7 @@ fun CreateChildAccountScreen(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
-                
+
                 // Error message
                 if (errorMessage != null) {
                     Text(
@@ -201,9 +202,9 @@ fun CreateChildAccountScreen(
                             .padding(vertical = ParentAppSpacing.S)
                     )
                 }
-                
+
                 Spacer(modifier = Modifier.height(ParentAppSpacing.XL))
-                
+
                 // Create Button
                 Button(
                     onClick = {
@@ -223,8 +224,8 @@ fun CreateChildAccountScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
-                    enabled = !isCreating && firstName.isNotBlank() && lastName.isNotBlank() && 
-                             email.isNotBlank() && password.length >= 6 && password == confirmPassword,
+                    enabled = !isCreating && firstName.isNotBlank() && lastName.isNotBlank() &&
+                            email.isNotBlank() && password.length >= 6 && password == confirmPassword,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = ParentAppColors.PrimaryTeal
                     ),
@@ -247,4 +248,3 @@ fun CreateChildAccountScreen(
         }
     }
 }
-

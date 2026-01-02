@@ -1,4 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Nova+</string>
+    <string name="parent_connections">Parent Connections</string>
+    <string name="children_title">Children</string>
+    <string name="recent_messages">Recent Messages</string>
+    <string name="manage_subscription">Manage Subscription</string>
+    <string name="logout">Logout</string>
+    <string name="view_details">View Details</string>
+    <string name="dashboard_title">Dashboard</string>
+    <string name="monitoring_title">Monitoring</string>
+    <string name="posts_title">Posts</string>
+    <string name="homework_title">Homework</string>
+    <string name="connections_title">Connections</string>
+    <string name="settings_title">Settings</string>
 </resources>

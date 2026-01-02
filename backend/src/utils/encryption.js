@@ -2,25 +2,34 @@ const crypto = require('crypto');
 
 // Encryption key - MUST be set in environment variables
 // Generate a key with: crypto.randomBytes(32).toString('hex')
-// NO DEFAULT KEY - application will fail to start if not set (security requirement)
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
-
-if (!ENCRYPTION_KEY) {
-  throw new Error(
-    'ENCRYPTION_KEY environment variable is required. ' +
-    'Generate a key with: crypto.randomBytes(32).toString("hex")'
-  );
-}
-
-if (ENCRYPTION_KEY.length < 32) {
-  throw new Error(
-    'ENCRYPTION_KEY must be at least 32 characters long. ' +
-    'For hex keys, use 64 characters (32 bytes).'
-  );
-}
-
+// NO DEFAULT KEY - application will fail if encryption is used without key (security requirement)
 const ALGORITHM = 'aes-256-cbc'; // Using CBC for compatibility with mobile apps
 const IV_LENGTH = 16; // 16 bytes for AES
+
+/**
+ * Get encryption key and validate it
+ * Throws error only when encryption is actually needed
+ */
+function getEncryptionKey() {
+  const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
+  
+  if (!ENCRYPTION_KEY) {
+    throw new Error(
+      'ENCRYPTION_KEY environment variable is required. ' +
+      'Generate a key with: crypto.randomBytes(32).toString("hex") ' +
+      'and add it to your Vercel environment variables.'
+    );
+  }
+
+  if (ENCRYPTION_KEY.length < 32) {
+    throw new Error(
+      'ENCRYPTION_KEY must be at least 32 characters long. ' +
+      'For hex keys, use 64 characters (32 bytes).'
+    );
+  }
+  
+  return ENCRYPTION_KEY;
+}
 
 /**
  * Encrypts data using AES-256-CBC
@@ -29,6 +38,8 @@ const IV_LENGTH = 16; // 16 bytes for AES
  */
 function encrypt(text) {
   try {
+    const ENCRYPTION_KEY = getEncryptionKey();
+    
     // Ensure encryption key is 32 bytes (256 bits)
     let key;
     if (ENCRYPTION_KEY.length === 64 && /^[0-9a-fA-F]+$/.test(ENCRYPTION_KEY)) {
@@ -63,6 +74,8 @@ function encrypt(text) {
  */
 function decrypt(encryptedData) {
   try {
+    const ENCRYPTION_KEY = getEncryptionKey();
+    
     // Ensure encryption key is 32 bytes (256 bits)
     let key;
     if (ENCRYPTION_KEY.length === 64 && /^[0-9a-fA-F]+$/.test(ENCRYPTION_KEY)) {

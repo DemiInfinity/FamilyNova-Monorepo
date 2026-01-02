@@ -26,6 +26,7 @@ import com.nova.kids.ui.components.CosmicPostCard
 import com.nova.kids.viewmodels.AuthViewModel
 import com.nova.kids.viewmodels.ProfileViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     authViewModel: AuthViewModel,
@@ -99,7 +100,7 @@ fun ProfileScreen(
                                     .size(120.dp)
                                     .clip(CircleShape)
                                     .align(Alignment.BottomStart)
-                                    .offset(x = CosmicSpacing.M.dp, y = 60.dp)
+                                    .offset(x = CosmicSpacing.M, y = 60.dp)
                                     .background(CosmicColors.GlassBackground)
                             )
                         }

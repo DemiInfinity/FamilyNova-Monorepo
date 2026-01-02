@@ -79,7 +79,12 @@ fun MainNavigation(authViewModel: AuthViewModel) {
             modifier = Modifier.padding(paddingValues)
         ) {
             composable(Screen.Home.route) {
-                HomeFeedScreen(authViewModel)
+                HomeFeedScreen(
+                    authViewModel = authViewModel,
+                    onNavigateToComments = { postId ->
+                        navController.navigate("comments/$postId")
+                    }
+                )
             }
             composable(Screen.Explore.route) {
                 ExploreScreen(authViewModel)
@@ -91,15 +96,57 @@ fun MainNavigation(authViewModel: AuthViewModel) {
                 MessagesScreen(authViewModel)
             }
             composable(Screen.More.route) {
-                MoreScreen(authViewModel)
+                MoreScreen(
+                    authViewModel = authViewModel,
+                    onNavigateToProfile = {
+                        navController.navigate("profile/me")
+                    },
+                    onNavigateToFriends = {
+                        navController.navigate("friends")
+                    },
+                    onNavigateToNotifications = {
+                        navController.navigate("notifications")
+                    },
+                    onNavigateToSettings = {
+                        navController.navigate("settings")
+                    }
+                )
+            }
+            
+            composable("friends") {
+                FriendsScreen(
+                    authViewModel = authViewModel,
+                    onAddFriendClick = {
+                        navController.navigate("add_friend")
+                    }
+                )
+            }
+            
+            composable("add_friend") {
+                AddFriendScreen(
+                    authViewModel = authViewModel,
+                    onDismiss = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+            
+            composable("notifications") {
+                NotificationsScreen(authViewModel)
+            }
+            
+            composable("settings") {
+                SettingsScreen(authViewModel)
             }
             
             // Detail screens
             composable("comments/{postId}") { backStackEntry ->
                 val postId = backStackEntry.arguments?.getString("postId") ?: ""
-                // Find post from PostsViewModel - for now show placeholder
-                // TODO: Pass post data through navigation
-                Text("Comments for post: $postId")
+                CommentsScreen(
+                    postId = postId,
+                    authViewModel = authViewModel,
+                    navController = navController
+                )
             }
             
             composable("profile/{userId}") { backStackEntry ->

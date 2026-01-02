@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nova.kids.api.ApiInterface
 import com.nova.kids.services.ApiService
-import com.nova.kids.models.Comment
 import com.nova.kids.services.DataManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,8 +19,8 @@ class CommentsViewModel(
     private val api: ApiInterface = com.nova.kids.services.ApiService.retrofit.create(ApiInterface::class.java)
     private val dataManager = DataManager
 
-    private val _comments = MutableStateFlow<List<Comment>>(emptyList())
-    val comments: StateFlow<List<Comment>> = _comments.asStateFlow()
+    private val _comments = MutableStateFlow<List<com.nova.kids.ui.screens.Comment>>(emptyList())
+    val comments: StateFlow<List<com.nova.kids.ui.screens.Comment>> = _comments.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -35,22 +34,28 @@ class CommentsViewModel(
             try {
                 val token = authViewModel.token.value ?: return@launch
                 
-                // Get posts by author to find the post with comments
+                // Get posts to find the post with comments
                 val response = api.getPosts("Bearer $token", null)
                 
                 if (response.isSuccessful && response.body() != null) {
                     val posts = response.body()!!.posts
                     val post = posts.find { it.id == postId }
                     
-                    if (post != null) {
-                        val commentsList = post.comments?.map { commentData ->
-                            Comment(
-                                id = commentData.id,
-                                author = commentData.author?.profile?.displayName ?: "Unknown",
-                                content = commentData.content,
-                                createdAt = parseDate(commentData.createdAt) ?: Date()
-                            )
-                        } ?: emptyList()
+                    if (post != null && post.comments != null) {
+                        // CommentData only has id and content, need to fetch full comment details
+                        // For now, create basic comments from CommentData
+                        val commentsList = post.comments.mapNotNull { commentData ->
+                            try {
+                                com.nova.kids.ui.screens.Comment(
+                                    id = commentData.id,
+                                    author = "Unknown", // Author info not in CommentData
+                                    content = commentData.content,
+                                    createdAt = Date() // createdAt not in CommentData
+                                )
+                            } catch (e: Exception) {
+                                null
+                            }
+                        }
                         
                         _comments.value = commentsList.sortedByDescending { it.createdAt }
                     }
@@ -77,9 +82,9 @@ class CommentsViewModel(
                 
                 if (response.isSuccessful && response.body() != null) {
                     val commentData = response.body()!!.comment
-                    val newComment = Comment(
+                    val newComment = com.nova.kids.ui.screens.Comment(
                         id = commentData.id,
-                        author = commentData.author?.profile?.displayName ?: "You",
+                        author = commentData.author.profile?.displayName ?: "You",
                         content = commentData.content,
                         createdAt = parseDate(commentData.createdAt) ?: Date()
                     )

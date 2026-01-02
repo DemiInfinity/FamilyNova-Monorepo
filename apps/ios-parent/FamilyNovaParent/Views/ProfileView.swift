@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import Foundation
 
 struct ProfileView: View {
     @EnvironmentObject var authManager: AuthManager
@@ -37,7 +38,7 @@ struct ProfileView: View {
                         LoadingStateView(message: "Loading profile...")
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {
-                    ScrollView {
+                        ScrollView {
                         VStack(spacing: 0) {
                             // Cover Banner
                             ZStack(alignment: .bottomLeading) {
@@ -226,6 +227,7 @@ struct ProfileView: View {
                             }
                             .padding(.bottom, CosmicSpacing.xl)
                         }
+                    }
                     }
                 }
             }

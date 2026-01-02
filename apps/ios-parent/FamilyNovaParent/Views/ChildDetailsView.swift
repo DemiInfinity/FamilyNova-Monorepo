@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import Foundation
 
 struct ChildDetailsView: View {
     let child: Child
@@ -28,7 +29,7 @@ struct ChildDetailsView: View {
                     LoadingStateView(message: "Loading child details...")
                 } else if let details = childDetails {
                     ScrollView {
-                    VStack(spacing: CosmicSpacing.l) {
+                        VStack(spacing: CosmicSpacing.l) {
                         // Profile Section
                         VStack(alignment: .leading, spacing: CosmicSpacing.m) {
                             Text("Profile Information")
@@ -107,6 +108,7 @@ struct ChildDetailsView: View {
                     .padding(.top, CosmicSpacing.m)
                 }
             }
+            }
         }
         .navigationTitle(child.profile.displayName)
         .navigationBarTitleDisplayMode(.large)
@@ -178,12 +180,12 @@ struct ChildDetailsView: View {
                 )
                 self.isLoading = false
             }
-            } catch {
-                await MainActor.run {
-                    self.isLoading = false
-                    ErrorHandler.shared.showError(error, toast: $toast)
-                }
+        } catch {
+            await MainActor.run {
+                self.isLoading = false
+                ErrorHandler.shared.showError(error, toast: $toast)
             }
+        }
     }
     
     private func handleDirectLogin() {

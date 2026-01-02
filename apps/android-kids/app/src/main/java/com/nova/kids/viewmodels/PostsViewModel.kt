@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nova.kids.api.ApiInterface
 import com.nova.kids.models.Post
-import com.nova.kids.api.ApiInterface
 import com.nova.kids.services.DataManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

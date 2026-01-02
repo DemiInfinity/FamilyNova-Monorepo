@@ -9,7 +9,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object ApiService {
-    private const val BASE_URL = "https://family-nova-monorepo.vercel.app/api"
+    private const val BASE_URL = "https://family-nova-monorepo.vercel.app/api/"
     
     private val gson: Gson = GsonBuilder()
         .setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")

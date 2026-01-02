@@ -1,14 +1,12 @@
 package com.nova.kids.services
 
 import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.nova.kids.MainActivity
-import com.nova.kids.R
 
 class NotificationManager private constructor(private val context: Context) {
     companion object {
@@ -28,7 +26,7 @@ class NotificationManager private constructor(private val context: Context) {
         }
     }
     
-    private val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    private val systemNotificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
     
     init {
         createNotificationChannel()
@@ -39,12 +37,12 @@ class NotificationManager private constructor(private val context: Context) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 CHANNEL_NAME,
-                NotificationManager.IMPORTANCE_DEFAULT
+                android.app.NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
                 description = "Notifications for new messages"
                 enableVibration(true)
             }
-            notificationManager.createNotificationChannel(channel)
+            systemNotificationManager.createNotificationChannel(channel)
         }
     }
     
@@ -63,7 +61,7 @@ class NotificationManager private constructor(private val context: Context) {
         )
         
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_notification) // Add notification icon
+            .setSmallIcon(android.R.drawable.ic_dialog_info) // Using system icon
             .setContentTitle("New message from $senderName")
             .setContentText(content)
             .setStyle(NotificationCompat.BigTextStyle().bigText(content))
@@ -72,7 +70,7 @@ class NotificationManager private constructor(private val context: Context) {
             .setAutoCancel(true)
             .build()
         
-        notificationManager.notify(friendId.hashCode(), notification)
+        systemNotificationManager.notify(friendId.hashCode(), notification)
     }
     
     fun showFriendRequestNotification(fromUserName: String, requestId: String) {
@@ -90,7 +88,7 @@ class NotificationManager private constructor(private val context: Context) {
         )
         
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_notification)
+            .setSmallIcon(android.R.drawable.ic_dialog_info) // Using system icon
             .setContentTitle("New friend request")
             .setContentText("$fromUserName wants to be your friend")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -98,15 +96,15 @@ class NotificationManager private constructor(private val context: Context) {
             .setAutoCancel(true)
             .build()
         
-        notificationManager.notify(requestId.hashCode(), notification)
+        systemNotificationManager.notify(requestId.hashCode(), notification)
     }
     
     fun cancelNotification(notificationId: Int) {
-        notificationManager.cancel(notificationId)
+        systemNotificationManager.cancel(notificationId)
     }
     
     fun cancelAllNotifications() {
-        notificationManager.cancelAll()
+        systemNotificationManager.cancelAll()
     }
 }
 

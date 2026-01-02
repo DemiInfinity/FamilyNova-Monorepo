@@ -24,7 +24,9 @@ import com.nova.kids.design.CosmicCornerRadius
 import com.nova.kids.design.CosmicSpacing
 import com.nova.kids.viewmodels.AuthViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
+@Suppress("UNUSED_PARAMETER")
 fun MoreScreen(
     authViewModel: AuthViewModel,
     onNavigateToProfile: () -> Unit = {},
@@ -32,6 +34,7 @@ fun MoreScreen(
     onNavigateToNotifications: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {}
 ) {
+    // These parameters are for future navigation implementation
     var showProfile by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
     
@@ -59,13 +62,12 @@ fun MoreScreen(
                     )
                 )
         ) {
-            ScrollView(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(CosmicSpacing.M),
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .fillMaxWidth()
+                    .padding(CosmicSpacing.M),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(CosmicSpacing.XL)
                 ) {
@@ -86,7 +88,7 @@ fun MoreScreen(
                         ) {
                             // Profile Picture
                             AsyncImage(
-                                model = authViewModel.currentUser.value?.avatarUrl,
+                                model = authViewModel.currentUser.value?.profile?.avatar,
                                 contentDescription = "Avatar",
                                 modifier = Modifier
                                     .size(100.dp)
@@ -96,7 +98,7 @@ fun MoreScreen(
                             
                             // Username
                             Text(
-                                text = authViewModel.currentUser.value?.displayName ?: "User",
+                                text = authViewModel.currentUser.value?.profile?.displayName ?: "User",
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = CosmicColors.TextPrimary
@@ -209,16 +211,6 @@ fun MoreScreen(
             }
         }
     }
-    
-    // Sheets
-    if (showProfile) {
-        // TODO: Show profile sheet
-    }
-    
-    if (showSettings) {
-        // TODO: Show settings sheet
-    }
-}
 
 @Composable
 fun MenuRow(

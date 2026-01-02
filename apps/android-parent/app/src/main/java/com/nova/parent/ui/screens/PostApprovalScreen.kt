@@ -25,6 +25,7 @@ import com.nova.parent.viewmodels.PostApprovalViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PostApprovalScreen(
     authViewModel: AuthViewModel,
@@ -33,11 +34,11 @@ fun PostApprovalScreen(
     val postApprovalViewModel: PostApprovalViewModel = viewModel { PostApprovalViewModel(authViewModel) }
     val pendingPosts by postApprovalViewModel.pendingPosts.collectAsState()
     val isLoading by postApprovalViewModel.isLoading.collectAsState()
-    
+
     LaunchedEffect(Unit) {
         postApprovalViewModel.loadPendingPosts()
     }
-    
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -98,7 +99,7 @@ fun PendingPostCard(
     var showRejectDialog by remember { mutableStateOf(false) }
     var rejectReason by remember { mutableStateOf("") }
     var isProcessing by remember { mutableStateOf(false) }
-    
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(ParentAppCornerRadius.Large),
@@ -130,7 +131,7 @@ fun PendingPostCard(
                         color = ParentAppColors.DarkGray
                     )
                 }
-                
+
                 Surface(
                     color = ParentAppColors.Warning.copy(alpha = 0.2f),
                     shape = RoundedCornerShape(ParentAppCornerRadius.Small)
@@ -143,9 +144,9 @@ fun PendingPostCard(
                     )
                 }
             }
-            
+
             Divider(modifier = Modifier.padding(vertical = ParentAppSpacing.M))
-            
+
             // Post content
             Text(
                 text = post.content,
@@ -153,7 +154,7 @@ fun PendingPostCard(
                 color = ParentAppColors.Black,
                 modifier = Modifier.padding(bottom = ParentAppSpacing.S)
             )
-            
+
             // Post image (if any)
             post.imageUrl?.let { imageUrl ->
                 AsyncImage(
@@ -164,9 +165,9 @@ fun PendingPostCard(
                         .height(200.dp)
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(ParentAppSpacing.M))
-            
+
             // Actions
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -194,7 +195,7 @@ fun PendingPostCard(
                         Text("Approve")
                     }
                 }
-                
+
                 Button(
                     onClick = { showRejectDialog = true },
                     modifier = Modifier.weight(1f),
@@ -210,7 +211,7 @@ fun PendingPostCard(
             }
         }
     }
-    
+
     if (showRejectDialog) {
         AlertDialog(
             onDismissRequest = { showRejectDialog = false },
@@ -257,4 +258,3 @@ private fun formatTimestamp(timestamp: String): String {
         timestamp
     }
 }
-

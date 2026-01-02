@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import com.nova.kids.design.CosmicColors
 import com.nova.kids.design.CosmicCornerRadius
 import com.nova.kids.design.CosmicSpacing
+import com.nova.kids.viewmodels.AuthViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -37,8 +38,10 @@ enum class NotificationType {
     MESSAGE, FRIEND_REQUEST, POST_LIKE, POST_COMMENT, FRIEND_ACCEPTED
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NotificationsScreen() {
+@Suppress("UNUSED_PARAMETER")
+fun NotificationsScreen(authViewModel: AuthViewModel) { // Reserved for loading notifications from API
     // TODO: Load from ViewModel or DataManager
     val notifications = remember { mutableStateListOf<Notification>() }
 

@@ -23,6 +23,7 @@ import com.nova.kids.models.Friend
 import com.nova.kids.viewmodels.AuthViewModel
 import com.nova.kids.viewmodels.FriendsViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExploreScreen(authViewModel: AuthViewModel) {
     val friendsViewModel = remember { FriendsViewModel(authViewModel) }

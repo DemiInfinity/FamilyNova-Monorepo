@@ -21,6 +21,7 @@ import com.nova.parent.design.ParentAppCornerRadius
 import com.nova.parent.design.ParentAppSpacing
 import com.nova.parent.viewmodels.AuthViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MoreScreen(
     authViewModel: AuthViewModel,
@@ -45,88 +46,85 @@ fun MoreScreen(
                 .padding(paddingValues)
                 .background(ParentAppColors.LightGray)
         ) {
-            ScrollView(
-                modifier = Modifier.fillMaxSize()
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(ParentAppSpacing.M),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(ParentAppSpacing.XL)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(ParentAppSpacing.M),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(ParentAppSpacing.XL)
+                // Profile Section
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(ParentAppCornerRadius.Large),
+                    colors = CardDefaults.cardColors(
+                        containerColor = ParentAppColors.White
+                    )
                 ) {
-                    // Profile Section
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(ParentAppCornerRadius.Large),
-                        colors = CardDefaults.cardColors(
-                            containerColor = ParentAppColors.White
-                        )
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(ParentAppSpacing.L),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(ParentAppSpacing.M)
-                        ) {
-                            AsyncImage(
-                                model = authViewModel.currentUser.value?.profile?.avatar,
-                                contentDescription = "Avatar",
-                                modifier = Modifier
-                                    .size(100.dp)
-                                    .background(ParentAppColors.PrimaryTeal, RoundedCornerShape(ParentAppCornerRadius.Round))
-                            )
-                            
-                            Text(
-                                text = authViewModel.currentUser.value?.displayName ?: "User",
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = ParentAppColors.Black
-                            )
-                        }
-                    }
-                    
-                    // Menu Options
                     Column(
-                        verticalArrangement = Arrangement.spacedBy(ParentAppSpacing.S)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(ParentAppSpacing.L),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(ParentAppSpacing.M)
                     ) {
-                        MenuRow(
-                            icon = Icons.Default.Person,
-                            title = "My Profile",
-                            onClick = onNavigateToProfile
+                        AsyncImage(
+                            model = authViewModel.currentUser.value?.profile?.avatar,
+                            contentDescription = "Avatar",
+                            modifier = Modifier
+                                .size(100.dp)
+                                .background(ParentAppColors.PrimaryTeal, RoundedCornerShape(ParentAppCornerRadius.Round))
                         )
-                        MenuRow(
-                            icon = Icons.Default.Visibility,
-                            title = "Monitoring",
-                            onClick = onNavigateToMonitoring
-                        )
-                        MenuRow(
-                            icon = Icons.Default.CheckCircle,
-                            title = "Post Approval",
-                            onClick = onNavigateToPostApproval
-                        )
-                        MenuRow(
-                            icon = Icons.Default.Settings,
-                            title = "Settings",
-                            onClick = onNavigateToSettings
-                        )
-                    }
-                    
-                    // Log Out
-                    Button(
-                        onClick = { authViewModel.logout() },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = ParentAppColors.Error
-                        ),
-                        shape = RoundedCornerShape(ParentAppCornerRadius.Medium)
-                    ) {
+
                         Text(
-                            "Log Out",
-                            fontWeight = FontWeight.Bold
+                            text = authViewModel.currentUser.value?.displayName ?: "User",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = ParentAppColors.Black
                         )
                     }
+                }
+
+                // Menu Options
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(ParentAppSpacing.S)
+                ) {
+                    MenuRow(
+                        icon = Icons.Default.Person,
+                        title = "My Profile",
+                        onClick = onNavigateToProfile
+                    )
+                    MenuRow(
+                        icon = Icons.Default.Visibility,
+                        title = "Monitoring",
+                        onClick = onNavigateToMonitoring
+                    )
+                    MenuRow(
+                        icon = Icons.Default.CheckCircle,
+                        title = "Post Approval",
+                        onClick = onNavigateToPostApproval
+                    )
+                    MenuRow(
+                        icon = Icons.Default.Settings,
+                        title = "Settings",
+                        onClick = onNavigateToSettings
+                    )
+                }
+
+                // Log Out
+                Button(
+                    onClick = { authViewModel.logout() },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ParentAppColors.Error
+                    ),
+                    shape = RoundedCornerShape(ParentAppCornerRadius.Medium)
+                ) {
+                    Text(
+                        "Log Out",
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
@@ -175,4 +173,3 @@ fun MenuRow(
         }
     }
 }
-

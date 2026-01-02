@@ -1,5 +1,7 @@
 package com.nova.kids.ui.screens
 
+import androidx.compose.foundation.clickable
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -20,6 +22,7 @@ import com.nova.kids.design.CosmicCornerRadius
 import com.nova.kids.design.CosmicSpacing
 import com.nova.kids.viewmodels.AuthViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(authViewModel: AuthViewModel) {
     Scaffold(
@@ -141,6 +144,7 @@ fun SettingsSection(title: String) {
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsItem(
     icon: ImageVector,
@@ -149,12 +153,13 @@ fun SettingsItem(
     trailing: @Composable (() -> Unit)? = null
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(CosmicCornerRadius.Medium),
         colors = CardDefaults.cardColors(
             containerColor = CosmicColors.GlassBackground
-        ),
-        onClick = onClick
+        )
     ) {
         Row(
             modifier = Modifier
