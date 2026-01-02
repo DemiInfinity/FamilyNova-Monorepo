@@ -6,14 +6,18 @@
 import SwiftUI
 
 struct MonitoringView: View {
+    @StateObject private var networkMonitor = NetworkMonitor.shared
     @State private var messages: [MonitoredMessage] = []
     @State private var isLoading = false
     @State private var selectedChild: String? = nil
+    @State private var toast: ToastNotificationData? = nil
     @EnvironmentObject var authManager: AuthManager
     
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
+                OfflineIndicator()
+                
                 // Filter by child
                 if !messages.isEmpty {
                     ScrollView(.horizontal, showsIndicators: false) {
@@ -41,27 +45,14 @@ struct MonitoringView: View {
                 }
                 
                 if isLoading {
-                    VStack(spacing: ParentAppSpacing.m) {
-                        ProgressView()
-                        Text("Loading messages...")
-                            .font(ParentAppFonts.body)
-                            .foregroundColor(ParentAppColors.darkGray)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    LoadingStateView(message: "Loading messages...")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if messages.isEmpty {
-                    VStack(spacing: ParentAppSpacing.m) {
-                        Image(systemName: "eye.slash")
-                            .font(.system(size: 48))
-                            .foregroundColor(ParentAppColors.mediumGray)
-                        Text("No messages to monitor")
-                            .font(ParentAppFonts.body)
-                            .foregroundColor(ParentAppColors.darkGray)
-                        Text("All messages from your children will appear here")
-                            .font(ParentAppFonts.caption)
-                            .foregroundColor(ParentAppColors.mediumGray)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, ParentAppSpacing.xl)
-                    }
+                    EmptyStateView(
+                        icon: "eye.slash",
+                        title: "No messages to monitor",
+                        message: "All messages from your children will appear here"
+                    )
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     ScrollView {
@@ -97,6 +88,7 @@ struct MonitoringView: View {
             .refreshable {
                 await loadMessagesAsync()
             }
+            .toastNotification($toast)
         }
     }
     

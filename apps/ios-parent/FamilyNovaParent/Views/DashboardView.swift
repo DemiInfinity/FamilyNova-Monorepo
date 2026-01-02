@@ -7,9 +7,11 @@ import SwiftUI
 
 struct DashboardView: View {
     @EnvironmentObject var authManager: AuthManager
+    @StateObject private var networkMonitor = NetworkMonitor.shared
     @State private var children: [Child] = []
     @State private var showCreateChild = false
     @State private var isLoading = false
+    @State private var toast: ToastNotificationData? = nil
     
     private let cacheKey = "cached_children"
     
@@ -45,12 +47,8 @@ struct DashboardView: View {
                         .padding(.horizontal, ParentAppSpacing.m)
                         
                         if isLoading {
-                            HStack {
-                                Spacer()
-                                ProgressView()
-                                    .padding()
-                                Spacer()
-                            }
+                            LoadingStateView(message: "Loading children...")
+                                .padding()
                         } else if children.isEmpty {
                             EmptyChildrenCard(showCreateChild: $showCreateChild)
                                 .padding(.horizontal, ParentAppSpacing.m)
@@ -140,6 +138,7 @@ struct DashboardView: View {
             .refreshable {
                 await loadChildren()
             }
+            .toastNotification($toast)
         }
     }
     
@@ -193,6 +192,7 @@ struct DashboardView: View {
                 if self.children.isEmpty {
                     loadFromCache()
                 }
+                ErrorHandler.shared.showError(error, toast: $toast)
             }
             print("Error loading children: \(error)")
         }

@@ -41,11 +41,6 @@ android {
         jvmTarget = "17"
     }
     
-    // Disable Java compilation since we're using Kotlin only
-    tasks.withType<JavaCompile> {
-        enabled = false
-    }
-    
     buildFeatures {
         compose = true
     }

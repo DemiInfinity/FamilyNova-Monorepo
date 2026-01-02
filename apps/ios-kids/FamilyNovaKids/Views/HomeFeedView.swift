@@ -8,38 +8,33 @@ import SwiftUI
 
 struct HomeFeedView: View {
     @EnvironmentObject var authManager: AuthManager
+    @StateObject private var networkMonitor = NetworkMonitor.shared
     @State private var posts: [Post] = []
     @State private var isLoading = false
     @State private var showCreatePost = false
+    @State private var toast: ToastNotificationData? = nil
     
     var body: some View {
         NavigationView {
             ZStack {
                 CosmicBackground()
                 
-                if isLoading && posts.isEmpty {
-                    VStack(spacing: CosmicSpacing.l) {
-                        ProgressView()
-                            .scaleEffect(1.5)
-                            .tint(CosmicColors.nebulaPurple)
-                        Text("Loading posts...")
-                            .font(CosmicFonts.body)
-                            .foregroundColor(CosmicColors.textSecondary)
-                    }
-                } else if posts.isEmpty {
-                    VStack(spacing: CosmicSpacing.xl) {
-                        Image(systemName: "sparkles")
-                            .cosmicIcon(size: 60, color: CosmicColors.nebulaPurple)
-                        Text("No posts yet!")
-                            .font(CosmicFonts.headline)
-                            .foregroundColor(CosmicColors.textPrimary)
-                        Text("Be the first to share something!")
-                            .font(CosmicFonts.body)
-                            .foregroundColor(CosmicColors.textSecondary)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, CosmicSpacing.xl)
-                    }
-                } else {
+                VStack(spacing: 0) {
+                    // Offline indicator
+                    OfflineIndicator()
+                    
+                    if isLoading && posts.isEmpty {
+                        LoadingStateView(message: "Loading posts...", showSkeleton: true)
+                            .padding(CosmicSpacing.m)
+                    } else if posts.isEmpty {
+                        EmptyStateView(
+                            icon: "sparkles",
+                            title: "No posts yet!",
+                            message: "Be the first to share something!",
+                            actionTitle: "Create Post",
+                            action: { showCreatePost = true }
+                        )
+                    } else {
                     ScrollView {
                         LazyVStack(spacing: CosmicSpacing.l) {
                             ForEach(posts) { post in
@@ -54,6 +49,7 @@ struct HomeFeedView: View {
             }
             .navigationTitle("Home")
             .navigationBarTitleDisplayMode(.large)
+            .toastNotification($toast)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { showCreatePost = true }) {

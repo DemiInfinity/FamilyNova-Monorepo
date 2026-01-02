@@ -13,12 +13,12 @@ struct CommentsView: View {
     let postContent: String
     let postAuthorId: String? // Add author ID to help fetch the post
     
+    @StateObject private var networkMonitor = NetworkMonitor.shared
     @State private var comments: [Comment] = []
     @State private var isLoading = false
     @State private var newComment = ""
     @State private var isPostingComment = false
-    @State private var showError = false
-    @State private var errorMessage = ""
+    @State private var toast: ToastNotificationData? = nil
     
     var body: some View {
         NavigationView {
@@ -60,26 +60,14 @@ struct CommentsView: View {
                     
                     // Comments List
                     if isLoading && comments.isEmpty {
-                        VStack(spacing: CosmicSpacing.l) {
-                            ProgressView()
-                                .scaleEffect(1.5)
-                                .tint(CosmicColors.nebulaPurple)
-                            Text("Loading comments...")
-                                .font(CosmicFonts.body)
-                                .foregroundColor(CosmicColors.textSecondary)
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        LoadingStateView(message: "Loading comments...")
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else if comments.isEmpty {
-                        VStack(spacing: CosmicSpacing.l) {
-                            Text("💬")
-                                .font(.system(size: 60))
-                            Text("No comments yet")
-                                .font(CosmicFonts.headline)
-                                .foregroundColor(CosmicColors.textPrimary)
-                            Text("Be the first to comment!")
-                                .font(CosmicFonts.body)
-                                .foregroundColor(CosmicColors.textSecondary)
-                        }
+                        EmptyStateView(
+                            icon: "message",
+                            title: "No comments yet",
+                            message: "Be the first to comment!"
+                        )
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {
                         ScrollView {
@@ -162,11 +150,7 @@ struct CommentsView: View {
             .refreshable {
                 await loadCommentsAsync()
             }
-            .alert("Error", isPresented: $showError) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text(errorMessage)
-            }
+            .toastNotification($toast)
         }
     }
     
@@ -313,8 +297,7 @@ struct CommentsView: View {
             }
             await MainActor.run {
                 self.isLoading = false
-                self.errorMessage = "Failed to load comments: \(error.localizedDescription)"
-                self.showError = true
+                ErrorHandler.shared.showError(error, toast: $toast)
             }
         }
     }
@@ -331,8 +314,7 @@ struct CommentsView: View {
         
         guard let token = authManager.getValidatedToken() else {
             print("[CommentsView] ❌ No valid token")
-            errorMessage = "Not authenticated. Please log in again."
-            showError = true
+            ErrorHandler.shared.showError(ApiError.invalidResponse, toast: $toast)
             return
         }
         
@@ -416,8 +398,7 @@ struct CommentsView: View {
                 await MainActor.run {
                     self.isPostingComment = false
                     self.newComment = commentText // Restore comment text
-                    self.errorMessage = "Failed to post comment: \(error.localizedDescription)"
-                    self.showError = true
+                    ErrorHandler.shared.showError(error, toast: $toast)
                 }
             }
         }

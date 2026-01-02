@@ -6,35 +6,26 @@
 import SwiftUI
 
 struct PostApprovalView: View {
+    @StateObject private var networkMonitor = NetworkMonitor.shared
     @State private var pendingPosts: [PendingPost] = []
     @State private var isLoading = false
+    @State private var toast: ToastNotificationData? = nil
     @EnvironmentObject var authManager: AuthManager
     
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
+                OfflineIndicator()
+                
                 if isLoading && pendingPosts.isEmpty {
-                    VStack(spacing: ParentAppSpacing.m) {
-                        ProgressView()
-                        Text("Loading posts...")
-                            .font(ParentAppFonts.body)
-                            .foregroundColor(ParentAppColors.darkGray)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    LoadingStateView(message: "Loading posts...")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if pendingPosts.isEmpty {
-                    VStack(spacing: ParentAppSpacing.m) {
-                        Image(systemName: "checkmark.circle")
-                            .font(.system(size: 48))
-                            .foregroundColor(ParentAppColors.success)
-                        Text("No pending posts")
-                            .font(ParentAppFonts.headline)
-                            .foregroundColor(ParentAppColors.black)
-                        Text("All posts from your children have been reviewed")
-                            .font(ParentAppFonts.body)
-                            .foregroundColor(ParentAppColors.darkGray)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, ParentAppSpacing.xl)
-                    }
+                    EmptyStateView(
+                        icon: "checkmark.circle",
+                        title: "No pending posts",
+                        message: "All posts from your children have been reviewed"
+                    )
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     ScrollView {
@@ -56,6 +47,7 @@ struct PostApprovalView: View {
             .refreshable {
                 await loadPendingPostsAsync()
             }
+            .toastNotification($toast)
         }
     }
     

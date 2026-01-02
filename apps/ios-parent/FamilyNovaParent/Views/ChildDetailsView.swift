@@ -9,10 +9,10 @@ struct ChildDetailsView: View {
     let child: Child
     @EnvironmentObject var authManager: AuthManager
     @Environment(\.dismiss) var dismiss
+    @StateObject private var networkMonitor = NetworkMonitor.shared
     @State private var childDetails: ChildDetails?
     @State private var isLoading = false
-    @State private var showError = false
-    @State private var errorMessage = ""
+    @State private var toast: ToastNotificationData? = nil
     @State private var showQRCode = false
     @State private var loginCode: String?
     @State private var isGeneratingCode = false
@@ -21,17 +21,13 @@ struct ChildDetailsView: View {
         ZStack {
             CosmicBackground()
             
-            if isLoading {
-                VStack(spacing: CosmicSpacing.l) {
-                    ProgressView()
-                        .scaleEffect(1.5)
-                        .tint(CosmicColors.nebulaPurple)
-                    Text("Loading...")
-                        .font(CosmicFonts.body)
-                        .foregroundColor(CosmicColors.textSecondary)
-                }
-            } else if let details = childDetails {
-                ScrollView {
+            VStack(spacing: 0) {
+                OfflineIndicator()
+                
+                if isLoading {
+                    LoadingStateView(message: "Loading child details...")
+                } else if let details = childDetails {
+                    ScrollView {
                     VStack(spacing: CosmicSpacing.l) {
                         // Profile Section
                         VStack(alignment: .leading, spacing: CosmicSpacing.m) {
@@ -127,11 +123,7 @@ struct ChildDetailsView: View {
                 await loadChildDetails()
             }
         }
-        .alert("Error", isPresented: $showError) {
-            Button("OK", role: .cancel) { }
-        } message: {
-            Text(errorMessage)
-        }
+        .toastNotification($toast)
         .sheet(isPresented: $showQRCode) {
             if let code = loginCode, let details = childDetails {
                 QRCodeLoginView(
@@ -144,8 +136,7 @@ struct ChildDetailsView: View {
     
     private func loadChildDetails() async {
         guard let token = authManager.token else {
-            errorMessage = "Not authenticated"
-            showError = true
+            ErrorHandler.shared.showError(ApiError.invalidResponse, toast: $toast)
             return
         }
         
@@ -187,19 +178,17 @@ struct ChildDetailsView: View {
                 )
                 self.isLoading = false
             }
-        } catch {
-            await MainActor.run {
-                self.isLoading = false
-                self.errorMessage = "Failed to load child details: \(error.localizedDescription)"
-                self.showError = true
+            } catch {
+                await MainActor.run {
+                    self.isLoading = false
+                    ErrorHandler.shared.showError(error, toast: $toast)
+                }
             }
-        }
     }
     
     private func handleDirectLogin() {
         guard let details = childDetails, let token = authManager.token else {
-            errorMessage = "Unable to log in. Please try again."
-            showError = true
+            ErrorHandler.shared.showError(NSError(domain: "LoginError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unable to log in. Please try again."]), toast: $toast)
             return
         }
         
@@ -212,8 +201,7 @@ struct ChildDetailsView: View {
     
     private func handleQRCodeLogin() {
         guard let details = childDetails, let token = authManager.token else {
-            errorMessage = "Unable to generate login code. Please try again."
-            showError = true
+            ErrorHandler.shared.showError(NSError(domain: "LoginError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unable to generate login code. Please try again."]), toast: $toast)
             return
         }
         
@@ -248,8 +236,7 @@ struct ChildDetailsView: View {
         } catch {
             await MainActor.run {
                 self.isGeneratingCode = false
-                self.errorMessage = "Failed to generate login code: \(error.localizedDescription)"
-                self.showError = true
+                ErrorHandler.shared.showError(error, toast: $toast)
             }
         }
     }

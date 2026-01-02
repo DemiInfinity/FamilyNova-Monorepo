@@ -8,6 +8,7 @@ import SwiftUI
 struct ProfileView: View {
     @EnvironmentObject var authManager: AuthManager
     @Environment(\.dismiss) var dismiss
+    @StateObject private var networkMonitor = NetworkMonitor.shared
     @State private var displayName = ""
     @State private var email = ""
     @State private var school: String? = nil
@@ -17,8 +18,7 @@ struct ProfileView: View {
     @State private var showEditProfile = false
     @State private var pendingChanges = false
     @State private var isLoading = true
-    @State private var showError = false
-    @State private var errorMessage = ""
+    @State private var toast: ToastNotificationData? = nil
     @State private var posts: [Post] = []
     @State private var postsCount = 0
     @State private var friendsCount = 0
@@ -30,17 +30,13 @@ struct ProfileView: View {
             ZStack {
                 CosmicBackground()
                 
-                if isLoading {
-                    VStack(spacing: CosmicSpacing.l) {
-                        ProgressView()
-                            .scaleEffect(1.5)
-                            .tint(CosmicColors.nebulaPurple)
-                        Text("Loading profile...")
-                            .font(CosmicFonts.body)
-                            .foregroundColor(CosmicColors.textSecondary)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
+                VStack(spacing: 0) {
+                    OfflineIndicator()
+                    
+                    if isLoading {
+                        LoadingStateView(message: "Loading profile...")
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else {
                     ScrollView {
                         VStack(spacing: 0) {
                             // Cover Banner
@@ -268,11 +264,7 @@ struct ProfileView: View {
                     loadUserPosts()
                 }
             }
-            .alert("Error", isPresented: $showError) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text(errorMessage)
-            }
+            .toastNotification($toast)
         }
     }
     
@@ -401,8 +393,7 @@ struct ProfileView: View {
     
     private func deletePost(postId: UUID) {
         guard let token = authManager.getValidatedToken() else {
-            errorMessage = "Not authenticated. Please log in again."
-            showError = true
+            ErrorHandler.shared.showError(ApiError.invalidResponse, toast: $toast)
             return
         }
         
@@ -429,8 +420,7 @@ struct ProfileView: View {
                 }
             } catch {
                 await MainActor.run {
-                    self.errorMessage = "Failed to delete post: \(error.localizedDescription)"
-                    self.showError = true
+                    ErrorHandler.shared.showError(error, toast: $toast)
                 }
             }
         }
@@ -438,8 +428,7 @@ struct ProfileView: View {
     
     private func loadProfile() {
         guard let token = authManager.getValidatedToken() else {
-            errorMessage = "Not authenticated. Please log in again."
-            showError = true
+            ErrorHandler.shared.showError(ApiError.invalidResponse, toast: $toast)
             isLoading = false
             return
         }
@@ -564,8 +553,7 @@ struct ProfileView: View {
             } catch {
                 await MainActor.run {
                     self.isLoading = false
-                    self.errorMessage = "Failed to load profile: \(error.localizedDescription)"
-                    self.showError = true
+                    ErrorHandler.shared.showError(error, toast: $toast)
                 }
             }
         }

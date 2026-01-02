@@ -13,12 +13,12 @@ struct CommentsView: View {
     let postContent: String
     let postAuthorId: String? // Add author ID to help fetch the post
     
+    @StateObject private var networkMonitor = NetworkMonitor.shared
     @State private var comments: [Comment] = []
     @State private var isLoading = false
     @State private var newComment = ""
     @State private var isPostingComment = false
-    @State private var showError = false
-    @State private var errorMessage = ""
+    @State private var toast: ToastNotificationData? = nil
     
     var body: some View {
         NavigationView {
@@ -162,11 +162,7 @@ struct CommentsView: View {
             .refreshable {
                 await loadCommentsAsync()
             }
-            .alert("Error", isPresented: $showError) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text(errorMessage)
-            }
+            .toastNotification($toast)
         }
     }
     
@@ -313,8 +309,7 @@ struct CommentsView: View {
             }
             await MainActor.run {
                 self.isLoading = false
-                self.errorMessage = "Failed to load comments: \(error.localizedDescription)"
-                self.showError = true
+                ErrorHandler.shared.showError(error, toast: $toast)
             }
         }
     }
@@ -331,8 +326,7 @@ struct CommentsView: View {
         
         guard let token = authManager.getValidatedToken() else {
             print("[CommentsView] ❌ No valid token")
-            errorMessage = "Not authenticated. Please log in again."
-            showError = true
+            ErrorHandler.shared.showError(ApiError.invalidResponse, toast: $toast)
             return
         }
         
@@ -416,8 +410,7 @@ struct CommentsView: View {
                 await MainActor.run {
                     self.isPostingComment = false
                     self.newComment = commentText // Restore comment text
-                    self.errorMessage = "Failed to post comment: \(error.localizedDescription)"
-                    self.showError = true
+                    ErrorHandler.shared.showError(error, toast: $toast)
                 }
             }
         }

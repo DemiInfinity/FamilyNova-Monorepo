@@ -7,11 +7,11 @@ import SwiftUI
 
 struct LoginView: View {
     @EnvironmentObject var authManager: AuthManager
+    @StateObject private var networkMonitor = NetworkMonitor.shared
     @State private var email = ""
     @State private var password = ""
     @State private var isLoading = false
-    @State private var showError = false
-    @State private var errorMessage = ""
+    @State private var toast: ToastNotificationData? = nil
     @State private var showRegister = false
     
     var body: some View {
@@ -116,11 +116,7 @@ struct LoginView: View {
             .padding(.bottom, ParentAppSpacing.xxl)
         }
         .background(ParentAppColors.lightGray)
-        .alert("Error", isPresented: $showError) {
-            Button("OK", role: .cancel) { }
-        } message: {
-            Text(errorMessage)
-        }
+        .toastNotification($toast)
         .sheet(isPresented: $showRegister) {
             RegisterView()
         }
@@ -128,14 +124,12 @@ struct LoginView: View {
     
     private func handleLogin() {
         guard !email.isEmpty, !password.isEmpty else {
-            errorMessage = "Please fill in all fields"
-            showError = true
+            ErrorHandler.shared.showError(NSError(domain: "LoginError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Please fill in all fields"]), toast: $toast)
             return
         }
         
         guard email.contains("@") else {
-            errorMessage = "Please enter a valid email"
-            showError = true
+            ErrorHandler.shared.showError(NSError(domain: "LoginError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Please enter a valid email"]), toast: $toast)
             return
         }
         
@@ -144,8 +138,7 @@ struct LoginView: View {
             do {
                 try await authManager.login(email: email, password: password)
             } catch {
-                errorMessage = error.localizedDescription
-                showError = true
+                ErrorHandler.shared.showError(error, toast: $toast)
             }
             isLoading = false
         }

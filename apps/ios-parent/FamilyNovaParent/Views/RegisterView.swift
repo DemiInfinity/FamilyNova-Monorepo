@@ -8,15 +8,14 @@ import SwiftUI
 struct RegisterView: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var authManager: AuthManager
+    @StateObject private var networkMonitor = NetworkMonitor.shared
     @State private var firstName = ""
     @State private var lastName = ""
     @State private var email = ""
     @State private var password = ""
     @State private var confirmPassword = ""
     @State private var isRegistering = false
-    @State private var showError = false
-    @State private var errorMessage = ""
-    @State private var showSuccess = false
+    @State private var toast: ToastNotificationData? = nil
     
     var body: some View {
         NavigationView {
@@ -186,18 +185,7 @@ struct RegisterView: View {
                     .foregroundColor(ParentAppColors.primaryTeal)
                 }
             }
-            .alert("Error", isPresented: $showError) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text(errorMessage)
-            }
-            .alert("Success", isPresented: $showSuccess) {
-                Button("OK") {
-                    dismiss()
-                }
-            } message: {
-                Text("Account created successfully! You can now log in.")
-            }
+            .toastNotification($toast)
         }
     }
     
@@ -212,8 +200,7 @@ struct RegisterView: View {
     
     private func handleRegister() {
         guard isFormValid else {
-            errorMessage = "Please fill in all fields correctly"
-            showError = true
+            ErrorHandler.shared.showError(NSError(domain: "RegistrationError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Please fill in all fields correctly"]), toast: $toast)
             return
         }
         
@@ -226,10 +213,14 @@ struct RegisterView: View {
                     firstName: firstName,
                     lastName: lastName
                 )
-                showSuccess = true
+                await MainActor.run {
+                    ErrorHandler.shared.showSuccess("Account created successfully! You can now log in.", toast: $toast)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                        dismiss()
+                    }
+                }
             } catch {
-                errorMessage = error.localizedDescription
-                showError = true
+                ErrorHandler.shared.showError(error, toast: $toast)
             }
             isRegistering = false
         }

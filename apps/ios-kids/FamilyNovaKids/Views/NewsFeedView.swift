@@ -7,9 +7,11 @@ import SwiftUI
 import UIKit
 
 struct NewsFeedView: View {
+    @StateObject private var networkMonitor = NetworkMonitor.shared
     @State private var posts: [Post] = []
     @State private var isLoading = false
     @State private var showCreatePost = false
+    @State private var toast: ToastNotificationData? = nil
     @EnvironmentObject var authManager: AuthManager
     
     var body: some View {
@@ -23,49 +25,22 @@ struct NewsFeedView: View {
                 )
                 .ignoresSafeArea()
                 
-                if isLoading && posts.isEmpty {
-                    VStack(spacing: AppSpacing.l) {
-                        ProgressView()
-                            .scaleEffect(1.5)
-                        Text("Loading posts...")
-                            .font(AppFonts.body)
-                            .foregroundColor(AppColors.darkGray)
-                    }
-                } else if posts.isEmpty {
-                    VStack(spacing: AppSpacing.l) {
-                        Text("🌟")
-                            .font(.system(size: 80))
-                        Text("No posts yet!")
-                            .font(AppFonts.headline)
-                            .foregroundColor(AppColors.primaryPurple)
-                        Text("Be the first to share something fun!")
-                            .font(AppFonts.body)
-                            .foregroundColor(AppColors.darkGray)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, AppSpacing.xl)
-                        
-                        Button(action: { showCreatePost = true }) {
-                            HStack(spacing: AppSpacing.s) {
-                                Text("✨")
-                                    .font(.system(size: 24))
-                                Text("Create Your First Post")
-                                    .font(AppFonts.button)
-                                    .foregroundColor(.white)
-                            }
-                            .padding(AppSpacing.l)
-                            .background(
-                                LinearGradient(
-                                    colors: [AppColors.primaryBlue, AppColors.primaryPurple],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                            .cornerRadius(AppCornerRadius.large)
-                            .shadow(color: AppColors.primaryBlue.opacity(0.3), radius: 8, x: 0, y: 4)
-                        }
-                        .padding(.top, AppSpacing.m)
-                    }
-                } else {
+                VStack(spacing: 0) {
+                    // Offline indicator
+                    OfflineIndicator()
+                    
+                    if isLoading && posts.isEmpty {
+                        LoadingStateView(message: "Loading posts...", showSkeleton: true)
+                            .padding(AppSpacing.m)
+                    } else if posts.isEmpty {
+                        EmptyStateView(
+                            icon: "sparkles",
+                            title: "No posts yet!",
+                            message: "Be the first to share something fun!",
+                            actionTitle: "Create Your First Post",
+                            action: { showCreatePost = true }
+                        )
+                    } else {
                     ScrollView {
                         LazyVStack(spacing: AppSpacing.l) {
                             ForEach(posts) { post in
@@ -78,6 +53,7 @@ struct NewsFeedView: View {
             }
             .navigationTitle("News Feed")
             .navigationBarTitleDisplayMode(.large)
+            .toastNotification($toast)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { showCreatePost = true }) {
@@ -207,10 +183,14 @@ struct NewsFeedView: View {
                         if statusCode == 401 {
                             // Unauthorized, force logout
                             authManager.logout()
+                        } else {
+                            ErrorHandler.shared.showError(error, toast: $toast)
                         }
                     default:
-                        break
+                        ErrorHandler.shared.showError(error, toast: $toast)
                     }
+                } else {
+                    ErrorHandler.shared.showError(error, toast: $toast)
                 }
             }
         }

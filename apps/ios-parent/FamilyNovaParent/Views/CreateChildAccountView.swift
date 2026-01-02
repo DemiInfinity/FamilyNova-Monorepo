@@ -17,10 +17,9 @@ struct CreateChildAccountView: View {
     @State private var dateOfBirth = Date()
     @State private var school = ""
     @State private var grade = ""
+    @StateObject private var networkMonitor = NetworkMonitor.shared
     @State private var isCreating = false
-    @State private var showError = false
-    @State private var errorMessage = ""
-    @State private var showSuccess = false
+    @State private var toast: ToastNotificationData? = nil
     
     var body: some View {
         NavigationView {
@@ -245,18 +244,7 @@ struct CreateChildAccountView: View {
                     .foregroundColor(ParentAppColors.primaryTeal)
                 }
             }
-            .alert("Error", isPresented: $showError) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text(errorMessage)
-            }
-            .alert("Success", isPresented: $showSuccess) {
-                Button("OK") {
-                    dismiss()
-                }
-            } message: {
-                Text("Child account created successfully! Your child can now log in with their email and password.")
-            }
+            .toastNotification($toast)
         }
     }
     
@@ -271,14 +259,12 @@ struct CreateChildAccountView: View {
     
     private func createChildAccount() {
         guard isFormValid else {
-            errorMessage = "Please fill in all required fields correctly"
-            showError = true
+            ErrorHandler.shared.showError(NSError(domain: "ValidationError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Please fill in all required fields correctly"]), toast: $toast)
             return
         }
         
         guard let token = authManager.token else {
-            errorMessage = "Not authenticated. Please log in again."
-            showError = true
+            ErrorHandler.shared.showError(ApiError.invalidResponse, toast: $toast)
             return
         }
         
@@ -334,26 +320,15 @@ struct CreateChildAccountView: View {
                 
                 await MainActor.run {
                     isCreating = false
-                    showSuccess = true
+                    ErrorHandler.shared.showSuccess("Child account created successfully! Your child can now log in with their email and password.", toast: $toast)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                        dismiss()
+                    }
                 }
             } catch {
                 await MainActor.run {
                     isCreating = false
-                    if let apiError = error as? ApiError {
-                        switch apiError {
-                        case .httpError(let code):
-                            errorMessage = "Server error (code: \(code)). Please try again."
-                        case .invalidURL:
-                            errorMessage = "Invalid server URL. Please check your connection."
-                        case .invalidResponse:
-                            errorMessage = "Invalid server response. Please try again."
-                        case .decodingError:
-                            errorMessage = "Failed to parse server response. Please try again."
-                        }
-                    } else {
-                        errorMessage = error.localizedDescription
-                    }
-                    showError = true
+                    ErrorHandler.shared.showError(error, toast: $toast)
                 }
             }
         }
