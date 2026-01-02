@@ -1,11 +1,6 @@
-const createDOMPurify = require('dompurify');
-const { JSDOM } = require('jsdom');
-
-const window = new JSDOM('').window;
-const DOMPurify = createDOMPurify(window);
-
 /**
  * Sanitizes HTML content to prevent XSS attacks
+ * Strips all HTML tags and escapes entities
  * @param {string} dirty - Potentially unsafe HTML string
  * @returns {string} - Sanitized HTML string
  */
@@ -14,12 +9,11 @@ function sanitizeHTML(dirty) {
     return '';
   }
   
-  // Configure DOMPurify to be very strict
-  return DOMPurify.sanitize(dirty, {
-    ALLOWED_TAGS: [], // No HTML tags allowed - strip all
-    ALLOWED_ATTR: [],
-    KEEP_CONTENT: true // Keep text content but strip tags
-  });
+  // Strip all HTML tags using regex (safe for our use case)
+  let sanitized = dirty.replace(/<[^>]*>/g, '');
+  
+  // Escape HTML entities
+  return sanitizeText(sanitized);
 }
 
 /**
