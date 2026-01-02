@@ -129,7 +129,7 @@ router.post('/', requireUserType('kid', 'parent'), [
       createdAt: message.createdAt
     }
   });
-});
+}));
 
 // @route   GET /api/messages
 // @desc    Get messages for current user
