@@ -3,6 +3,8 @@ const { body, validationResult } = require('express-validator');
 const { getSupabase } = require('../config/database');
 const User = require('../models/User');
 const { auth } = require('../middleware/auth');
+const constants = require('../config/constants');
+const { asyncHandler, createError } = require('../middleware/errorHandler');
 
 const router = express.Router();
 
@@ -11,11 +13,12 @@ const router = express.Router();
 // @access  Public
 router.post('/register', [
   body('email').isEmail().normalizeEmail(),
-  body('password').isLength({ min: 6 }),
+  body('password').isLength({ min: constants.MIN_PASSWORD_LENGTH, max: constants.MAX_PASSWORD_LENGTH })
+    .withMessage(`Password must be between ${constants.MIN_PASSWORD_LENGTH} and ${constants.MAX_PASSWORD_LENGTH} characters`),
   body('userType').isIn(['kid', 'parent']),
   body('firstName').trim().notEmpty(),
   body('lastName').trim().notEmpty()
-], async (req, res) => {
+], asyncHandler(async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -107,11 +110,7 @@ router.post('/register', [
       console.error('Profile creation error:', profileError);
       return res.status(500).json({ error: 'Failed to create user profile' });
     }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Server error during registration' });
-  }
-});
+}));
 
 // @route   POST /api/auth/login
 // @desc    Login user using Supabase Auth

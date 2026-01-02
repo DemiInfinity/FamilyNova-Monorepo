@@ -2,6 +2,8 @@ const express = require('express');
 const { auth, requireUserType } = require('../middleware/auth');
 const User = require('../models/User');
 const { getSupabase } = require('../config/database');
+const { asyncHandler, createError } = require('../middleware/errorHandler');
+const { getUserById } = require('../utils/routeHelpers');
 
 const router = express.Router();
 
@@ -12,14 +14,9 @@ router.use(requireUserType('kid'));
 // @route   GET /api/kids/profile
 // @desc    Get kid's profile
 // @access  Private (Kid only)
-router.get('/profile', async (req, res) => {
-  try {
-    const supabase = await getSupabase();
-    const user = await User.findById(req.user.id);
-    
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
+router.get('/profile', asyncHandler(async (req, res) => {
+  const supabase = getSupabase();
+  const user = await getUserById(req.user.id, 'User not found');
     
     // Get friends
     const { data: friendships, error: friendsError } = await supabase
@@ -79,11 +76,7 @@ router.get('/profile', async (req, res) => {
         parentAccount: parentAccount
       }
     });
-  } catch (error) {
-    console.error('Error fetching profile:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
+}));
 
 // @route   GET /api/kids/friends
 // @desc    Get kid's friends list

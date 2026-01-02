@@ -13,24 +13,6 @@ import com.nova.kids.viewmodels.AuthViewModel
 
 @Composable
 fun MoreScreen(authViewModel: AuthViewModel) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        CosmicColors.SpaceTop,
-                        CosmicColors.SpaceMiddle,
-                        CosmicColors.SpaceBottom
-                    )
-                )
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = "More",
-            color = CosmicColors.TextPrimary
-        )
-    }
+    ProfileScreen(authViewModel = authViewModel)
 }
 

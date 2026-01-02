@@ -1,9 +1,24 @@
 const crypto = require('crypto');
 
-// Encryption key - should be stored in environment variables
-// In production, use a strong random key: crypto.randomBytes(32).toString('hex')
-// Default key matches iOS app default (for development only - MUST set ENCRYPTION_KEY in production!)
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'your-32-byte-encryption-key-here-must-match-backend';
+// Encryption key - MUST be set in environment variables
+// Generate a key with: crypto.randomBytes(32).toString('hex')
+// NO DEFAULT KEY - application will fail to start if not set (security requirement)
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
+
+if (!ENCRYPTION_KEY) {
+  throw new Error(
+    'ENCRYPTION_KEY environment variable is required. ' +
+    'Generate a key with: crypto.randomBytes(32).toString("hex")'
+  );
+}
+
+if (ENCRYPTION_KEY.length < 32) {
+  throw new Error(
+    'ENCRYPTION_KEY must be at least 32 characters long. ' +
+    'For hex keys, use 64 characters (32 bytes).'
+  );
+}
+
 const ALGORITHM = 'aes-256-cbc'; // Using CBC for compatibility with mobile apps
 const IV_LENGTH = 16; // 16 bytes for AES
 

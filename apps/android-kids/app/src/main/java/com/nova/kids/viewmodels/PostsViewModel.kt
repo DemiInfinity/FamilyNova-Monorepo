@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nova.kids.api.ApiInterface
 import com.nova.kids.models.Post
-import com.nova.kids.services.ApiService
+import com.nova.kids.api.ApiInterface
 import com.nova.kids.services.DataManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,7 +14,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class PostsViewModel(private val authViewModel: AuthViewModel) : ViewModel() {
-    private val api = ApiService.retrofit.create(ApiInterface::class.java)
+    private val api: ApiInterface = com.nova.kids.services.ApiService.retrofit.create(ApiInterface::class.java)
     
     private val _posts = MutableStateFlow<List<Post>>(emptyList())
     val posts: StateFlow<List<Post>> = _posts.asStateFlow()

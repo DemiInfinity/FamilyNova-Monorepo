@@ -122,8 +122,10 @@ fun CosmicPostCard(
                     )
                 }
                 
+                var showComments by remember { mutableStateOf(false) }
+                
                 Row {
-                    IconButton(onClick = { /* Comment */ }) {
+                    IconButton(onClick = { showComments = true }) {
                         Icon(
                             imageVector = Icons.Default.Comment,
                             contentDescription = "Comment",
@@ -135,6 +137,11 @@ fun CosmicPostCard(
                         color = CosmicColors.TextMuted,
                         modifier = Modifier.align(Alignment.CenterVertically)
                     )
+                }
+                
+                if (showComments) {
+                    // Navigate to comments screen - this would need navigation context
+                    // For now, we'll handle this in the parent composable
                 }
                 
                 IconButton(onClick = { /* Share */ }) {

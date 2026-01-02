@@ -16,6 +16,9 @@ interface ApiInterface {
     @GET("kids/profile")
     suspend fun getProfile(@Header("Authorization") token: String): Response<ProfileResponse>
     
+    @GET("auth/me")
+    suspend fun getCurrentUser(@Header("Authorization") token: String): Response<ProfileResponse>
+    
     // Posts
     @GET("posts")
     suspend fun getPosts(

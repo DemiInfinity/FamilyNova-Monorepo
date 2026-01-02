@@ -31,14 +31,13 @@ router.get('/my-code', requireUserType('kid', 'parent'), async (req, res) => {
 // @route   POST /api/friends/add-by-code
 // @desc    Add friend using friend code (kids and parents)
 // @access  Private
-router.post('/add-by-code', requireUserType('kid', 'parent'), async (req, res) => {
-  try {
-    const { code } = req.body;
-    const supabase = await getSupabase();
-    
-    if (!code || code.length !== 8) {
-      return res.status(400).json({ error: 'Invalid friend code format' });
-    }
+router.post('/add-by-code', requireUserType('kid', 'parent'), asyncHandler(async (req, res) => {
+  const code = requireNotNull(req.body.code, 'code');
+  const supabase = getSupabase();
+  
+  if (!code || code.length !== 8) {
+    throw createError('Invalid friend code format', 400, 'INVALID_FRIEND_CODE');
+  }
     
     // Find friend by code
     const friendCode = await FriendCode.findByCode(code.toUpperCase());
@@ -58,46 +57,53 @@ router.post('/add-by-code', requireUserType('kid', 'parent'), async (req, res) =
       return res.status(400).json({ error: 'Cannot add yourself as a friend' });
     }
     
-    // Get friend user
-    const friend = await User.findById(friendId);
-    if (!friend) {
-      return res.status(404).json({ error: 'Friend not found' });
-    }
+    // Get friend user with validation
+    const friend = await getUserById(friendId, 'Friend not found');
     
-    // Parents can only add other parents as friends, kids can only add other kids
-    if (req.user.userType === 'parent' && friend.userType !== 'parent') {
-      return res.status(403).json({ error: 'Parents can only add other parents as friends' });
-    }
-    if (req.user.userType === 'kid' && friend.userType !== 'kid') {
-      return res.status(403).json({ error: 'Kids can only add other kids as friends' });
-    }
+    // Validate user type compatibility
+    validateUserTypeInteraction(req.user.userType, friend.userType, 'add as friend');
     
-    // Check if already friends
-    const { data: existingFriendship, error: friendCheckError } = await supabase
+    // Check if already friends - use transaction-like approach to prevent race conditions
+    const { data: existingFriendships, error: friendCheckError } = await supabase
       .from('friendships')
       .select('*')
-      .or(`and(user_id.eq.${req.user.id},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${req.user.id})`)
-      .single();
+      .or(`and(user_id.eq.${req.user.id},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${req.user.id})`);
     
-    if (!friendCheckError && existingFriendship) {
+    if (friendCheckError && friendCheckError.code !== 'PGRST116') { // PGRST116 = no rows returned
+      console.error('Error checking friendship:', friendCheckError);
+      return res.status(500).json({ error: 'Failed to verify friendship status' });
+    }
+    
+    if (existingFriendships && existingFriendships.length > 0) {
+      const existingFriendship = existingFriendships[0];
       if (existingFriendship.status === 'accepted') {
         return res.status(400).json({ error: 'Already friends' });
       } else if (existingFriendship.status === 'pending') {
-        // Auto-accept if pending
-        await supabase
-          .from('friendships')
-          .update({ status: 'accepted' })
-          .or(`and(user_id.eq.${req.user.id},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${req.user.id})`);
+        // Auto-accept if pending - use atomic update to avoid race condition
+        const { checkAndUpdate } = require('../utils/transactions');
+        try {
+          await checkAndUpdate(
+            'friendships',
+            { id: existingFriendship.id, status: 'pending' },
+            { status: 'accepted' }
+          );
+        } catch (updateError) {
+          console.error('Error updating friendship:', updateError);
+          return res.status(500).json({ error: 'Failed to accept friendship' });
+        }
       }
     } else {
       // Create friendship (auto-accept when using friend code)
-      const { error: friendshipError } = await supabase
+      // Use unique constraint to prevent duplicates
+      const { data: newFriendship, error: friendshipError } = await supabase
         .from('friendships')
         .insert({
           user_id: req.user.id,
           friend_id: friendId,
           status: 'accepted'
-        });
+        })
+        .select()
+        .single();
       
       if (friendshipError) {
         console.error('Error creating friendship:', friendshipError);

@@ -7,6 +7,10 @@ const Comment = require('../models/Comment');
 const Reaction = require('../models/Reaction');
 const { auth, requireUserType } = require('../middleware/auth');
 const { getSupabase } = require('../config/database');
+const { sanitizeInput, sanitizeText } = require('../utils/sanitize');
+const { asyncHandler, createError } = require('../middleware/errorHandler');
+const { requireNotNull, safeGet } = require('../middleware/validation');
+const { getUserById, formatPostResponse } = require('../utils/routeHelpers');
 
 // All routes require authentication
 router.use(auth);
@@ -16,18 +20,21 @@ router.use(auth);
 // @access  Private
 router.post('/', [
   body('content').trim().isLength({ min: 1, max: 500 })
-], async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
+], asyncHandler(async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    throw createError('Validation failed', 400, 'VALIDATION_ERROR', errors.array());
+  }
+  
+  // Sanitize input with null checks
+  const content = requireNotNull(req.body.content, 'content');
+  const imageUrl = safeGet(req.body, 'imageUrl');
+  const visibleToChildren = safeGet(req.body, 'visibleToChildren');
+  const sanitizedContent = sanitizeInput(content);
     
-    const { content, imageUrl, visibleToChildren } = req.body;
-    
-    const author = await User.findById(req.user.id);
+    const author = await User.findById(requireNotNull(req.user.id, 'user.id'));
     if (!author) {
-      return res.status(404).json({ error: 'User not found' });
+      throw createError('User not found', 404, 'USER_NOT_FOUND');
     }
     
     // Determine status and visibility based on user type
@@ -52,7 +59,7 @@ router.post('/', [
     // Create post using Post model
     const post = await Post.create({
       authorId: req.user.id,
-      content: content.trim(),
+      content: sanitizedContent,
       imageUrl: imageUrl || null,
       status: status,
       visibleToChildren: visibleToChildrenValue,
@@ -88,11 +95,7 @@ router.post('/', [
         ? 'Post created and pending parent approval' 
         : 'Post created and approved'
     });
-  } catch (error) {
-    console.error('Error creating post:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
+}));
 
 // @route   GET /api/posts
 // @desc    Get approved posts for news feed with visibility filtering, or posts by a specific user if userId query param is provided
@@ -210,32 +213,14 @@ router.get('/', async (req, res) => {
         }
       }
       
-      // Format posts with author info
+      // Format posts with author info using helper
       const postsWithAuthors = (userPostsData || []).map(postData => {
-        const postReactions = reactionsByPost.get(postData.id) || [];
-        const postComments = commentsByPost.get(postData.id) || [];
-        const isLiked = postReactions.includes(req.user.id);
-        
-        const createdAt = postData.created_at instanceof Date
-          ? postData.created_at.toISOString()
-          : (postData.created_at || new Date().toISOString());
-        
-        return {
-          id: postData.id,
-          content: postData.content,
-          imageUrl: postData.image_url,
-          status: postData.status,
-          likes: postReactions,
-          comments: postComments,
-          author: {
-            id: author.id,
-            profile: {
-              displayName: authorProfile.displayName || 'Unknown',
-              avatar: authorProfile.avatar
-            }
-          },
-          createdAt: createdAt
+        const postWithReactions = {
+          ...postData,
+          reactions: reactionsByPost.get(postData.id) || [],
+          comments: commentsByPost.get(postData.id) || []
         };
+        return formatPostResponse(postWithReactions, author, req.user.id);
       });
       
       return res.json({ posts: postsWithAuthors });
@@ -800,15 +785,17 @@ router.post('/:postId/reaction', [
 // @access  Private
 router.post('/:postId/comment', [
   body('content').trim().isLength({ min: 1, max: 200 })
-], async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-    
-    const { postId } = req.params;
-    const { content } = req.body;
+], asyncHandler(async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    throw createError('Validation failed', 400, 'VALIDATION_ERROR', errors.array());
+  }
+  
+  const { postId } = req.params;
+  const { content } = req.body;
+  
+  // Sanitize comment content
+  const sanitizedContent = sanitizeInput(content);
     
     const post = await Post.findById(postId);
     
@@ -828,7 +815,7 @@ router.post('/:postId/comment', [
     const comment = await Comment.create({
       postId: postId,
       authorId: req.user.id,
-      content: content.trim()
+      content: sanitizedContent
     });
     
     // Format createdAt as ISO8601 string
@@ -849,11 +836,7 @@ router.post('/:postId/comment', [
         createdAt: createdAt
       }
     });
-  } catch (error) {
-    console.error('Error adding comment:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
+}));
 
 // @route   PUT /api/posts/:postId/approve-adult
 // @desc    Approve an adult to see a child's post (parent only)

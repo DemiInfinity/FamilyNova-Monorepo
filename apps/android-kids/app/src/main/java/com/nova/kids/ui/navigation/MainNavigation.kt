@@ -23,6 +23,10 @@ sealed class Screen(val route: String, val title: String, val icon: androidx.com
     object Create : Screen("create", "Create", Icons.Default.AddCircle)
     object Messages : Screen("messages", "Messages", Icons.Default.Message)
     object More : Screen("more", "More", Icons.Default.MoreVert)
+    
+    // Detail screens
+    data class Comments(val postId: String) : Screen("comments/$postId", "Comments", Icons.Default.Comment)
+    data class Profile(val userId: String? = null) : Screen("profile/${userId ?: "me"}", "Profile", Icons.Default.Person)
 }
 
 @Composable
@@ -88,6 +92,19 @@ fun MainNavigation(authViewModel: AuthViewModel) {
             }
             composable(Screen.More.route) {
                 MoreScreen(authViewModel)
+            }
+            
+            // Detail screens
+            composable("comments/{postId}") { backStackEntry ->
+                val postId = backStackEntry.arguments?.getString("postId") ?: ""
+                // Find post from PostsViewModel - for now show placeholder
+                // TODO: Pass post data through navigation
+                Text("Comments for post: $postId")
+            }
+            
+            composable("profile/{userId}") { backStackEntry ->
+                val userId = backStackEntry.arguments?.getString("userId")
+                ProfileScreen(authViewModel, if (userId == "me") null else userId)
             }
         }
     }

@@ -2,6 +2,8 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { auth, requireUserType } = require('../middleware/auth');
 const User = require('../models/User');
+const { asyncHandler, createError } = require('../middleware/errorHandler');
+const { getUserById } = require('../utils/routeHelpers');
 
 const router = express.Router();
 
@@ -12,15 +14,10 @@ router.use(requireUserType('parent'));
 // @route   GET /api/parents/profile
 // @desc    Get parent's profile
 // @access  Private (Parent only)
-router.get('/profile', async (req, res) => {
-  try {
-    const { getSupabase } = require('../config/database');
-    const supabase = await getSupabase();
-    const user = await User.findById(req.user.id);
-    
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
+router.get('/profile', asyncHandler(async (req, res) => {
+  const { getSupabase } = require('../config/database');
+  const supabase = getSupabase();
+  const user = await getUserById(req.user.id, 'User not found');
     
     // Get friends (parents can have friends too)
     const { data: friendships, error: friendsError } = await supabase

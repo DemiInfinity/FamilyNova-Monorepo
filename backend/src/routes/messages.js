@@ -4,6 +4,8 @@ const { auth, requireUserType } = require('../middleware/auth');
 const Message = require('../models/Message');
 const User = require('../models/User');
 const { getSupabase } = require('../config/database');
+const { sanitizeInput } = require('../utils/sanitize');
+const { asyncHandler, createError } = require('../middleware/errorHandler');
 
 const router = express.Router();
 
@@ -16,23 +18,26 @@ router.use(auth);
 router.post('/', requireUserType('kid', 'parent'), [
   body('receiverId').notEmpty(),
   body('content').trim().isLength({ min: 1, max: 1000 })
-], async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
+], asyncHandler(async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    throw createError('Validation failed', 400, 'VALIDATION_ERROR', errors.array());
+  }
+  
+  const receiverId = requireNotNull(req.body.receiverId, 'receiverId');
+  const content = requireNotNull(req.body.content, 'content');
+  
+  // Sanitize message content
+  const sanitizedContent = sanitizeInput(content);
+    const supabase = getSupabase();
     
-    const { receiverId, content } = req.body;
-    const supabase = await getSupabase();
-    
-    console.log(`[Messages] Sending message from ${req.user.id} (${req.user.userType}) to ${receiverId}`);
+    console.log(`[Messages] Sending message from ${requireNotNull(req.user.id, 'user.id')} (${safeGet(req.user, 'userType', 'unknown')}) to ${receiverId}`);
     
     // Verify receiver is a friend
     const receiver = await User.findById(receiverId);
     if (!receiver) {
       console.log(`[Messages] Receiver not found: ${receiverId}`);
-      return res.status(404).json({ error: 'Receiver not found' });
+      throw createError('Receiver not found', 404, 'RECEIVER_NOT_FOUND');
     }
     
     console.log(`[Messages] Receiver found: ${receiver.id} (${receiver.userType})`);
@@ -86,7 +91,7 @@ router.post('/', requireUserType('kid', 'parent'), [
     const message = await Message.create({
       senderId: req.user.id,
       receiverId: receiverId,
-      content: content.trim(),
+      content: sanitizedContent,
       status: status
     });
     
@@ -95,11 +100,13 @@ router.post('/', requireUserType('kid', 'parent'), [
     const receiverProfile = receiver.profile || {};
     
     res.status(201).json({
-      message: {
+      message: formatMessageResponse({
         id: message.id,
+        sender_id: message.senderId,
+        receiver_id: message.receiverId,
         content: message.content,
-        createdAt: message.createdAt ? new Date(message.createdAt).toISOString() : new Date().toISOString()
-      }
+        created_at: message.createdAt
+      })
     });
   } catch (error) {
     console.error('Error sending message:', error);
