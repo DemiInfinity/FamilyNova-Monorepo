@@ -67,3 +67,7 @@ yarn-error.log*
 *.tmp
 *.temp
 .cache/
+
+# Java heap dumps
+*.hprof
+java_pid*.hprof
