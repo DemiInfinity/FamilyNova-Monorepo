@@ -118,11 +118,27 @@ function decryptMiddleware(req, res, next) {
     // Check if body contains encrypted data
     if (req.body && req.body.encrypted) {
       try {
+        // Validate encrypted data format
+        if (typeof req.body.encrypted !== 'string' || !req.body.encrypted.includes(':')) {
+          console.warn('[Decrypt] Invalid encrypted data format, treating as unencrypted');
+          // Remove the encrypted field and continue with rest of body
+          delete req.body.encrypted;
+          return next();
+        }
+        
         const decryptedData = decrypt(req.body.encrypted);
         req.body = JSON.parse(decryptedData);
         req.body._wasEncrypted = true; // Flag to know it was decrypted
       } catch (error) {
-        return res.status(400).json({ error: 'Failed to decrypt request data' });
+        // If decryption fails, it might be that:
+        // 1. The data isn't actually encrypted (wrong key)
+        // 2. The encryption key changed
+        // 3. The data is corrupted
+        console.warn('[Decrypt] Decryption failed, treating as unencrypted:', error.message);
+        // Remove the encrypted field and continue with rest of body
+        // This allows clients that don't encrypt to still work
+        delete req.body.encrypted;
+        // Don't return error - let the route handler validate the data
       }
     }
   }

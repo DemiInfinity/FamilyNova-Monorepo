@@ -1,5 +1,12 @@
 const rateLimit = require('express-rate-limit');
 
+// Custom key generator that works with Vercel's proxy
+const keyGenerator = (req) => {
+  // In Vercel/serverless, use X-Forwarded-For header
+  // req.ip will be set correctly if trust proxy is enabled
+  return req.ip || req.connection?.remoteAddress || 'unknown';
+};
+
 // General API rate limiter - 100 requests per 15 minutes per IP
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -10,6 +17,7 @@ const apiLimiter = rateLimit({
   },
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  keyGenerator: keyGenerator,
   skip: (req) => {
     // Skip rate limiting for health checks
     return req.path === '/api/health';
@@ -26,6 +34,7 @@ const authLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: keyGenerator,
   skipSuccessfulRequests: false, // Count successful requests too
   skipFailedRequests: false
 });
@@ -39,7 +48,8 @@ const uploadLimiter = rateLimit({
     retryAfter: '1 hour'
   },
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
+  keyGenerator: keyGenerator
 });
 
 // Message sending rate limiter - 50 messages per 15 minutes
@@ -51,7 +61,8 @@ const messageLimiter = rateLimit({
     retryAfter: '15 minutes'
   },
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
+  keyGenerator: keyGenerator
 });
 
 module.exports = {

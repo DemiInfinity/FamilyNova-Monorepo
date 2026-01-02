@@ -12,6 +12,10 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust proxy - Required for Vercel/serverless environments
+// This allows Express to correctly identify client IPs from X-Forwarded-For headers
+app.set('trust proxy', true);
+
 // Connect to Supabase (async, but don't block serverless startup)
 // In Vercel, connections are lazy-loaded per request
 if (process.env.VERCEL !== '1' && !process.env.VERCEL_ENV) {
