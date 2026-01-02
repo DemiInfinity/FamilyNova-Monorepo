@@ -46,7 +46,7 @@ const uploadLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: keyGenerator
+  keyGenerator: ipKeyGenerator
 });
 
 // Message sending rate limiter - 50 messages per 15 minutes
@@ -59,7 +59,7 @@ const messageLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: keyGenerator
+  keyGenerator: ipKeyGenerator
 });
 
 module.exports = {
