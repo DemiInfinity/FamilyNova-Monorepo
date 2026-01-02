@@ -24,103 +24,119 @@ router.post('/', requireUserType('kid', 'parent'), [
     throw createError('Validation failed', 400, 'VALIDATION_ERROR', errors.array());
   }
   
-  const receiverId = requireNotNull(req.body.receiverId, 'receiverId');
-  const content = requireNotNull(req.body.content, 'content');
+  const { receiverId, content } = req.body;
+  
+  if (!receiverId) {
+    throw createError('receiverId is required', 400, 'VALIDATION_ERROR');
+  }
+  if (!content || !content.trim()) {
+    throw createError('content is required', 400, 'VALIDATION_ERROR');
+  }
   
   // Sanitize message content
   const sanitizedContent = sanitizeInput(content);
-    const supabase = getSupabase();
-    
-    console.log(`[Messages] Sending message from ${requireNotNull(req.user.id, 'user.id')} (${safeGet(req.user, 'userType', 'unknown')}) to ${receiverId}`);
-    
-    // Verify receiver is a friend
-    const receiver = await User.findById(receiverId);
-    if (!receiver) {
-      console.log(`[Messages] Receiver not found: ${receiverId}`);
-      throw createError('Receiver not found', 404, 'RECEIVER_NOT_FOUND');
-    }
-    
-    console.log(`[Messages] Receiver found: ${receiver.id} (${receiver.userType})`);
-    
-    // Parents can only message other parents, kids can only message other kids
-    if (req.user.userType === 'parent' && receiver.userType !== 'parent') {
-      console.log(`[Messages] User type mismatch: parent trying to message ${receiver.userType}`);
-      return res.status(403).json({ error: 'Parents can only message other parents' });
-    }
-    if (req.user.userType === 'kid' && receiver.userType !== 'kid') {
-      console.log(`[Messages] User type mismatch: kid trying to message ${receiver.userType}`);
-      return res.status(403).json({ error: 'Kids can only message other kids' });
-    }
-    
-    // Check if they are friends - UUIDs are case-insensitive, use .eq
-    const { data: friendships, error: friendError } = await supabase
+  const supabase = getSupabase();
+  
+  console.log(`[Messages] Sending message from ${req.user.id} (${req.user.userType || 'unknown'}) to ${receiverId}`);
+  
+  // Verify receiver is a friend
+  const receiver = await User.findById(receiverId);
+  if (!receiver) {
+    console.log(`[Messages] Receiver not found: ${receiverId}`);
+    throw createError('Receiver not found', 404, 'RECEIVER_NOT_FOUND');
+  }
+  
+  console.log(`[Messages] Receiver found: ${receiver.id} (${receiver.userType})`);
+  
+  // Parents can only message other parents, kids can only message other kids
+  if (req.user.userType === 'parent' && receiver.userType !== 'parent') {
+    console.log(`[Messages] User type mismatch: parent trying to message ${receiver.userType}`);
+    throw createError('Parents can only message other parents', 403, 'USER_TYPE_MISMATCH');
+  }
+  if (req.user.userType === 'kid' && receiver.userType !== 'kid') {
+    console.log(`[Messages] User type mismatch: kid trying to message ${receiver.userType}`);
+    throw createError('Kids can only message other kids', 403, 'USER_TYPE_MISMATCH');
+  }
+  
+  // Check if they are friends - UUIDs are case-insensitive, use .eq
+  const { data: friendships, error: friendError } = await supabase
+    .from('friendships')
+    .select('*')
+    .or(`and(user_id.eq.${req.user.id},friend_id.eq.${receiverId}),and(user_id.eq.${receiverId},friend_id.eq.${req.user.id})`)
+    .eq('status', 'accepted');
+  
+  if (friendError) {
+    console.error('[Messages] Error checking friendship:', friendError);
+    throw createError('Failed to verify friendship', 500, 'FRIENDSHIP_CHECK_FAILED');
+  }
+  
+  console.log(`[Messages] Found ${friendships?.length || 0} friendship(s) between ${req.user.id} and ${receiverId}`);
+  
+  if (!friendships || friendships.length === 0) {
+    console.log(`[Messages] No accepted friendship found between ${req.user.id} and ${receiverId}`);
+    // Check if there's a pending friendship
+    const { data: pendingFriendships } = await supabase
       .from('friendships')
       .select('*')
       .or(`and(user_id.eq.${req.user.id},friend_id.eq.${receiverId}),and(user_id.eq.${receiverId},friend_id.eq.${req.user.id})`)
-      .eq('status', 'accepted');
+      .eq('status', 'pending');
     
-    if (friendError) {
-      console.error('[Messages] Error checking friendship:', friendError);
-      return res.status(500).json({ error: 'Failed to verify friendship' });
+    if (pendingFriendships && pendingFriendships.length > 0) {
+      console.log(`[Messages] Found pending friendship - needs to be accepted first`);
+      throw createError('Friend request is pending. Please wait for acceptance.', 403, 'FRIEND_REQUEST_PENDING');
     }
     
-    console.log(`[Messages] Found ${friendships?.length || 0} friendship(s) between ${req.user.id} and ${receiverId}`);
-    
-    if (!friendships || friendships.length === 0) {
-      console.log(`[Messages] No accepted friendship found between ${req.user.id} and ${receiverId}`);
-      // Check if there's a pending friendship
-      const { data: pendingFriendships } = await supabase
-        .from('friendships')
-        .select('*')
-        .or(`and(user_id.eq.${req.user.id},friend_id.eq.${receiverId}),and(user_id.eq.${receiverId},friend_id.eq.${req.user.id})`)
-        .eq('status', 'pending');
-      
-      if (pendingFriendships && pendingFriendships.length > 0) {
-        console.log(`[Messages] Found pending friendship - needs to be accepted first`);
-        return res.status(403).json({ error: 'Friend request is pending. Please wait for acceptance.' });
-      }
-      
-      return res.status(403).json({ error: 'Can only message friends. Please add this user as a friend first.' });
-    }
-    
-    // Check monitoring level - full monitoring means all messages are flagged for review
-    // Parents' messages are always approved
-    const sender = await User.findById(req.user.id);
-    const status = (sender.userType === 'parent' || sender.monitoringLevel !== 'full') ? 'approved' : 'pending';
-    
-    const message = await Message.create({
-      senderId: req.user.id,
-      receiverId: receiverId,
-      content: sanitizedContent,
-      status: status
-    });
-    
-    // Get sender and receiver profiles for response
-    const senderProfile = sender.profile || {};
-    const receiverProfile = receiver.profile || {};
-    
-    res.status(201).json({
-      message: formatMessageResponse({
-        id: message.id,
-        sender_id: message.senderId,
-        receiver_id: message.receiverId,
-        content: message.content,
-        created_at: message.createdAt
-      })
-    });
-  } catch (error) {
-    console.error('Error sending message:', error);
-    res.status(500).json({ error: 'Server error' });
+    throw createError('Can only message friends. Please add this user as a friend first.', 403, 'NOT_FRIENDS');
   }
+  
+  // Check monitoring level - full monitoring means all messages are flagged for review
+  // Parents' messages are always approved
+  const sender = await User.findById(req.user.id);
+  const status = (sender.userType === 'parent' || sender.monitoringLevel !== 'full') ? 'approved' : 'pending';
+  
+  const message = await Message.create({
+    senderId: req.user.id,
+    receiverId: receiverId,
+    content: sanitizedContent,
+    status: status
+  });
+  
+  // Get sender and receiver profiles for response
+  const senderProfile = sender.profile || {};
+  const receiverProfile = receiver.profile || {};
+  
+  res.status(201).json({
+    message: {
+      id: message.id,
+      senderId: message.senderId,
+      receiverId: message.receiverId,
+      content: message.content,
+      status: message.status,
+      sender: {
+        id: message.senderId,
+        profile: {
+          displayName: senderProfile.displayName || 'Unknown',
+          avatar: senderProfile.avatar
+        }
+      },
+      receiver: {
+        id: message.receiverId,
+        profile: {
+          displayName: receiverProfile.displayName || 'Unknown',
+          avatar: receiverProfile.avatar
+        }
+      },
+      createdAt: message.createdAt
+    }
+  });
 });
 
 // @route   GET /api/messages
 // @desc    Get messages for current user
 // @access  Private
-router.get('/', async (req, res) => {
-  try {
-    const { conversationWith } = req.query;
-    const supabase = await getSupabase();
+router.get('/', asyncHandler(async (req, res) => {
+  const { conversationWith } = req.query;
+  const supabase = getSupabase();
     
     let query = supabase
       .from('messages')
@@ -211,21 +227,16 @@ router.get('/', async (req, res) => {
       };
     });
     
-    res.json({ messages });
-  } catch (error) {
-    console.error('Error fetching messages:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
+  res.json({ messages });
+}));
 
 // @route   PUT /api/messages/:messageId/moderate
 // @desc    Moderate a message (parents only)
 // @access  Private (Parent only)
-router.put('/:messageId/moderate', requireUserType('parent'), async (req, res) => {
-  try {
-    const { messageId } = req.params;
-    const { action } = req.body; // 'approve', 'reject', 'delete'
-    const supabase = await getSupabase();
+router.put('/:messageId/moderate', requireUserType('parent'), asyncHandler(async (req, res) => {
+  const { messageId } = req.params;
+  const { action } = req.body; // 'approve', 'reject', 'delete'
+  const supabase = getSupabase();
     
     const message = await Message.findById(messageId);
     
@@ -271,19 +282,15 @@ router.put('/:messageId/moderate', requireUserType('parent'), async (req, res) =
     
     await message.save();
     
-    res.json({ 
-      message: 'Message moderated successfully',
-      message: {
-        id: message.id,
-        status: message.status,
-        moderatedBy: message.moderatedBy,
-        moderatedAt: message.moderatedAt
-      }
-    });
-  } catch (error) {
-    console.error('Error moderating message:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
+  res.json({ 
+    message: 'Message moderated successfully',
+    moderatedMessage: {
+      id: message.id,
+      status: message.status,
+      moderatedBy: message.moderatedBy,
+      moderatedAt: message.moderatedAt
+    }
+  });
+}));
 
 module.exports = router;
