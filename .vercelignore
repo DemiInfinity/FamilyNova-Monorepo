@@ -1,0 +1,11 @@
+# Ignore everything except backend and apps/web
+apps/android-kids/
+apps/android-parent/
+apps/ios-kids/
+apps/ios-parent/
+Docs/
+packages/
+node_modules/
+*.md
+!README.md
+
