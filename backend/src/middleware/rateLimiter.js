@@ -1,11 +1,8 @@
 const rateLimit = require('express-rate-limit');
 
-// Custom key generator that works with Vercel's proxy
-const keyGenerator = (req) => {
-  // In Vercel/serverless, use X-Forwarded-For header
-  // req.ip will be set correctly if trust proxy is enabled
-  return req.ip || req.connection?.remoteAddress || 'unknown';
-};
+// Use the built-in ipKeyGenerator helper for proper IPv6 support
+// This handles both IPv4 and IPv6 addresses correctly and prevents bypass attacks
+const ipKeyGenerator = rateLimit.ipKeyGenerator;
 
 // General API rate limiter - 100 requests per 15 minutes per IP
 const apiLimiter = rateLimit({
@@ -17,7 +14,7 @@ const apiLimiter = rateLimit({
   },
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-  keyGenerator: keyGenerator,
+  keyGenerator: ipKeyGenerator,
   skip: (req) => {
     // Skip rate limiting for health checks
     return req.path === '/api/health';
@@ -34,7 +31,7 @@ const authLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: keyGenerator,
+  keyGenerator: ipKeyGenerator,
   skipSuccessfulRequests: false, // Count successful requests too
   skipFailedRequests: false
 });

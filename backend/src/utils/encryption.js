@@ -117,28 +117,40 @@ function decryptMiddleware(req, res, next) {
   if (req.path.startsWith('/api/auth/register') || req.path.startsWith('/api/auth/login')) {
     // Check if body contains encrypted data
     if (req.body && req.body.encrypted) {
+      const encryptedValue = req.body.encrypted;
+      const hasOtherFields = Object.keys(req.body).some(key => key !== 'encrypted');
+      
       try {
         // Validate encrypted data format
-        if (typeof req.body.encrypted !== 'string' || !req.body.encrypted.includes(':')) {
-          console.warn('[Decrypt] Invalid encrypted data format, treating as unencrypted');
-          // Remove the encrypted field and continue with rest of body
+        if (typeof encryptedValue !== 'string' || !encryptedValue.includes(':')) {
+          console.warn('[Decrypt] Invalid encrypted data format');
+          // If body only has encrypted field, return error
+          // Otherwise, treat as unencrypted and continue
+          if (!hasOtherFields) {
+            return res.status(400).json({ error: 'Invalid encrypted data format' });
+          }
           delete req.body.encrypted;
           return next();
         }
         
-        const decryptedData = decrypt(req.body.encrypted);
-        req.body = JSON.parse(decryptedData);
+        const decryptedData = decrypt(encryptedValue);
+        const parsedData = JSON.parse(decryptedData);
+        
+        // Replace body with decrypted data
+        req.body = parsedData;
         req.body._wasEncrypted = true; // Flag to know it was decrypted
       } catch (error) {
-        // If decryption fails, it might be that:
-        // 1. The data isn't actually encrypted (wrong key)
-        // 2. The encryption key changed
-        // 3. The data is corrupted
-        console.warn('[Decrypt] Decryption failed, treating as unencrypted:', error.message);
-        // Remove the encrypted field and continue with rest of body
-        // This allows clients that don't encrypt to still work
+        // If decryption fails and body only has encrypted field, return error
+        // This means the client intended to send encrypted data but it's invalid
+        if (!hasOtherFields) {
+          console.error('[Decrypt] Decryption failed for encrypted-only request:', error.message);
+          return res.status(400).json({ error: 'Failed to decrypt request data. Please check your encryption key or data format.' });
+        }
+        
+        // If there are other fields, treat as unencrypted request
+        console.warn('[Decrypt] Decryption failed but other fields present, treating as unencrypted:', error.message);
         delete req.body.encrypted;
-        // Don't return error - let the route handler validate the data
+        // Continue with unencrypted data
       }
     }
   }
